@@ -20,3 +20,4 @@ Requires Node.js 20+ and pnpm 9+.
 ## Documentation
 
 The product blueprint v2.0 — the single source of truth for scope, schema, and the 21-sprint plan — lives at [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md).
+
