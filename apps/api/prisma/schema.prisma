@@ -27,6 +27,7 @@ model Company {
   departments Department[]
   teams       Team[]
   users       User[]
+  roles       Role[]
 
   @@index([country], map: "idx_companies_country")
   @@map("companies")
@@ -87,6 +88,7 @@ model Team {
 
   company    Company    @relation(fields: [companyId],    references: [id], onDelete: Restrict)
   department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  members    UserTeam[]
 
   @@unique([departmentId, name], map: "idx_teams_department_name")
   @@index([companyId],           map: "idx_teams_company_id")
@@ -130,12 +132,76 @@ model User {
   branch     Branch?     @relation(fields: [branchId],     references: [id], onDelete: SetNull)
   department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
+  systemRoles UserSystemRole[]
+  teams       UserTeam[]
+  roles       UserRole[]
+
   @@unique([companyId, email], map: "idx_users_company_email")
   @@index([companyId],         map: "idx_users_company_id")
   @@index([branchId],          map: "idx_users_branch_id")
   @@index([departmentId],      map: "idx_users_department_id")
   @@index([status],            map: "idx_users_status")
   @@map("users")
+}
+
+model Role {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String    @db.Uuid @map("company_id")
+  name        String
+  description String?
+  isBuiltin   Boolean   @default(false) @map("is_builtin")
+  permissions Json      @default("[]")
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt   DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt   DateTime? @db.Timestamptz(6) @map("deleted_at")
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  userRoles UserRole[]
+
+  @@unique([companyId, name], map: "idx_roles_company_name")
+  @@index([companyId],        map: "idx_roles_company_id")
+  @@map("roles")
+}
+
+model UserSystemRole {
+  userId     String   @db.Uuid @map("user_id")
+  systemRole String   @map("system_role")
+  grantedAt  DateTime @default(now()) @db.Timestamptz(6) @map("granted_at")
+  grantedBy  String?  @db.Uuid @map("granted_by")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, systemRole])
+  @@index([systemRole], map: "idx_user_system_roles_system_role")
+  @@map("user_system_roles")
+}
+
+model UserTeam {
+  userId    String   @db.Uuid @map("user_id")
+  teamId    String   @db.Uuid @map("team_id")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  joinedAt  DateTime @default(now()) @db.Timestamptz(6) @map("joined_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([userId, teamId])
+  @@index([teamId], map: "idx_user_teams_team_id")
+  @@map("user_teams")
+}
+
+model UserRole {
+  userId    String   @db.Uuid @map("user_id")
+  roleId    String   @db.Uuid @map("role_id")
+  grantedAt DateTime @default(now()) @db.Timestamptz(6) @map("granted_at")
+  grantedBy String?  @db.Uuid @map("granted_by")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId], map: "idx_user_roles_role_id")
+  @@map("user_roles")
 }
 
 enum billing_cycle {
