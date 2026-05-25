@@ -1,6 +1,3 @@
-// Prisma schema for Q Task Manager.
-// Models will be added sprint by sprint per docs/BLUEPRINT.md §6.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,4 +6,138 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+model Company {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  slug            String    @unique(map: "idx_companies_slug")
+  country         String
+  defaultLocale   String    @default("en")            @map("default_locale")
+  defaultTimezone String    @default("Asia/Baghdad")  @map("default_timezone")
+  defaultCurrency String    @default("IQD")           @map("default_currency")
+  logoFileId      String?   @db.Uuid                  @map("logo_file_id")
+  contactEmail    String?                             @map("contact_email")
+  contactPhone    String?                             @map("contact_phone")
+  createdAt       DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt       DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt       DateTime? @db.Timestamptz(6)        @map("deleted_at")
+
+  @@index([country], map: "idx_companies_country")
+  @@map("companies")
+}
+
+enum billing_cycle {
+  monthly
+  annual
+}
+
+enum broadcast_audience {
+  all_company
+  branch
+  role
+  custom
+}
+
+enum employment_status {
+  employed
+  on_leave
+  terminated
+}
+
+enum file_purpose {
+  task_attachment
+  task_submission
+  avatar
+  company_logo
+}
+
+enum invoice_status {
+  draft
+  open
+  paid
+  void
+  uncollectible
+}
+
+enum leave_status {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+enum notification_channel {
+  in_app
+  email
+  push
+}
+
+enum org_role {
+  ceo
+  manager
+  supervisor
+  employee
+  hr
+  admin
+}
+
+enum payment_method {
+  card
+  bank_transfer
+  fastpay
+  zaincash
+}
+
+enum payment_provider {
+  paddle
+  stripe
+}
+
+enum subscription_plan {
+  starter
+  growth
+  enterprise
+}
+
+enum subscription_status {
+  trialing
+  active
+  past_due
+  paused
+  cancelled
+  expired
+}
+
+enum task_priority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum task_status {
+  draft
+  assigned
+  in_progress
+  submitted
+  reassignment_requested
+  approved
+  rejected
+  completed
+  cancelled
+}
+
+enum user_status {
+  active
+  invited
+  suspended
+  deactivated
+}
+
+enum virus_scan_status {
+  pending
+  clean
+  infected
+  error
 }
