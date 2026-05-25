@@ -7,5 +7,11 @@
     "logicalLabel": "Logical (me-4) — flips with direction",
     "physicalLabel": "Physical (ml-4) — never flips",
     "explainer": "Switch to /ar or /ckb to see the logical box mirror; the physical one stays put."
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "light": "Light mode — click for dark",
+    "dark": "Dark mode — click for system",
+    "system": "System mode — click for light"
   }
 }

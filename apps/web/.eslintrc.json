@@ -1,3 +1,16 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "JSXAttribute[name.name='className'] Literal[value=/(?:^|\\s)(?:bg|text|border|ring|fill|stroke|outline|caret|accent|decoration|shadow|from|via|to|placeholder|divide)-(?:white|black|slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)(?:-\\d{2,3})?(?:\\s|$)/]",
+        "message": "Use theme tokens (bg-background, text-foreground, bg-card, text-muted-foreground, bg-primary, bg-destructive, etc.) instead of literal Tailwind colors. They adapt automatically to dark mode and brand changes. If you genuinely need a fixed color, add // eslint-disable-next-line no-restricted-syntax with a comment explaining why."
+      },
+      {
+        "selector": "JSXAttribute[name.name='className'] TemplateElement[value.raw=/(?:^|\\s)(?:bg|text|border|ring|fill|stroke|outline|caret|accent|decoration|shadow|from|via|to|placeholder|divide)-(?:white|black|slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)(?:-\\d{2,3})?(?:\\s|$)/]",
+        "message": "Use theme tokens (bg-background, text-foreground, etc.) instead of literal Tailwind colors. They adapt to dark mode. Escape with // eslint-disable-next-line no-restricted-syntax + reason if intentional."
+      }
+    ]
+  }
 }
