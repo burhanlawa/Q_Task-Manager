@@ -36,7 +36,10 @@ export default async function LocaleLayout({
   const typedLocale = locale as Locale;
 
   return (
-    <ClerkProvider localization={getClerkLocalization(typedLocale)}>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      localization={getClerkLocalization(typedLocale)}
+    >
       <html lang={locale} dir={getDirection(typedLocale)} suppressHydrationWarning>
         <body>
           <NextIntlClientProvider locale={locale} messages={messages}>
