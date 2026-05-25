@@ -9,13 +9,14 @@ datasource db {
 }
 
 model Company {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name            String
-  slug            String    @unique(map: "idx_companies_slug")
+  slug            String              @unique(map: "idx_companies_slug")
   country         String
-  defaultLocale   String    @default("en")            @map("default_locale")
-  defaultTimezone String    @default("Asia/Baghdad")  @map("default_timezone")
-  defaultCurrency String    @default("IQD")           @map("default_currency")
+  status          subscription_status @default(trialing)
+  defaultLocale   String              @default("en")            @map("default_locale")
+  defaultTimezone String              @default("Asia/Baghdad")  @map("default_timezone")
+  defaultCurrency String              @default("IQD")           @map("default_currency")
   logoFileId      String?   @db.Uuid                  @map("logo_file_id")
   contactEmail    String?                             @map("contact_email")
   contactPhone    String?                             @map("contact_phone")

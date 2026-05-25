@@ -15,6 +15,12 @@ out/
 .env.*.local
 !.env.example
 
+# Clerk keyless-mode state — overrides real publishable/secret keys if present
+.clerk/
+
+# Workspace .env files are symlinks to the repo-root .env (don't commit them either).
+apps/*/.env
+
 # Logs
 *.log
 npm-debug.log*
