@@ -23,8 +23,51 @@ model Company {
   updatedAt       DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt       DateTime? @db.Timestamptz(6)        @map("deleted_at")
 
+  branches    Branch[]
+  departments Department[]
+
   @@index([country], map: "idx_companies_country")
   @@map("companies")
+}
+
+model Branch {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String    @db.Uuid                                       @map("company_id")
+  name      String
+  code      String?
+  country   String?
+  city      String?
+  address   String?
+  timezone  String?
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)              @map("created_at")
+  updatedAt DateTime  @default(now()) @db.Timestamptz(6)              @map("updated_at")
+  deletedAt DateTime? @db.Timestamptz(6)                              @map("deleted_at")
+
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  departments Department[]
+
+  @@unique([companyId, code], map: "idx_branches_company_code")
+  @@index([companyId],         map: "idx_branches_company_id")
+  @@map("branches")
+}
+
+model Department {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String    @db.Uuid                                       @map("company_id")
+  branchId      String    @db.Uuid                                       @map("branch_id")
+  name          String
+  isAutoCreated Boolean   @default(false)                                @map("is_auto_created")
+  createdAt     DateTime  @default(now()) @db.Timestamptz(6)             @map("created_at")
+  updatedAt     DateTime  @default(now()) @db.Timestamptz(6)             @map("updated_at")
+  deletedAt     DateTime? @db.Timestamptz(6)                             @map("deleted_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  branch  Branch  @relation(fields: [branchId],  references: [id], onDelete: Restrict)
+
+  @@index([companyId],       map: "idx_departments_company_id")
+  @@index([branchId],        map: "idx_departments_branch_id")
+  @@unique([branchId, name], map: "idx_departments_branch_name")
+  @@map("departments")
 }
 
 enum billing_cycle {
