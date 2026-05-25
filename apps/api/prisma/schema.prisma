@@ -26,6 +26,7 @@ model Company {
   branches    Branch[]
   departments Department[]
   teams       Team[]
+  users       User[]
 
   @@index([country], map: "idx_companies_country")
   @@map("companies")
@@ -46,6 +47,7 @@ model Branch {
 
   company     Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
   departments Department[]
+  users       User[]
 
   @@unique([companyId, code], map: "idx_branches_company_code")
   @@index([companyId],         map: "idx_branches_company_id")
@@ -65,6 +67,7 @@ model Department {
   company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
   branch  Branch  @relation(fields: [branchId],  references: [id], onDelete: Restrict)
   teams   Team[]
+  users   User[]
 
   @@index([companyId],       map: "idx_departments_company_id")
   @@index([branchId],        map: "idx_departments_branch_id")
@@ -90,6 +93,49 @@ model Team {
   @@index([departmentId],        map: "idx_teams_department_id")
   @@index([supervisorId],        map: "idx_teams_supervisor_id")
   @@map("teams")
+}
+
+model User {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String  @db.Uuid @map("company_id")
+  branchId     String? @db.Uuid @map("branch_id")
+  departmentId String? @db.Uuid @map("department_id")
+
+  email           String
+  emailVerifiedAt DateTime? @db.Timestamptz(6) @map("email_verified_at")
+  clerkUserId     String?   @unique(map: "idx_users_clerk_user_id") @map("clerk_user_id")
+  firstName       String?   @map("first_name")
+  lastName        String?   @map("last_name")
+  displayName     String?   @map("display_name")
+  phone           String?
+  avatarFileId    String?   @db.Uuid @map("avatar_file_id")
+  locale          String    @default("en")
+  timezone        String?
+
+  orgRole          org_role          @default(employee) @map("org_role")
+  systemRole       String?           @map("system_role")
+  status           user_status       @default(invited)
+  employmentStatus employment_status @default(employed) @map("employment_status")
+  hiredAt          DateTime?         @db.Date @map("hired_at")
+  terminatedAt     DateTime?         @db.Date @map("terminated_at")
+
+  nationalId Bytes? @map("national_id")
+
+  lastLoginAt DateTime? @db.Timestamptz(6) @map("last_login_at")
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt   DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt   DateTime? @db.Timestamptz(6) @map("deleted_at")
+
+  company    Company     @relation(fields: [companyId],    references: [id], onDelete: Restrict)
+  branch     Branch?     @relation(fields: [branchId],     references: [id], onDelete: SetNull)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@unique([companyId, email], map: "idx_users_company_email")
+  @@index([companyId],         map: "idx_users_company_id")
+  @@index([branchId],          map: "idx_users_branch_id")
+  @@index([departmentId],      map: "idx_users_department_id")
+  @@index([status],            map: "idx_users_status")
+  @@map("users")
 }
 
 enum billing_cycle {
