@@ -6,6 +6,7 @@ import { DebugModule } from './debug/debug.module';
 import { AuthModule } from './auth/auth.module';
 import { MeModule } from './me/me.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { TenantModule } from './tenant/tenant.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
       envFilePath: [join(process.cwd(), '../../.env'), join(process.cwd(), '.env')],
     }),
     PrismaModule,
+    TenantModule,
     HealthModule,
     DebugModule,
     AuthModule,

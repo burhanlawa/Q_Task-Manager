@@ -18,7 +18,11 @@ function primaryEmail(data: ClerkUserCreated): string | null {
 }
 
 function slugFromEmail(email: string, clerkUserId: string): string {
-  const base = email.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]+/g, '-') ?? 'company';
+  const base =
+    email
+      .split('@')[0]
+      ?.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-') ?? 'company';
   const suffix = clerkUserId.slice(-6).toLowerCase();
   return `${base}-${suffix}`.replace(/-+/g, '-').replace(/^-|-$/g, '');
 }
