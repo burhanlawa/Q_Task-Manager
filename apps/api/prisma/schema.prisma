@@ -25,6 +25,7 @@ model Company {
 
   branches    Branch[]
   departments Department[]
+  teams       Team[]
 
   @@index([country], map: "idx_companies_country")
   @@map("companies")
@@ -63,11 +64,32 @@ model Department {
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
   branch  Branch  @relation(fields: [branchId],  references: [id], onDelete: Restrict)
+  teams   Team[]
 
   @@index([companyId],       map: "idx_departments_company_id")
   @@index([branchId],        map: "idx_departments_branch_id")
   @@unique([branchId, name], map: "idx_departments_branch_name")
   @@map("departments")
+}
+
+model Team {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String    @db.Uuid                                       @map("company_id")
+  departmentId String    @db.Uuid                                       @map("department_id")
+  supervisorId String?   @db.Uuid                                       @map("supervisor_id")
+  name         String
+  createdAt    DateTime  @default(now()) @db.Timestamptz(6)             @map("created_at")
+  updatedAt    DateTime  @default(now()) @db.Timestamptz(6)             @map("updated_at")
+  deletedAt    DateTime? @db.Timestamptz(6)                             @map("deleted_at")
+
+  company    Company    @relation(fields: [companyId],    references: [id], onDelete: Restrict)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+
+  @@unique([departmentId, name], map: "idx_teams_department_name")
+  @@index([companyId],           map: "idx_teams_company_id")
+  @@index([departmentId],        map: "idx_teams_department_id")
+  @@index([supervisorId],        map: "idx_teams_supervisor_id")
+  @@map("teams")
 }
 
 enum billing_cycle {
