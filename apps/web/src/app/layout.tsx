@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { PostHogProvider } from '@/components/posthog-provider';
 
 export const metadata: Metadata = {
   title: 'Q Task Manager',
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <PostHogProvider />
+        {children}
+      </body>
     </html>
   );
 }
