@@ -6,9 +6,7 @@ import * as Sentry from '@sentry/node';
 export class SentryExceptionFilter extends BaseExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
     if (status >= 500) {
       Sentry.captureException(exception);
