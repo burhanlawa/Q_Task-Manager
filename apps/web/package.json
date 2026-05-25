@@ -11,6 +11,9 @@
     "test": "echo \"(web) no tests yet — added in Sprint 21 E2E\" && exit 0"
   },
   "dependencies": {
+    "@clerk/localizations": "^4.6.8",
+    "@clerk/nextjs": "^7.4.1",
+    "@radix-ui/react-slot": "^1.2.4",
     "@sentry/nextjs": "^10.53.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

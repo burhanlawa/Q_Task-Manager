@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { ClerkProvider } from '@clerk/nextjs';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { setRequestLocale, getMessages } from 'next-intl/server';
 import { PostHogProvider } from '@/components/posthog-provider';
 import { SiteHeader } from '@/components/site-header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { routing, getDirection, type Locale } from '@/i18n/routing';
+import { getClerkLocalization } from '@/i18n/clerk';
 import '../globals.css';
 
 export const metadata: Metadata = {
@@ -31,18 +33,21 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const messages = await getMessages();
+  const typedLocale = locale as Locale;
 
   return (
-    <html lang={locale} dir={getDirection(locale as Locale)} suppressHydrationWarning>
-      <body>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <PostHogProvider />
-            <SiteHeader />
-            {children}
-          </ThemeProvider>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <ClerkProvider localization={getClerkLocalization(typedLocale)}>
+      <html lang={locale} dir={getDirection(typedLocale)} suppressHydrationWarning>
+        <body>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <PostHogProvider />
+              <SiteHeader />
+              {children}
+            </ThemeProvider>
+          </NextIntlClientProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

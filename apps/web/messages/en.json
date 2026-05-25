@@ -13,5 +13,8 @@
     "light": "Light mode — click for dark",
     "dark": "Dark mode — click for system",
     "system": "System mode — click for light"
+  },
+  "auth": {
+    "signIn": "Sign in"
   }
 }
