@@ -12,7 +12,7 @@ export default async function HomePage({
   const t = await getTranslations();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-10 p-8">
+    <main className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center gap-10 p-8">
       <h1 className="text-5xl font-bold tracking-tight">{t('app.title')}</h1>
 
       <Card className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-500">

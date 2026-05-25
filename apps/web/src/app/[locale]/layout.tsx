@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { setRequestLocale, getMessages } from 'next-intl/server';
 import { PostHogProvider } from '@/components/posthog-provider';
+import { SiteHeader } from '@/components/site-header';
 import { routing, getDirection, type Locale } from '@/i18n/routing';
 import '../globals.css';
 
@@ -35,6 +36,7 @@ export default async function LocaleLayout({
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <PostHogProvider />
+          <SiteHeader />
           {children}
         </NextIntlClientProvider>
       </body>
