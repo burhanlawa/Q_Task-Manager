@@ -1,0 +1,12 @@
+// Prisma schema for Q Task Manager.
+// Models will be added sprint by sprint per docs/BLUEPRINT.md §6.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
