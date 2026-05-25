@@ -1,5 +1,11 @@
 {
   "app": {
     "title": "Q Task Manager"
+  },
+  "demo": {
+    "heading": "RTL demo",
+    "logicalLabel": "Logical (me-4) — flips with direction",
+    "physicalLabel": "Physical (ml-4) — never flips",
+    "explainer": "Switch to /ar or /ckb to see the logical box mirror; the physical one stays put."
   }
 }
