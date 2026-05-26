@@ -9,7 +9,9 @@ import {
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
+import { PermissionsGuard } from '../auth/permissions.guard';
 import { PermissionsService } from '../auth/permissions.service';
+import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { UpdateMeDto } from './dto/update-me.dto';
@@ -36,7 +38,7 @@ const ME_SELECT = {
 } satisfies Prisma.UserSelect;
 
 @Controller('me')
-@UseGuards(ClerkAuthGuard)
+@UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class MeController {
   constructor(private readonly permissions: PermissionsService) {}
@@ -44,10 +46,11 @@ export class MeController {
   /**
    * Diagnostic-only: returns whether the caller's effective-permissions set
    * is cached and the total cache size. Used to verify the 5-minute TTL works
-   * (Sprint 6 task 6.7's done check). Safe to expose — no permission data
-   * leaks, just hit/miss + a count.
+   * (Sprint 6 task 6.7's done check). Gated behind role.manage so casual
+   * users can't probe cache state; admins can keep using it.
    */
   @Get('permissions-debug')
+  @RequirePermissions('role.manage')
   permissionsDebug(@CurrentTenant() tenant: TenantContext) {
     return {
       userId: tenant.userId,
