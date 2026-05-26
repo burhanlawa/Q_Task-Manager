@@ -1,9 +1,13 @@
-import { Transform } from 'class-transformer';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
+
+export enum BranchListStatus {
+  Active = 'active',
+  Archived = 'archived',
+  All = 'all',
+}
 
 export class ListBranchesQuery {
   @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === true || value === 'true' || value === '1')
-  includeArchived?: boolean;
+  @IsEnum(BranchListStatus)
+  status?: BranchListStatus;
 }

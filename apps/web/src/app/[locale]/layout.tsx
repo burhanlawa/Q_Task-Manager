@@ -4,8 +4,10 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { setRequestLocale, getMessages } from 'next-intl/server';
 import { PostHogProvider } from '@/components/posthog-provider';
+import { QueryProvider } from '@/components/query-provider';
 import { SiteHeader } from '@/components/site-header';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
 import { routing, getDirection, type Locale } from '@/i18n/routing';
 import { getClerkLocalization } from '@/i18n/clerk';
 import '../globals.css';
@@ -44,9 +46,12 @@ export default async function LocaleLayout({
         <body>
           <NextIntlClientProvider locale={locale} messages={messages}>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-              <PostHogProvider />
-              <SiteHeader />
-              {children}
+              <QueryProvider>
+                <PostHogProvider />
+                <SiteHeader />
+                {children}
+                <Toaster richColors position="top-center" />
+              </QueryProvider>
             </ThemeProvider>
           </NextIntlClientProvider>
         </body>

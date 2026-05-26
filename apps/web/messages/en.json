@@ -20,5 +20,61 @@
   "security": {
     "heading": "Account security",
     "description": "Enable two-factor authentication, manage active sessions, and update your password."
+  },
+  "admin": {
+    "branches": {
+      "title": "Branches",
+      "description": "Manage your company's branches. Archive hides a branch from default lists.",
+      "newBranch": "New branch",
+      "createTitle": "Create a branch",
+      "createDescription": "Branches are physical locations within your company.",
+      "editTitle": "Edit branch",
+      "editDescription": "Update branch details. Archive from the list.",
+      "backToList": "Back to branches",
+      "filter": {
+        "active": "Active",
+        "archived": "Archived",
+        "all": "All"
+      },
+      "loading": "Loading…",
+      "loadError": "Could not load branches.",
+      "empty": "No branches yet. Create the first one.",
+      "columns": {
+        "name": "Name",
+        "city": "City",
+        "country": "Country",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "archived": "Archived"
+      },
+      "fields": {
+        "name": "Name",
+        "code": "Code",
+        "country": "Country (ISO 2)",
+        "city": "City",
+        "address": "Address",
+        "timezone": "Timezone (IANA)"
+      },
+      "actions": {
+        "open": "Open",
+        "archive": "Archive",
+        "unarchive": "Unarchive",
+        "create": "Create",
+        "creating": "Creating…",
+        "save": "Save",
+        "saving": "Saving…",
+        "cancel": "Cancel"
+      },
+      "toast": {
+        "created": "Branch created.",
+        "saved": "Branch saved.",
+        "archived": "Branch archived.",
+        "unarchived": "Branch restored.",
+        "error": "Something went wrong."
+      }
+    }
   }
 }

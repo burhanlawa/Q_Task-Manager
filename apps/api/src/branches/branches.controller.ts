@@ -19,7 +19,7 @@ import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateBranchDto } from './dto/create-branch.dto';
-import { ListBranchesQuery } from './dto/list-branches.query';
+import { BranchListStatus, ListBranchesQuery } from './dto/list-branches.query';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 
 @Controller('branches')
@@ -28,10 +28,14 @@ import { UpdateBranchDto } from './dto/update-branch.dto';
 export class BranchesController {
   @Get()
   async list(@TenantDb() db: Prisma.TransactionClient, @Query() q: ListBranchesQuery) {
-    return db.branch.findMany({
-      where: q.includeArchived ? {} : { deletedAt: null },
-      orderBy: [{ createdAt: 'asc' }],
-    });
+    const status = q.status ?? BranchListStatus.Active;
+    const where =
+      status === BranchListStatus.All
+        ? {}
+        : status === BranchListStatus.Archived
+          ? { NOT: { deletedAt: null } }
+          : { deletedAt: null };
+    return db.branch.findMany({ where, orderBy: [{ createdAt: 'asc' }] });
   }
 
   @Post()
