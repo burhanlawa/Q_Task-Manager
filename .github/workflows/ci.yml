@@ -73,6 +73,10 @@ jobs:
     env:
       # Migrations + tests' admin-role queries connect as ci_owner.
       DATABASE_URL: postgresql://ci_owner:ci_owner_pw@localhost:5432/qtm_ci
+      # Prisma's schema declares directUrl = env("DIRECT_URL"); it's used by
+      # Neon's pooler in dev but a local Postgres needs no separate URL.
+      # Point it at the same value so Prisma's env validation passes.
+      DIRECT_URL: postgresql://ci_owner:ci_owner_pw@localhost:5432/qtm_ci
       # The integration suite's app-role client connects as app_user. The
       # password is set in the "Reset app_user password" step below.
       APP_DATABASE_URL: postgresql://app_user:ci_app_pw@localhost:5432/qtm_ci
