@@ -38,4 +38,41 @@ export class ActivityLogService {
       })),
     });
   }
+
+  /**
+   * Records a change to a role's permissions array (Sprint 6 task 6.6).
+   * Skips when before/after are equivalent so a no-op PATCH doesn't pollute
+   * the audit log. Atomic with the role update because both ride the same
+   * per-request transaction.
+   */
+  async recordRolePermissionsChange(p: {
+    db: Prisma.TransactionClient;
+    companyId: string;
+    actorUserId: string;
+    roleId: string;
+    before: string[];
+    after: string[];
+  }): Promise<void> {
+    const beforeSet = new Set(p.before);
+    const afterSet = new Set(p.after);
+    const added = [...afterSet].filter((k) => !beforeSet.has(k)).sort();
+    const removed = [...beforeSet].filter((k) => !afterSet.has(k)).sort();
+    if (added.length === 0 && removed.length === 0) return;
+    await p.db.activityLog.create({
+      data: {
+        companyId: p.companyId,
+        actorUserId: p.actorUserId,
+        actionType: 'role_permissions_changed',
+        targetType: 'role',
+        targetId: p.roleId,
+        fieldChanged: 'permissions',
+        metadata: {
+          before: [...p.before].sort(),
+          after: [...p.after].sort(),
+          added,
+          removed,
+        },
+      },
+    });
+  }
 }
