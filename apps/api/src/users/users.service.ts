@@ -56,27 +56,32 @@ export class UsersService {
       throw err;
     }
 
-    // Best-effort Clerk creation. If it fails we roll back our row so the
-    // invite can be retried cleanly.
+    // Use Clerk's Invitations API rather than Users.createUser. Invitations
+    // actually send the email and route the invitee through Clerk's hosted
+    // "complete your sign-up" + set-password flow. createUser would silently
+    // mint the identity with no email at all (Sprint 7 task 7.2 fix).
+    //
+    // The webhook (3.4) handles the rest: when the invitee completes signup,
+    // Clerk fires user.created → we look up the pre-created row by email and
+    // link clerk_user_id + flip status to 'active'.
     try {
-      await this.clerk.users.createUser({
-        emailAddress: [dto.email],
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        // skipPasswordRequirement makes Clerk treat this as an invited user;
-        // they set their password via the email link.
-        skipPasswordRequirement: true,
+      await this.clerk.invitations.createInvitation({
+        emailAddress: dto.email,
+        publicMetadata: {
+          // Carried into the resulting Clerk user; we don't rely on it (our
+          // webhook joins by email), but it makes Clerk's dashboard easier
+          // to read when triaging issues.
+          qtmInvitedUserId: user.id,
+        },
       });
     } catch (err) {
-      this.log.warn(`Clerk createUser failed for ${dto.email}; rolling back local row`);
+      this.log.warn(`Clerk createInvitation failed for ${dto.email}; rolling back local row`);
       await db.user.delete({ where: { id: user.id } }).catch(() => undefined);
-      // Surface Clerk's message if we can — most common is "email already in
-      // use" across the entire Clerk instance (not just our tenant).
       const message =
         err && typeof err === 'object' && 'errors' in err
           ? JSON.stringify((err as { errors: unknown }).errors)
           : (err as Error)?.message;
-      throw new BadRequestException(`Could not create Clerk identity: ${message}`);
+      throw new BadRequestException(`Could not send invitation: ${message}`);
     }
 
     return { id: user.id, email: user.email, status: user.status };
