@@ -13,6 +13,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { BranchesModule } from './branches/branches.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { TeamsModule } from './teams/teams.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { TeamsModule } from './teams/teams.module';
     BranchesModule,
     DepartmentsModule,
     TeamsModule,
+    UsersModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -52,6 +52,29 @@ export class ClerkWebhookService {
       return;
     }
 
+    // Invite path: an admin in some tenant pre-created a users row with this
+    // email and status='invited' (no clerk_user_id yet). Link to that row
+    // instead of provisioning a brand-new tenant.
+    const invited = await this.prisma.user.findFirst({
+      where: { email, clerkUserId: null, status: 'invited', deletedAt: null },
+      select: { id: true, companyId: true },
+    });
+    if (invited) {
+      await this.prisma.user.update({
+        where: { id: invited.id },
+        data: {
+          clerkUserId,
+          status: 'active',
+          firstName: data.first_name ?? undefined,
+          lastName: data.last_name ?? undefined,
+        },
+      });
+      this.log.log(
+        `Linked clerk user ${clerkUserId} to invited row in company ${invited.companyId}`,
+      );
+      return;
+    }
+
     const displayName =
       [data.first_name, data.last_name].filter(Boolean).join(' ').trim() || email.split('@')[0];
 

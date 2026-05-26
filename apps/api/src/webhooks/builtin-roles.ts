@@ -33,7 +33,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
   {
     name: 'Manager',
     description:
-      'Manages branches/departments/teams and the tasks within them. Cannot manage users company-wide.',
+      'Manages branches/departments/teams, invites people, and oversees the tasks within them.',
     permissions: [
       'branch.read',
       'department.create',
@@ -44,7 +44,9 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
       'team.update',
       'team.archive',
       'team.read',
+      'user.create',
       'user.read',
+      'user.update',
       'task.create',
       'task.update',
       'task.assign',
