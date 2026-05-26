@@ -1,8 +1,30 @@
-import { BadRequestException, ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import type { ClerkClient } from '@clerk/backend';
 import { Prisma } from '@prisma/client';
 import { CLERK_CLIENT } from '../auth/clerk-client.provider';
 import type { CreateUserDto } from './dto/create-user.dto';
+
+// Org roles whose invites skip the approval chain entirely. Founders &
+// company-wide admins are trusted to invite directly.
+const ROLES_THAT_BYPASS_APPROVAL = new Set(['ceo', 'admin']);
+
+export type InviteResult =
+  | { kind: 'invited'; userId: string; email: string; status: 'invited' }
+  | {
+      kind: 'pending_approval';
+      userId: string;
+      email: string;
+      approvalId: string;
+      nextApproverRole: string;
+    };
 
 @Injectable()
 export class UsersService {
@@ -11,26 +33,21 @@ export class UsersService {
   constructor(@Inject(CLERK_CLIENT) private readonly clerk: ClerkClient) {}
 
   /**
-   * Invite a user into the current tenant.
+   * Invite a user into the current tenant. Branches on inviter's org role:
+   *  - CEO/Admin → call Clerk immediately, user lands at status='invited',
+   *    no approval row.
+   *  - Anyone else → create an approval row in 'pending' state; do NOT call
+   *    Clerk yet. The final approveStep() call fires the Clerk invitation.
    *
-   * Flow (the "Option B" from the Sprint 5 plan, with a small twist):
-   *   1. Pre-create our `users` row inside the tenant with status='invited'
-   *      and clerk_user_id=null. Catch a P2002 here as 409 (email already in
-   *      tenant).
-   *   2. Ask Clerk to create the identity. They send the password-setup email.
-   *   3. When the invitee completes signup, the Clerk webhook (3.4) fires.
-   *      That handler is updated to look for a pre-created `users` row by
-   *      email — if it exists, link clerk_user_id to it instead of
-   *      provisioning a brand-new tenant.
-   *
-   * If Clerk creation fails, we roll back the local users row so the email
-   * isn't permanently squatted in our DB.
+   * Either way, on P2002 (email collision in this tenant) we 409.
    */
   async inviteToTenant(
     db: Prisma.TransactionClient,
     companyId: string,
+    inviterUserId: string,
+    inviterOrgRole: string,
     dto: CreateUserDto,
-  ): Promise<{ id: string; email: string; status: string }> {
+  ): Promise<InviteResult> {
     const displayName =
       [dto.firstName, dto.lastName].filter(Boolean).join(' ').trim() || dto.email.split('@')[0];
 
@@ -56,34 +73,186 @@ export class UsersService {
       throw err;
     }
 
-    // Use Clerk's Invitations API rather than Users.createUser. Invitations
-    // actually send the email and route the invitee through Clerk's hosted
-    // "complete your sign-up" + set-password flow. createUser would silently
-    // mint the identity with no email at all (Sprint 7 task 7.2 fix).
-    //
-    // The webhook (3.4) handles the rest: when the invitee completes signup,
-    // Clerk fires user.created → we look up the pre-created row by email and
-    // link clerk_user_id + flip status to 'active'.
+    // Fast path: CEO/Admin invites bypass approvals.
+    if (ROLES_THAT_BYPASS_APPROVAL.has(inviterOrgRole)) {
+      await this.sendClerkInvite(db, user.id, user.email);
+      return { kind: 'invited', userId: user.id, email: user.email, status: 'invited' };
+    }
+
+    // Approval path: read the company's chain, drop any steps that match the
+    // inviter's own role (they can't approve themselves), record the row.
+    const settings = await db.companySetting.findUnique({
+      where: { companyId },
+      select: { onboardingApprovalChain: true },
+    });
+    const rawChain = Array.isArray(settings?.onboardingApprovalChain)
+      ? settings!.onboardingApprovalChain
+      : [];
+    const chain = (rawChain as unknown[])
+      .filter((s): s is string => typeof s === 'string')
+      .filter((step) => step.toLowerCase() !== inviterOrgRole.toLowerCase());
+
+    if (chain.length === 0) {
+      // Inviter's role exhausts the chain (e.g. a Manager invites and the
+      // chain is just ['manager']). Treat as auto-approved.
+      await this.sendClerkInvite(db, user.id, user.email);
+      return { kind: 'invited', userId: user.id, email: user.email, status: 'invited' };
+    }
+
+    const approval = await db.userInvitationApproval.create({
+      data: {
+        companyId,
+        invitedUserId: user.id,
+        invitedByUserId: inviterUserId,
+        chain,
+        currentStepIndex: 0,
+        status: 'pending',
+      },
+    });
+
+    return {
+      kind: 'pending_approval',
+      userId: user.id,
+      email: user.email,
+      approvalId: approval.id,
+      nextApproverRole: chain[0],
+    };
+  }
+
+  /**
+   * Advance the approval chain one step. Caller must already be verified as
+   * holding the role at `approval.chain[approval.currentStepIndex]`.
+   *  - If more steps remain → bump currentStepIndex.
+   *  - If this was the last step → mark approved, fire Clerk invitation.
+   *
+   * Returns the next approver role (or null if approval is complete).
+   */
+  async advanceApproval(
+    db: Prisma.TransactionClient,
+    approverUserId: string,
+    approvalId: string,
+  ): Promise<{ status: 'pending' | 'approved'; nextApproverRole: string | null }> {
+    const approval = await db.userInvitationApproval.findFirst({
+      where: { id: approvalId, status: 'pending' },
+    });
+    if (!approval) throw new NotFoundException('Pending approval not found');
+
+    const chain = (approval.chain as string[]) ?? [];
+    const isLastStep = approval.currentStepIndex >= chain.length - 1;
+
+    if (isLastStep) {
+      await db.userInvitationApproval.update({
+        where: { id: approval.id },
+        data: { status: 'approved', decidedAt: new Date(), decidedByUserId: approverUserId },
+      });
+      const invitee = await db.user.findUnique({
+        where: { id: approval.invitedUserId },
+        select: { email: true },
+      });
+      if (!invitee) throw new NotFoundException('Invitee row missing');
+      await this.sendClerkInvite(db, approval.invitedUserId, invitee.email);
+      return { status: 'approved', nextApproverRole: null };
+    }
+
+    const next = await db.userInvitationApproval.update({
+      where: { id: approval.id },
+      data: { currentStepIndex: approval.currentStepIndex + 1 },
+    });
+    return { status: 'pending', nextApproverRole: chain[next.currentStepIndex] };
+  }
+
+  /**
+   * Reject an approval. Marks the row + leaves the local user row alone
+   * (status='invited' with no clerk_user_id) — caller can hard-delete later.
+   */
+  async rejectApproval(
+    db: Prisma.TransactionClient,
+    approverUserId: string,
+    approvalId: string,
+    reason: string | undefined,
+  ): Promise<void> {
+    const result = await db.userInvitationApproval.updateMany({
+      where: { id: approvalId, status: 'pending' },
+      data: {
+        status: 'rejected',
+        decidedAt: new Date(),
+        decidedByUserId: approverUserId,
+        rejectionReason: reason ?? null,
+      },
+    });
+    if (result.count === 0) throw new NotFoundException('Pending approval not found');
+  }
+
+  /**
+   * Verify the caller is allowed to act on this approval — i.e. their org_role
+   * matches the chain step. Throws 403 otherwise. Returns the approval.
+   */
+  async assertCanApprove(
+    db: Prisma.TransactionClient,
+    approverUserId: string,
+    approverOrgRole: string,
+    approvalId: string,
+  ): Promise<{
+    id: string;
+    invitedUserId: string;
+    chain: string[];
+    currentStepIndex: number;
+  }> {
+    const approval = await db.userInvitationApproval.findFirst({
+      where: { id: approvalId, status: 'pending' },
+    });
+    if (!approval) throw new NotFoundException('Pending approval not found');
+    const chain = (approval.chain as string[]) ?? [];
+    const expectedRole = chain[approval.currentStepIndex];
+    if (!expectedRole) throw new BadRequestException('Approval chain is empty');
+    // CEO and Admin bypass the role-match check — they're the universal
+    // escape hatch. (They wouldn't normally hit this code path because their
+    // own invites skip the chain entirely, but they CAN approve other people's
+    // pending approvals when needed.)
+    const isWildcardRole = ROLES_THAT_BYPASS_APPROVAL.has(approverOrgRole.toLowerCase());
+    if (!isWildcardRole && expectedRole.toLowerCase() !== approverOrgRole.toLowerCase()) {
+      throw new ForbiddenException(
+        `This step needs an approver with role '${expectedRole}', you are '${approverOrgRole}'`,
+      );
+    }
+    // Belt-and-suspenders: don't let the inviter or invitee approve themselves.
+    if (approverUserId === approval.invitedByUserId) {
+      throw new ForbiddenException('You cannot approve an invite you originated');
+    }
+    if (approverUserId === approval.invitedUserId) {
+      throw new ForbiddenException('You cannot approve your own invitation');
+    }
+    return {
+      id: approval.id,
+      invitedUserId: approval.invitedUserId,
+      chain,
+      currentStepIndex: approval.currentStepIndex,
+    };
+  }
+
+  /**
+   * Extracted Clerk-invite call. Used immediately on CEO/Admin invites, and
+   * deferred until final approval lands for everyone else. publicMetadata
+   * carries the local user id so the Clerk dashboard is easier to triage.
+   */
+  private async sendClerkInvite(
+    db: Prisma.TransactionClient,
+    userId: string,
+    email: string,
+  ): Promise<void> {
     try {
       await this.clerk.invitations.createInvitation({
-        emailAddress: dto.email,
-        publicMetadata: {
-          // Carried into the resulting Clerk user; we don't rely on it (our
-          // webhook joins by email), but it makes Clerk's dashboard easier
-          // to read when triaging issues.
-          qtmInvitedUserId: user.id,
-        },
+        emailAddress: email,
+        publicMetadata: { qtmInvitedUserId: userId },
       });
     } catch (err) {
-      this.log.warn(`Clerk createInvitation failed for ${dto.email}; rolling back local row`);
-      await db.user.delete({ where: { id: user.id } }).catch(() => undefined);
+      this.log.warn(`Clerk createInvitation failed for ${email}; rolling back local row`);
+      await db.user.delete({ where: { id: userId } }).catch(() => undefined);
       const message =
         err && typeof err === 'object' && 'errors' in err
           ? JSON.stringify((err as { errors: unknown }).errors)
           : (err as Error)?.message;
       throw new BadRequestException(`Could not send invitation: ${message}`);
     }
-
-    return { id: user.id, email: user.email, status: user.status };
   }
 }

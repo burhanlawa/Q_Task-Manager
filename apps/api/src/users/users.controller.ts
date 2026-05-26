@@ -124,7 +124,8 @@ export class UsersController {
     @CurrentTenant() tenant: TenantContext,
     @Body() dto: CreateUserDto,
   ) {
-    return this.users.inviteToTenant(db, tenant.companyId, dto);
+    const inviterOrgRole = await this.getActorOrgRole(tenant.userId);
+    return this.users.inviteToTenant(db, tenant.companyId, tenant.userId, inviterOrgRole, dto);
   }
 
   @Get(':id')
@@ -200,6 +201,15 @@ export class UsersController {
       select: { departmentId: true },
     });
     return u?.departmentId ?? null;
+  }
+
+  private async getActorOrgRole(userId: string): Promise<string> {
+    const u = await this.admin.user.findUnique({
+      where: { id: userId },
+      select: { orgRole: true },
+    });
+    if (!u) throw new NotFoundException('Actor not found');
+    return u.orgRole;
   }
 
   @Patch(':id')

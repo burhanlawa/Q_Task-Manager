@@ -35,6 +35,25 @@ model Company {
   @@map("companies")
 }
 
+model UserInvitationApproval {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId         String    @db.Uuid @map("company_id")
+  invitedUserId     String    @db.Uuid @map("invited_user_id")
+  invitedByUserId   String    @db.Uuid @map("invited_by_user_id")
+  chain             Json
+  currentStepIndex  Int       @default(0) @map("current_step_index")
+  status            String    @default("pending")
+  decidedAt         DateTime? @db.Timestamptz(6) @map("decided_at")
+  decidedByUserId   String?   @db.Uuid @map("decided_by_user_id")
+  rejectionReason   String?   @map("rejection_reason")
+  createdAt         DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt         DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+
+  @@unique([invitedUserId], map: "idx_user_invitation_approvals_invited_user_id")
+  @@index([companyId, status], map: "idx_user_invitation_approvals_company_status")
+  @@map("user_invitation_approvals")
+}
+
 model CompanySetting {
   id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   companyId                String    @unique @db.Uuid @map("company_id")
