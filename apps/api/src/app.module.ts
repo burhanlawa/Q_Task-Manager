@@ -10,6 +10,7 @@ import { MeModule } from './me/me.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TenantModule } from './tenant/tenant.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { BranchesModule } from './branches/branches.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     AuthModule,
     MeModule,
     WebhooksModule,
+    BranchesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

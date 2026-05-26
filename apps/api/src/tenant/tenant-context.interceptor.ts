@@ -9,6 +9,7 @@ import type { Request } from 'express';
 import { Observable, from, switchMap } from 'rxjs';
 import type { Prisma } from '@prisma/client';
 import type { RequestAuth } from '../auth/clerk-auth.guard';
+import { PrismaAdminService } from '../prisma/prisma-admin.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type TenantTx = Prisma.TransactionClient;
@@ -21,7 +22,10 @@ export type TenantRequest = Request & {
 
 @Injectable()
 export class TenantContextInterceptor implements NestInterceptor {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly admin: PrismaAdminService,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const req = context.switchToHttp().getRequest<TenantRequest>();
@@ -30,8 +34,12 @@ export class TenantContextInterceptor implements NestInterceptor {
     }
     const clerkUserId = req.auth.userId;
 
+    // Use the admin (owner-role) client for this single lookup. We have no
+    // current_company_id yet — that's literally what we're about to discover —
+    // so RLS on `users` would reject this query. Every downstream query in
+    // this request runs through the RLS-subject `prisma` client below.
     return from(
-      this.prisma.user.findUnique({
+      this.admin.user.findUnique({
         where: { clerkUserId },
         select: { id: true, companyId: true },
       }),

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaAdminService } from '../prisma/prisma-admin.service';
 
 type ClerkEmail = { id: string; email_address: string };
 type ClerkUserCreated = {
@@ -32,7 +32,9 @@ function slugFromEmail(email: string, clerkUserId: string): string {
 export class ClerkWebhookService {
   private readonly log = new Logger(ClerkWebhookService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  // Webhook handlers run before any tenant context exists — they create the
+  // tenant. Use the owner-role admin client so we can write across tenants.
+  constructor(private readonly prisma: PrismaAdminService) {}
 
   async onUserCreated(raw: Record<string, unknown>): Promise<void> {
     const data = raw as ClerkUserCreated;

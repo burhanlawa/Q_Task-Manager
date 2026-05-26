@@ -159,5 +159,39 @@ describe('tenant isolation (Sprint 3 non-negotiable)', () => {
       });
       expect(branches).toHaveLength(0);
     });
+
+    it('CRUD as A only ever touches A.branches (Sprint 4 task 4.1)', async () => {
+      // create a new branch under A
+      const created = await asTenant(A.companyId, (tx) =>
+        tx.branch.create({ data: { companyId: A.companyId, name: 'A-extra' } }),
+      );
+      expect(created.companyId).toBe(A.companyId);
+
+      // list under A — A's seeded + created; B's seeded must not appear
+      const list = await asTenant(A.companyId, (tx) =>
+        tx.branch.findMany({ where: { deletedAt: null } }),
+      );
+      const ids = list.map((b) => b.id);
+      expect(ids).toEqual(expect.arrayContaining([A.branchId, created.id]));
+      expect(ids).not.toContain(B.branchId);
+
+      // archive the extra one
+      const archived = await asTenant(A.companyId, (tx) =>
+        tx.branch.updateMany({
+          where: { id: created.id, deletedAt: null },
+          data: { deletedAt: new Date() },
+        }),
+      );
+      expect(archived.count).toBe(1);
+
+      // list excluding archived → only A.branchId
+      const after = await asTenant(A.companyId, (tx) =>
+        tx.branch.findMany({ where: { deletedAt: null } }),
+      );
+      expect(after.map((b) => b.id)).not.toContain(created.id);
+
+      // cleanup
+      await ownerDb.branch.delete({ where: { id: created.id } });
+    });
   });
 });
