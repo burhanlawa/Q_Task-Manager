@@ -46,4 +46,29 @@ export class UpdateMeDto {
   @ValidateIf((_, v) => v !== null)
   @IsDateString()
   dateOfBirth?: string | null;
+
+  // Sprint 7 task 7.5: self-onboarding fields. Same null-clears semantics.
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @Length(1, 500)
+  address?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @Length(1, 120)
+  emergencyContactName?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @Length(5, 32)
+  emergencyContactPhone?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @Length(1, 60)
+  emergencyContactRelationship?: string | null;
 }

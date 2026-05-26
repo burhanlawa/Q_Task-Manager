@@ -2,8 +2,10 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   NotFoundException,
   Patch,
+  Post,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -33,6 +35,11 @@ const ME_SELECT = {
   branchId: true,
   departmentId: true,
   dateOfBirth: true, // sensitive in general, but reading your own DOB is fine + not audited
+  address: true,
+  emergencyContactName: true,
+  emergencyContactPhone: true,
+  emergencyContactRelationship: true,
+  onboardingCompletedAt: true,
   lastLoginAt: true,
   company: { select: { id: true, name: true, slug: true, status: true, country: true } },
 } satisfies Prisma.UserSelect;
@@ -80,7 +87,17 @@ export class MeController {
     // unknown fields like `orgRole` are rejected with 400 — the user can't
     // sneak organizational fields into the request.
     const data: Prisma.UserUncheckedUpdateManyInput = {};
-    for (const k of ['firstName', 'lastName', 'displayName', 'phone', 'timezone'] as const) {
+    for (const k of [
+      'firstName',
+      'lastName',
+      'displayName',
+      'phone',
+      'timezone',
+      'address',
+      'emergencyContactName',
+      'emergencyContactPhone',
+      'emergencyContactRelationship',
+    ] as const) {
       if (dto[k] !== undefined) data[k] = dto[k];
     }
     if (dto.locale !== undefined) data.locale = dto.locale;
@@ -94,6 +111,34 @@ export class MeController {
     });
     if (result.count === 0) throw new NotFoundException('User not found');
     return db.user.findUnique({ where: { id: tenant.userId }, select: ME_SELECT });
+  }
+
+  /**
+   * Mark onboarding as completed (Sprint 7 task 7.5). Called either when the
+   * user submits the full /onboarding/welcome form OR when they click "skip
+   * for now." Idempotent — re-completing is a no-op since the timestamp
+   * stays at the original time.
+   */
+  @Post('complete-onboarding')
+  @HttpCode(200)
+  async completeOnboarding(
+    @CurrentTenant() tenant: TenantContext,
+    @TenantDb() db: Prisma.TransactionClient,
+  ): Promise<{ onboardingCompletedAt: string }> {
+    const existing = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { onboardingCompletedAt: true },
+    });
+    if (!existing) throw new NotFoundException('User not found');
+    if (existing.onboardingCompletedAt) {
+      return { onboardingCompletedAt: existing.onboardingCompletedAt.toISOString() };
+    }
+    const now = new Date();
+    await db.user.update({
+      where: { id: tenant.userId },
+      data: { onboardingCompletedAt: now },
+    });
+    return { onboardingCompletedAt: now.toISOString() };
   }
 
   @Get('tenant')

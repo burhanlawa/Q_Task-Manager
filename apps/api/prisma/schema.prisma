@@ -164,6 +164,16 @@ model User {
   nationalId  Bytes?    @map("national_id")
   dateOfBirth DateTime? @db.Date @map("date_of_birth")
 
+  // Sprint 7 task 7.5: onboarding self-completion fields.
+  // address is freeform text for v1; if HR work later wants structured
+  // addresses (street/city/region/postal_code) we migrate then. Emergency
+  // contact is 1:1 — blueprint doesn't ask for multiple.
+  address                      String? @db.Text
+  emergencyContactName         String? @map("emergency_contact_name")
+  emergencyContactPhone        String? @map("emergency_contact_phone")
+  emergencyContactRelationship String? @map("emergency_contact_relationship")
+  onboardingCompletedAt        DateTime? @db.Timestamptz(6) @map("onboarding_completed_at")
+
   lastLoginAt DateTime? @db.Timestamptz(6) @map("last_login_at")
   createdAt   DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt   DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")

@@ -125,6 +125,43 @@
         "rejected": "Invitation rejected.",
         "error": "Something went wrong."
       }
+    },
+    "welcome": {
+      "title": "Welcome — let's finish your profile",
+      "description": "A few details so your team can reach you. Everything here is optional; you can skip and come back to it from your profile page later.",
+      "stepLabel": "Step {step} of {total}",
+      "step1": {
+        "title": "Your date of birth",
+        "description": "Used for birthday reminders and HR records. Visible only to you and HR."
+      },
+      "step2": {
+        "title": "Emergency contact",
+        "description": "Who should we contact in an emergency? Optional but recommended."
+      },
+      "step3": {
+        "title": "Where do you live?",
+        "description": "A short address is enough — city + neighbourhood works. Optional."
+      },
+      "fields": {
+        "dateOfBirth": "Date of birth",
+        "emergencyContactName": "Contact name",
+        "emergencyContactPhone": "Contact phone",
+        "emergencyContactRelationship": "Relationship",
+        "relationshipPlaceholder": "Parent, sibling, friend…",
+        "address": "Address",
+        "addressPlaceholder": "Neighbourhood, city"
+      },
+      "actions": {
+        "back": "Back",
+        "next": "Next",
+        "finish": "Finish",
+        "skip": "Skip for now"
+      },
+      "toast": {
+        "completed": "Welcome aboard.",
+        "skipped": "No problem — you can add this from your profile later.",
+        "error": "Could not save your details."
+      }
     }
   },
   "people": {
