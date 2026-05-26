@@ -45,10 +45,33 @@ export class InvitationsController {
   @Get()
   @RequirePermissions('user.create')
   async list(@TenantDb() db: Prisma.TransactionClient) {
-    return db.userInvitationApproval.findMany({
+    const rows = await db.userInvitationApproval.findMany({
       where: { status: 'pending' },
       orderBy: [{ createdAt: 'asc' }],
     });
+    if (rows.length === 0) return [];
+
+    // Hydrate inviter + invitee + department so the UI can show meaningful
+    // names without N+1 fetches per row.
+    const userIds = [...new Set(rows.flatMap((r) => [r.invitedByUserId, r.invitedUserId]))];
+    const users = await db.user.findMany({
+      where: { id: { in: userIds } },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        displayName: true,
+        orgRole: true,
+        departmentId: true,
+      },
+    });
+    const byId = new Map(users.map((u) => [u.id, u]));
+    return rows.map((r) => ({
+      ...r,
+      invitedBy: byId.get(r.invitedByUserId) ?? null,
+      invitedUser: byId.get(r.invitedUserId) ?? null,
+    }));
   }
 
   @Post(':id/approve')

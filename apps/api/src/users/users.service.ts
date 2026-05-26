@@ -171,8 +171,13 @@ export class UsersService {
     approvalId: string,
     reason: string | undefined,
   ): Promise<void> {
-    const result = await db.userInvitationApproval.updateMany({
+    const approval = await db.userInvitationApproval.findFirst({
       where: { id: approvalId, status: 'pending' },
+      select: { invitedUserId: true },
+    });
+    if (!approval) throw new NotFoundException('Pending approval not found');
+    await db.userInvitationApproval.update({
+      where: { id: approvalId },
       data: {
         status: 'rejected',
         decidedAt: new Date(),
@@ -180,7 +185,9 @@ export class UsersService {
         rejectionReason: reason ?? null,
       },
     });
-    if (result.count === 0) throw new NotFoundException('Pending approval not found');
+    // Hard-delete the pre-created local user row so the email slot frees up
+    // for re-invitation. The approval row remains as the audit trail.
+    await db.user.delete({ where: { id: approval.invitedUserId } }).catch(() => undefined);
   }
 
   /**

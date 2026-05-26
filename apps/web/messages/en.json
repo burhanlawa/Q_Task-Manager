@@ -97,6 +97,36 @@
       }
     }
   },
+  "onboarding": {
+    "approvals": {
+      "title": "Pending approvals",
+      "description": "Invitations waiting for your approval. Each invite walks through an approval chain set in company settings.",
+      "loading": "Loading…",
+      "loadError": "Could not load pending approvals.",
+      "empty": "No pending approvals.",
+      "invitedBy": "Invited by",
+      "chainLabel": "Chain",
+      "nextApprover": "Next approver: {role}",
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "cancel": "Cancel",
+        "confirmReject": "Reject invitation"
+      },
+      "rejectDialog": {
+        "title": "Reject invitation",
+        "description": "{name} will not be invited. The invitation is archived; a new invite for the same email can be sent later.",
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "Why are you rejecting?"
+      },
+      "toast": {
+        "approvedFinal": "Approved. Invitation email is on its way.",
+        "approvedAdvanced": "Approved. Next approver: {next}.",
+        "rejected": "Invitation rejected.",
+        "error": "Something went wrong."
+      }
+    }
+  },
   "people": {
     "title": "People",
     "description": "Browse your company's users. Managers see their department; HR and admins see the whole company.",
