@@ -2,6 +2,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
   HttpCode,
   NotFoundException,
@@ -19,6 +20,7 @@ import { PermissionsGuard } from '../auth/permissions.guard';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
+import { AddUserTeamDto } from './dto/add-user-team.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersQuery, UserListStatus } from './dto/list-users.query';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -182,5 +184,76 @@ export class UsersController {
     });
     if (result.count === 0) throw new NotFoundException('Archived user not found');
     return { archived: false };
+  }
+
+  // ---- team memberships (Sprint 5 task 5.2) ----
+
+  @Get(':id/teams')
+  @RequirePermissions('user.read')
+  async listTeams(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    // RLS scopes the user via UserTeam.user → users.company_id, so we don't
+    // need an explicit tenant guard.
+    return db.userTeam.findMany({
+      where: { userId: id },
+      include: { team: { select: { id: true, name: true, departmentId: true, deletedAt: true } } },
+      orderBy: [{ joinedAt: 'asc' }],
+    });
+  }
+
+  @Post(':id/teams')
+  @RequirePermissions('user.update')
+  async addTeam(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) userId: string,
+    @Body() dto: AddUserTeamDto,
+  ) {
+    // Verify user and team belong to the current tenant (RLS-filtered lookups).
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true, deletedAt: true },
+    });
+    if (!user || user.deletedAt) throw new NotFoundException('User not found');
+
+    const team = await db.team.findUnique({
+      where: { id: dto.teamId },
+      select: { id: true, deletedAt: true },
+    });
+    if (!team || team.deletedAt) throw new NotFoundException('Team not found');
+
+    const wantPrimary = dto.isPrimary === true;
+
+    // The tenant interceptor already wrapped this request in a Prisma
+    // transaction, so these two statements are atomic. The DB has a partial
+    // unique index on (user_id) WHERE is_primary=true — unset any existing
+    // primary first, then upsert this membership.
+    if (wantPrimary) {
+      await db.userTeam.updateMany({
+        where: { userId, isPrimary: true, NOT: { teamId: dto.teamId } },
+        data: { isPrimary: false },
+      });
+    }
+    return db.userTeam.upsert({
+      where: { userId_teamId: { userId, teamId: dto.teamId } },
+      create: { userId, teamId: dto.teamId, isPrimary: wantPrimary },
+      update: { isPrimary: wantPrimary },
+    });
+  }
+
+  @Delete(':id/teams/:teamId')
+  @HttpCode(200)
+  @RequirePermissions('user.update')
+  async removeTeam(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) userId: string,
+    @Param('teamId', new ParseUUIDPipe()) teamId: string,
+  ) {
+    const result = await db.userTeam.deleteMany({ where: { userId, teamId } });
+    if (result.count === 0) {
+      throw new NotFoundException('Membership not found');
+    }
+    return { removed: true };
   }
 }
