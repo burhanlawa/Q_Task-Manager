@@ -34,20 +34,42 @@ export class PermissionsGuard implements CanActivate {
       where: { clerkUserId: req.auth.userId },
       select: {
         id: true,
+        companyId: true,
         roles: {
           where: { role: { deletedAt: null } },
           select: { role: { select: { permissions: true } } },
         },
+        systemRoles: { select: { systemRole: true } },
       },
     });
 
     if (!user) throw new ForbiddenException('No tenant for this user');
 
     const granted = new Set<string>();
+
+    // 1. Direct role grants via user_roles.
     for (const ur of user.roles) {
       const perms = ur.role.permissions;
       if (Array.isArray(perms)) {
         for (const p of perms) if (typeof p === 'string') granted.add(p);
+      }
+    }
+
+    // 2. System-role grants via user_system_roles. The `systemRole` string is
+    // a free-form pointer; we resolve it to a role by name within the tenant
+    // and union its permissions. This lets an admin grant "HR" power to an
+    // Employee-by-position without touching the user_roles table directly.
+    if (user.systemRoles.length > 0) {
+      const names = user.systemRoles.map((s) => s.systemRole);
+      const systemRoles = await this.admin.role.findMany({
+        where: { companyId: user.companyId, name: { in: names }, deletedAt: null },
+        select: { permissions: true },
+      });
+      for (const r of systemRoles) {
+        const perms = r.permissions;
+        if (Array.isArray(perms)) {
+          for (const p of perms) if (typeof p === 'string') granted.add(p);
+        }
       }
     }
     if (granted.has('*')) return true;

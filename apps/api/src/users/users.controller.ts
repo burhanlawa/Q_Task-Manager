@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -21,6 +22,7 @@ import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { AddUserTeamDto } from './dto/add-user-team.dto';
+import { AssignSystemRoleDto } from './dto/assign-system-role.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersQuery, UserListStatus } from './dto/list-users.query';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -255,5 +257,69 @@ export class UsersController {
       throw new NotFoundException('Membership not found');
     }
     return { removed: true };
+  }
+
+  // ---- system role grants (Sprint 5 task 5.3) ----
+
+  @Get(':id/system-roles')
+  @RequirePermissions('user.read')
+  async listSystemRoles(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) userId: string,
+  ) {
+    return db.userSystemRole.findMany({
+      where: { userId },
+      select: { systemRole: true, grantedAt: true, grantedBy: true },
+      orderBy: [{ grantedAt: 'asc' }],
+    });
+  }
+
+  @Post(':id/system-roles')
+  @RequirePermissions('user.assign_system_role')
+  async assignSystemRole(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', new ParseUUIDPipe()) userId: string,
+    @Body() dto: AssignSystemRoleDto,
+  ) {
+    // Verify the target user is in our tenant (RLS-filtered).
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true, deletedAt: true },
+    });
+    if (!user || user.deletedAt) throw new NotFoundException('User not found');
+
+    // Validate the role name exists as an active role in this tenant. We don't
+    // require it to be builtin — admins can create custom roles later — but it
+    // must exist, otherwise the grant has no effect (PermissionsGuard joins
+    // by name and an unmatched name contributes zero permissions).
+    const role = await db.role.findFirst({
+      where: { name: dto.systemRole, deletedAt: null },
+      select: { name: true },
+    });
+    if (!role) {
+      throw new BadRequestException(`systemRole '${dto.systemRole}' is not a role in this tenant`);
+    }
+
+    return db.userSystemRole.upsert({
+      where: { userId_systemRole: { userId, systemRole: dto.systemRole } },
+      create: { userId, systemRole: dto.systemRole, grantedBy: tenant.userId },
+      update: { grantedBy: tenant.userId },
+    });
+  }
+
+  @Delete(':id/system-roles/:role')
+  @HttpCode(200)
+  @RequirePermissions('user.assign_system_role')
+  async revokeSystemRole(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) userId: string,
+    @Param('role') systemRole: string,
+  ) {
+    const result = await db.userSystemRole.deleteMany({
+      where: { userId, systemRole },
+    });
+    if (result.count === 0) throw new NotFoundException('Grant not found');
+    return { revoked: true };
   }
 }
