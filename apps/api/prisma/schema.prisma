@@ -353,8 +353,9 @@ model Task {
   updatedAt                DateTime      @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt                DateTime?     @db.Timestamptz(6) @map("deleted_at")
 
-  parentTask Task?  @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Restrict)
-  subtasks   Task[] @relation("TaskSubtasks")
+  parentTask Task?           @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Restrict)
+  subtasks   Task[]          @relation("TaskSubtasks")
+  assignees  TaskAssignee[]
 
   @@index([companyId, deletedAt],                map: "idx_tasks_company_deleted")
   @@index([companyId, status],                   map: "idx_tasks_company_status")
@@ -365,6 +366,19 @@ model Task {
   @@index([parentTaskId],                        map: "idx_tasks_parent")
   @@index([companyId, dueDate],                  map: "idx_tasks_company_due_date")
   @@map("tasks")
+}
+
+model TaskAssignee {
+  taskId            String   @db.Uuid @map("task_id")
+  userId            String   @db.Uuid @map("user_id")
+  assignedAt        DateTime @default(now()) @db.Timestamptz(6) @map("assigned_at")
+  assignedByUserId  String?  @db.Uuid @map("assigned_by_user_id")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+  @@index([userId], map: "idx_task_assignees_user")
+  @@map("task_assignees")
 }
 
 enum billing_cycle {
