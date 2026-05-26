@@ -82,6 +82,19 @@
     },
     "toast": {
       "noPermission": "You don't have permission to see this user's sensitive details."
+    },
+    "roles": {
+      "heading": "Roles",
+      "description": "Direct role grants. The user's effective permissions are the union of all granted roles plus any system-role assignments.",
+      "loading": "Loading roles…",
+      "builtin": "built-in",
+      "granted": "Granted",
+      "notGranted": "Not granted",
+      "toast": {
+        "granted": "Role granted.",
+        "revoked": "Role revoked.",
+        "error": "Could not update role."
+      }
     }
   },
   "people": {

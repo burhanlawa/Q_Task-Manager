@@ -26,6 +26,7 @@ import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { AddUserTeamDto } from './dto/add-user-team.dto';
+import { AssignRoleDto } from './dto/assign-role.dto';
 import { AssignSystemRoleDto } from './dto/assign-system-role.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersQuery, UserListStatus } from './dto/list-users.query';
@@ -449,6 +450,68 @@ export class UsersController {
     const result = await db.userSystemRole.deleteMany({
       where: { userId, systemRole },
     });
+    if (result.count === 0) throw new NotFoundException('Grant not found');
+    return { revoked: true };
+  }
+
+  // ---- direct role grants via user_roles (Sprint 6 task 6.4) ----
+
+  @Get(':id/roles')
+  @RequirePermissions('role.manage')
+  async listRoles(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) userId: string,
+  ) {
+    return db.userRole.findMany({
+      where: { userId, role: { deletedAt: null } },
+      select: {
+        roleId: true,
+        grantedAt: true,
+        grantedBy: true,
+        role: { select: { name: true, isBuiltin: true } },
+      },
+      orderBy: [{ grantedAt: 'asc' }],
+    });
+  }
+
+  @Post(':id/roles')
+  @RequirePermissions('role.manage')
+  async assignRole(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', new ParseUUIDPipe()) userId: string,
+    @Body() dto: AssignRoleDto,
+  ) {
+    // Both lookups are RLS-scoped so the target user + role must belong to
+    // the current tenant. RLS misses become 404 — no cross-tenant leak.
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true, deletedAt: true },
+    });
+    if (!user || user.deletedAt) throw new NotFoundException('User not found');
+
+    const role = await db.role.findFirst({
+      where: { id: dto.roleId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!role) throw new NotFoundException('Role not found');
+
+    return db.userRole.upsert({
+      where: { userId_roleId: { userId, roleId: dto.roleId } },
+      create: { userId, roleId: dto.roleId, grantedBy: tenant.userId },
+      update: { grantedBy: tenant.userId },
+    });
+  }
+
+  @Delete(':id/roles/:roleId')
+  @HttpCode(200)
+  @RequirePermissions('role.manage')
+  async revokeRole(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) userId: string,
+    @Param('roleId', new ParseUUIDPipe()) roleId: string,
+  ) {
+    const result = await db.userRole.deleteMany({ where: { userId, roleId } });
     if (result.count === 0) throw new NotFoundException('Grant not found');
     return { revoked: true };
   }
