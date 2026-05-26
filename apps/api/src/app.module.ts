@@ -7,6 +7,7 @@ import { HealthModule } from './health/health.module';
 import { DebugModule } from './debug/debug.module';
 import { AuthModule } from './auth/auth.module';
 import { MeModule } from './me/me.module';
+import { ActivityLogModule } from './activity-log/activity-log.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TenantModule } from './tenant/tenant.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
@@ -27,6 +28,7 @@ import { UsersModule } from './users/users.module';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     PrismaModule,
     TenantModule,
+    ActivityLogModule,
     HealthModule,
     DebugModule,
     AuthModule,

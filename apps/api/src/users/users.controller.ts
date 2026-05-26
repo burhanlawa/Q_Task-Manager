@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   NotFoundException,
@@ -16,8 +17,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
+import { PrismaAdminService } from '../prisma/prisma-admin.service';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
@@ -36,7 +39,11 @@ function isUniqueViolation(err: unknown): boolean {
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class UsersController {
-  constructor(private readonly users: UsersService) {}
+  constructor(
+    private readonly users: UsersService,
+    private readonly activity: ActivityLogService,
+    private readonly admin: PrismaAdminService,
+  ) {}
 
   @Get()
   @RequirePermissions('user.read')
@@ -95,32 +102,97 @@ export class UsersController {
   @RequirePermissions('user.read')
   async get(
     @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
     @Param('id', new ParseUUIDPipe()) id: string,
+    @Query('include') include?: string,
   ) {
-    const user = await db.user.findUnique({
-      where: { id },
+    const wantSensitive = include === 'sensitive';
+
+    // Opt-in to sensitive fields is gated by a separate permission. We check
+    // it here rather than via @RequirePermissions because the same endpoint
+    // is dual-purpose (basic profile vs. profile + PII).
+    if (wantSensitive) {
+      const allowed = await this.hasSensitivePermission(tenant.userId);
+      if (!allowed) {
+        throw new ForbiddenException('Missing permission: user.read.sensitive');
+      }
+    }
+
+    const select: Prisma.UserSelect = {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      displayName: true,
+      phone: true,
+      avatarFileId: true,
+      locale: true,
+      timezone: true,
+      orgRole: true,
+      status: true,
+      employmentStatus: true,
+      branchId: true,
+      departmentId: true,
+      lastLoginAt: true,
+      createdAt: true,
+      updatedAt: true,
+      ...(wantSensitive ? { dateOfBirth: true, nationalId: true } : {}),
+    };
+
+    const user = await db.user.findUnique({ where: { id }, select });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (wantSensitive) {
+      // The DB sees this insert inside the same tx as the read, so either
+      // both land or neither does.
+      const fields: string[] = [];
+      if ('dateOfBirth' in user) fields.push('date_of_birth');
+      if ('nationalId' in user) fields.push('national_id');
+      await this.activity.recordSensitiveRead({
+        db,
+        companyId: tenant.companyId,
+        actorUserId: tenant.userId,
+        targetUserId: id,
+        fields,
+      });
+    }
+
+    return user;
+  }
+
+  /**
+   * Resolve whether the current user has `user.read.sensitive` by replicating
+   * the PermissionsGuard's permission-collection (user_roles + user_system_roles
+   * unioned, wildcard short-circuit). Uses the admin client because it's a
+   * permission check, not a tenant-scoped read.
+   */
+  private async hasSensitivePermission(userId: string): Promise<boolean> {
+    const u = await this.admin.user.findUnique({
+      where: { id: userId },
       select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        displayName: true,
-        phone: true,
-        avatarFileId: true,
-        locale: true,
-        timezone: true,
-        orgRole: true,
-        status: true,
-        employmentStatus: true,
-        branchId: true,
-        departmentId: true,
-        lastLoginAt: true,
-        createdAt: true,
-        updatedAt: true,
+        companyId: true,
+        roles: { select: { role: { select: { permissions: true } } } },
+        systemRoles: { select: { systemRole: true } },
       },
     });
-    if (!user) throw new NotFoundException('User not found');
-    return user;
+    if (!u) return false;
+    const granted = new Set<string>();
+    for (const ur of u.roles) {
+      const perms = ur.role.permissions;
+      if (Array.isArray(perms)) for (const p of perms) if (typeof p === 'string') granted.add(p);
+    }
+    if (u.systemRoles.length > 0) {
+      const names = u.systemRoles.map((s) => s.systemRole);
+      const sysRoles = await this.admin.role.findMany({
+        where: { companyId: u.companyId, name: { in: names }, deletedAt: null },
+        select: { permissions: true },
+      });
+      for (const r of sysRoles) {
+        const perms = r.permissions;
+        if (Array.isArray(perms)) for (const p of perms) if (typeof p === 'string') granted.add(p);
+      }
+    }
+    return granted.has('*') || granted.has('user.read.sensitive');
   }
 
   @Patch(':id')

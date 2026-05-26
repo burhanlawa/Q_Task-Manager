@@ -126,7 +126,8 @@ model User {
   hiredAt          DateTime?         @db.Date @map("hired_at")
   terminatedAt     DateTime?         @db.Date @map("terminated_at")
 
-  nationalId Bytes? @map("national_id")
+  nationalId  Bytes?    @map("national_id")
+  dateOfBirth DateTime? @db.Date @map("date_of_birth")
 
   lastLoginAt DateTime? @db.Timestamptz(6) @map("last_login_at")
   createdAt   DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
@@ -221,6 +222,23 @@ model LoginAttempt {
   @@index([email, attemptedAt(sort: Desc)], map: "idx_login_attempts_email_attempted_at")
   @@index([ipAddress, attemptedAt(sort: Desc)], map: "idx_login_attempts_ip_attempted_at")
   @@map("login_attempts")
+}
+
+model ActivityLog {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String   @db.Uuid @map("company_id")
+  actorUserId   String?  @db.Uuid @map("actor_user_id")
+  actionType    String   @map("action_type")
+  targetType    String?  @map("target_type")
+  targetId      String?  @db.Uuid @map("target_id")
+  fieldChanged  String?  @map("field_changed")
+  metadata      Json?
+  createdAt     DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@index([companyId, createdAt(sort: Desc)],                   map: "idx_activity_log_company_created_at")
+  @@index([targetType, targetId, createdAt(sort: Desc)],        map: "idx_activity_log_target")
+  @@index([actorUserId, createdAt(sort: Desc)],                 map: "idx_activity_log_actor")
+  @@map("activity_log")
 }
 
 enum billing_cycle {

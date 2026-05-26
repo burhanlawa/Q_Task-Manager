@@ -87,6 +87,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
       'user.update',
       'user.archive',
       'user.read',
+      'user.read.sensitive',
       'report.read',
     ],
   },
