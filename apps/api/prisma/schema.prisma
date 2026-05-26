@@ -353,9 +353,10 @@ model Task {
   updatedAt                DateTime      @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt                DateTime?     @db.Timestamptz(6) @map("deleted_at")
 
-  parentTask Task?           @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Restrict)
-  subtasks   Task[]          @relation("TaskSubtasks")
-  assignees  TaskAssignee[]
+  parentTask           Task?                     @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Restrict)
+  subtasks             Task[]                    @relation("TaskSubtasks")
+  assignees            TaskAssignee[]
+  reassignmentRequests TaskReassignmentRequest[]
 
   @@index([companyId, deletedAt],                map: "idx_tasks_company_deleted")
   @@index([companyId, status],                   map: "idx_tasks_company_status")
@@ -379,6 +380,28 @@ model TaskAssignee {
   @@id([taskId, userId])
   @@index([userId], map: "idx_task_assignees_user")
   @@map("task_assignees")
+}
+
+model TaskReassignmentRequest {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId           String    @db.Uuid @map("company_id")
+  taskId              String    @db.Uuid @map("task_id")
+  requestedByUserId   String    @db.Uuid @map("requested_by_user_id")
+  requestedToUserId   String?   @db.Uuid @map("requested_to_user_id")
+  reason              String?
+  status              String    @default("pending")
+  decidedByUserId     String?   @db.Uuid @map("decided_by_user_id")
+  decidedAt           DateTime? @db.Timestamptz(6) @map("decided_at")
+  decisionNote        String?   @map("decision_note")
+  createdAt           DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt           DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status],    map: "idx_task_reassignment_requests_company_status")
+  @@index([taskId],               map: "idx_task_reassignment_requests_task")
+  @@index([requestedByUserId],    map: "idx_task_reassignment_requests_requested_by")
+  @@map("task_reassignment_requests")
 }
 
 enum billing_cycle {
