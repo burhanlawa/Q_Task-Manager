@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaAdminService } from '../prisma/prisma-admin.service';
+import { BUILTIN_ROLES } from './builtin-roles';
 
 type ClerkEmail = { id: string; email_address: string };
 type ClerkUserCreated = {
@@ -91,20 +92,23 @@ export class ClerkWebhookService {
         },
       });
 
-      // Built-in CEO role with wildcard permissions. Sprint 6 will seed the
-      // other five built-in roles with their specific permission lists; for
-      // now '*' lets the founder use every guarded endpoint without us having
-      // to enumerate every permission key today.
-      const ceoRole = await tx.role.create({
-        data: {
+      // Seed all six built-in roles for the new tenant. CEO and Admin get
+      // wildcard; the rest get placeholder permission lists pending §4.13.
+      await tx.role.createMany({
+        data: BUILTIN_ROLES.map((r) => ({
           companyId: company.id,
-          name: 'CEO',
-          description: 'Founder; full access to every action in the tenant.',
+          name: r.name,
+          description: r.description,
           isBuiltin: true,
-          permissions: ['*'],
-        },
+          permissions: r.permissions,
+        })),
       });
 
+      // Founder gets the CEO role.
+      const ceoRole = await tx.role.findFirstOrThrow({
+        where: { companyId: company.id, name: 'CEO', isBuiltin: true },
+        select: { id: true },
+      });
       await tx.userRole.create({ data: { userId: user.id, roleId: ceoRole.id } });
 
       this.log.log(`Provisioned company ${company.id} for clerk user ${clerkUserId}`);
