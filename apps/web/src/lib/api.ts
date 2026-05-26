@@ -64,3 +64,14 @@ export type Department = {
   updatedAt: string;
   deletedAt: string | null;
 };
+
+export type Team = {
+  id: string;
+  companyId: string;
+  departmentId: string;
+  supervisorId: string | null;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};

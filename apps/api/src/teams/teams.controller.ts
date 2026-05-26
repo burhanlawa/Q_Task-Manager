@@ -21,7 +21,7 @@ import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateTeamDto } from './dto/create-team.dto';
-import { ListTeamsQuery } from './dto/list-teams.query';
+import { ListTeamsQuery, TeamListStatus } from './dto/list-teams.query';
 import { UpdateTeamDto } from './dto/update-team.dto';
 
 function isUniqueViolation(err: unknown): boolean {
@@ -50,11 +50,15 @@ async function assertSupervisorInTenant(
 export class TeamsController {
   @Get()
   async list(@TenantDb() db: Prisma.TransactionClient, @Query() q: ListTeamsQuery) {
+    const status = q.status ?? TeamListStatus.Active;
+    const statusWhere =
+      status === TeamListStatus.All
+        ? {}
+        : status === TeamListStatus.Archived
+          ? { NOT: { deletedAt: null } }
+          : { deletedAt: null };
     return db.team.findMany({
-      where: {
-        ...(q.departmentId ? { departmentId: q.departmentId } : {}),
-        ...(q.includeArchived ? {} : { deletedAt: null }),
-      },
+      where: { ...(q.departmentId ? { departmentId: q.departmentId } : {}), ...statusWhere },
       orderBy: [{ createdAt: 'asc' }],
     });
   }

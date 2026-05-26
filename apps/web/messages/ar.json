@@ -22,9 +22,53 @@
     "description": "فعّل المصادقة الثنائية، وأدر الجلسات النشطة، وحدّث كلمة المرور."
   },
   "admin": {
+    "teams": {
+      "title": "الفِرَق",
+      "description": "الفِرَق ضمن هذا القسم. يمكن تعيين المشرفين بعد إطلاق إدارة المستخدمين.",
+      "newTeam": "فريق جديد",
+      "createTitle": "إنشاء فريق",
+      "createDescription": "الفِرَق تجمع الأشخاص داخل القسم.",
+      "loading": "جارٍ التحميل…",
+      "loadError": "تعذّر تحميل الفِرَق.",
+      "empty": "لا توجد فِرَق بعد في هذا القسم.",
+      "assignSupervisorComingSoon": "تعيين مشرف (قريبًا مع إدارة المستخدمين)",
+      "filter": {
+        "active": "النشطة",
+        "archived": "المؤرشفة",
+        "all": "الكل"
+      },
+      "status": {
+        "active": "نشِط",
+        "archived": "مُؤرشف"
+      },
+      "columns": {
+        "name": "الاسم",
+        "supervisor": "المشرف",
+        "status": "الحالة",
+        "actions": "إجراءات"
+      },
+      "fields": {
+        "name": "الاسم"
+      },
+      "actions": {
+        "create": "إنشاء",
+        "creating": "جارٍ الإنشاء…",
+        "cancel": "إلغاء",
+        "archive": "أرشفة",
+        "unarchive": "استرجاع"
+      },
+      "toast": {
+        "created": "تم إنشاء الفريق.",
+        "archived": "تمت أرشفة الفريق.",
+        "unarchived": "تم استرجاع الفريق.",
+        "error": "حدث خطأ ما."
+      }
+    },
     "departments": {
       "title": "الأقسام",
       "description": "أدِر أقسامك كشجرة. أضِف قسمًا فرعيًا بتمرير المؤشر على عقدة والنقر على +.",
+      "backToTree": "العودة إلى الأقسام",
+      "detailDescription": "تفاصيل القسم. الفِرَق تنتمي إلى كل قسم.",
       "branchLabel": "الفرع",
       "branchPlaceholder": "اختر فرعًا",
       "newRoot": "قسم رئيسي جديد",

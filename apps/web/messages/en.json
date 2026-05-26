@@ -22,9 +22,53 @@
     "description": "Enable two-factor authentication, manage active sessions, and update your password."
   },
   "admin": {
+    "teams": {
+      "title": "Teams",
+      "description": "Teams within this department. Supervisors can be assigned once user management lands.",
+      "newTeam": "New team",
+      "createTitle": "Create a team",
+      "createDescription": "Teams group people inside a department.",
+      "loading": "Loading…",
+      "loadError": "Could not load teams.",
+      "empty": "No teams yet in this department.",
+      "assignSupervisorComingSoon": "Assign supervisor (coming with user management)",
+      "filter": {
+        "active": "Active",
+        "archived": "Archived",
+        "all": "All"
+      },
+      "status": {
+        "active": "Active",
+        "archived": "Archived"
+      },
+      "columns": {
+        "name": "Name",
+        "supervisor": "Supervisor",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "fields": {
+        "name": "Name"
+      },
+      "actions": {
+        "create": "Create",
+        "creating": "Creating…",
+        "cancel": "Cancel",
+        "archive": "Archive",
+        "unarchive": "Unarchive"
+      },
+      "toast": {
+        "created": "Team created.",
+        "archived": "Team archived.",
+        "unarchived": "Team restored.",
+        "error": "Something went wrong."
+      }
+    },
     "departments": {
       "title": "Departments",
       "description": "Manage your departments as a tree. Add sub-departments by hovering a node and clicking +.",
+      "backToTree": "Back to departments",
+      "detailDescription": "Department detail. Teams live under each department.",
       "branchLabel": "Branch",
       "branchPlaceholder": "Select a branch",
       "newRoot": "New root department",

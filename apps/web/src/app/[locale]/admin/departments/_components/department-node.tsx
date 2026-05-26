@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@/i18n/routing';
 import { Archive, ChevronDown, ChevronRight, Pencil, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -117,7 +118,12 @@ export function DepartmentNode({
           </form>
         ) : (
           <>
-            <span className="flex-1 truncate text-sm font-medium">{node.name}</span>
+            <Link
+              href={`/admin/departments/${node.id}`}
+              className="flex-1 truncate text-sm font-medium hover:underline"
+            >
+              {node.name}
+            </Link>
             {node.isAutoCreated && (
               <Badge variant="outline" className="text-xs">
                 {t('autoCreated')}
