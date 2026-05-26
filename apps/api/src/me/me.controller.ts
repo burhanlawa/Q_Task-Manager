@@ -10,6 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { PermissionsService } from '../auth/permissions.service';
@@ -48,7 +49,10 @@ const ME_SELECT = {
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class MeController {
-  constructor(private readonly permissions: PermissionsService) {}
+  constructor(
+    private readonly permissions: PermissionsService,
+    private readonly activity: ActivityLogService,
+  ) {}
 
   /**
    * Diagnostic-only: returns whether the caller's effective-permissions set
@@ -137,6 +141,14 @@ export class MeController {
     await db.user.update({
       where: { id: tenant.userId },
       data: { onboardingCompletedAt: now },
+    });
+    // Sprint 7 task 7.6 — log self-completion. Actor is the user themselves.
+    await this.activity.recordOnboardingEvent({
+      db,
+      companyId: tenant.companyId,
+      actorUserId: tenant.userId,
+      invitedUserId: tenant.userId,
+      actionType: 'self_completed',
     });
     return { onboardingCompletedAt: now.toISOString() };
   }

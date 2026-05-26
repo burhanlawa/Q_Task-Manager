@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { PrismaAdminService } from '../prisma/prisma-admin.service';
 import { BUILTIN_ROLES } from './builtin-roles';
 import { BUILTIN_TAG_CATEGORIES } from './builtin-tag-categories';
@@ -36,7 +37,10 @@ export class ClerkWebhookService {
 
   // Webhook handlers run before any tenant context exists — they create the
   // tenant. Use the owner-role admin client so we can write across tenants.
-  constructor(private readonly prisma: PrismaAdminService) {}
+  constructor(
+    private readonly prisma: PrismaAdminService,
+    private readonly activity: ActivityLogService,
+  ) {}
 
   async onUserCreated(raw: Record<string, unknown>): Promise<void> {
     const data = raw as ClerkUserCreated;
@@ -69,6 +73,16 @@ export class ClerkWebhookService {
           firstName: data.first_name ?? undefined,
           lastName: data.last_name ?? undefined,
         },
+      });
+      // Sprint 7 task 7.6 — log activation. actor is null since this is the
+      // Clerk webhook firing, not a user action.
+      await this.activity.recordOnboardingEvent({
+        db: this.prisma as unknown as Prisma.TransactionClient,
+        companyId: invited.companyId,
+        actorUserId: null,
+        invitedUserId: invited.id,
+        actionType: 'activated',
+        metadata: { clerkUserId, email },
       });
       this.log.log(
         `Linked clerk user ${clerkUserId} to invited row in company ${invited.companyId}`,

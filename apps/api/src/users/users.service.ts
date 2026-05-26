@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import type { ClerkClient } from '@clerk/backend';
 import { Prisma } from '@prisma/client';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { CLERK_CLIENT } from '../auth/clerk-client.provider';
 import type { CreateUserDto } from './dto/create-user.dto';
 
@@ -30,7 +31,10 @@ export type InviteResult =
 export class UsersService {
   private readonly log = new Logger(UsersService.name);
 
-  constructor(@Inject(CLERK_CLIENT) private readonly clerk: ClerkClient) {}
+  constructor(
+    @Inject(CLERK_CLIENT) private readonly clerk: ClerkClient,
+    private readonly activity: ActivityLogService,
+  ) {}
 
   /**
    * Invite a user into the current tenant. Branches on inviter's org role:
@@ -73,6 +77,16 @@ export class UsersService {
       throw err;
     }
 
+    // Always log the invite itself (Sprint 7 task 7.6).
+    await this.activity.recordOnboardingEvent({
+      db,
+      companyId,
+      actorUserId: inviterUserId,
+      invitedUserId: user.id,
+      actionType: 'invited',
+      metadata: { email: user.email, inviterOrgRole },
+    });
+
     // Fast path: CEO/Admin invites bypass approvals.
     if (ROLES_THAT_BYPASS_APPROVAL.has(inviterOrgRole)) {
       await this.sendClerkInvite(db, user.id, user.email);
@@ -108,6 +122,16 @@ export class UsersService {
         currentStepIndex: 0,
         status: 'pending',
       },
+    });
+
+    // Sprint 7 task 7.6 — log the approval request.
+    await this.activity.recordOnboardingEvent({
+      db,
+      companyId,
+      actorUserId: inviterUserId,
+      invitedUserId: user.id,
+      actionType: 'approval_requested',
+      metadata: { chain, firstApproverRole: chain[0] },
     });
 
     return {
@@ -157,6 +181,18 @@ export class UsersService {
     const next = await db.userInvitationApproval.update({
       where: { id: approval.id },
       data: { currentStepIndex: approval.currentStepIndex + 1 },
+    });
+    await this.activity.recordOnboardingEvent({
+      db,
+      companyId: approval.companyId,
+      actorUserId: approverUserId,
+      invitedUserId: approval.invitedUserId,
+      actionType: 'approval_advanced',
+      metadata: {
+        approverRole: chain[approval.currentStepIndex],
+        nextApproverRole: chain[next.currentStepIndex],
+        stepIndex: next.currentStepIndex,
+      },
     });
     return { status: 'pending', nextApproverRole: chain[next.currentStepIndex] };
   }

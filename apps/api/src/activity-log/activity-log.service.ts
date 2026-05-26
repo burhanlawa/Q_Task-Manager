@@ -75,4 +75,37 @@ export class ActivityLogService {
       },
     });
   }
+
+  /**
+   * Onboarding-flow events (Sprint 7 task 7.6). All target the invited user
+   * id so a query "show me everything that happened to Adam" is one indexed
+   * scan via idx_activity_log_target.
+   *
+   * actorUserId may be null when the trigger is the Clerk webhook (no
+   * authenticated user in that context — it's an external system event).
+   */
+  async recordOnboardingEvent(p: {
+    db: Prisma.TransactionClient;
+    companyId: string;
+    actorUserId: string | null;
+    invitedUserId: string;
+    actionType:
+      | 'invited'
+      | 'approval_requested'
+      | 'approval_advanced'
+      | 'activated'
+      | 'self_completed';
+    metadata?: Prisma.InputJsonValue;
+  }): Promise<void> {
+    await p.db.activityLog.create({
+      data: {
+        companyId: p.companyId,
+        actorUserId: p.actorUserId,
+        actionType: p.actionType,
+        targetType: 'user',
+        targetId: p.invitedUserId,
+        metadata: p.metadata,
+      },
+    });
+  }
 }
