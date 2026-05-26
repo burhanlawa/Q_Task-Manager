@@ -226,6 +226,41 @@ model LoginAttempt {
   @@map("login_attempts")
 }
 
+model TagCategory {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String    @db.Uuid @map("company_id")
+  name      String
+  position  Int       @default(0)
+  isBuiltin Boolean   @default(false) @map("is_builtin")
+  createdAt DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt DateTime? @db.Timestamptz(6) @map("deleted_at")
+
+  tags Tag[]
+
+  @@unique([companyId, name], map: "idx_tag_categories_company_name")
+  @@index([companyId, position], map: "idx_tag_categories_company_position")
+  @@map("tag_categories")
+}
+
+model Tag {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String    @db.Uuid @map("company_id")
+  categoryId String    @db.Uuid @map("category_id")
+  name       String
+  color      String?
+  position   Int       @default(0)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt  DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt  DateTime? @db.Timestamptz(6) @map("deleted_at")
+
+  category TagCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([categoryId, name], map: "idx_tags_category_name")
+  @@index([companyId, categoryId, position], map: "idx_tags_company_category_position")
+  @@map("tags")
+}
+
 model ActivityLog {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   companyId     String   @db.Uuid @map("company_id")

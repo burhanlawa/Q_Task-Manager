@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaAdminService } from '../prisma/prisma-admin.service';
 import { BUILTIN_ROLES } from './builtin-roles';
+import { BUILTIN_TAG_CATEGORIES } from './builtin-tag-categories';
 
 type ClerkEmail = { id: string; email_address: string };
 type ClerkUserCreated = {
@@ -143,6 +144,17 @@ export class ClerkWebhookService {
       await tx.department.update({
         where: { id: department.id },
         data: { managerId: user.id },
+      });
+
+      // Seed 4 default tag categories (Sprint 6 task 6.2). Just the category
+      // names — tags inside each are user-populated.
+      await tx.tagCategory.createMany({
+        data: BUILTIN_TAG_CATEGORIES.map((c, i) => ({
+          companyId: company.id,
+          name: c.name,
+          position: i,
+          isBuiltin: true,
+        })),
       });
 
       this.log.log(`Provisioned company ${company.id} for clerk user ${clerkUserId}`);
