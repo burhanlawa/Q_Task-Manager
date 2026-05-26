@@ -205,6 +205,20 @@ model UserRole {
   @@map("user_roles")
 }
 
+model LoginAttempt {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email       String
+  ipAddress   String?  @db.Inet @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  success     Boolean
+  reason      String?
+  attemptedAt DateTime @default(now()) @db.Timestamptz(6) @map("attempted_at")
+
+  @@index([email, attemptedAt(sort: Desc)], map: "idx_login_attempts_email_attempted_at")
+  @@index([ipAddress, attemptedAt(sort: Desc)], map: "idx_login_attempts_ip_attempted_at")
+  @@map("login_attempts")
+}
+
 enum billing_cycle {
   monthly
   annual

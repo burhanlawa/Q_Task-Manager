@@ -7,6 +7,7 @@ import {
   Req,
   UnauthorizedException,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { Webhook } from 'svix';
 import { ClerkWebhookService } from './clerk-webhook.service';
@@ -17,6 +18,7 @@ type ClerkEvent = {
 };
 
 @Controller('webhooks/clerk')
+@SkipThrottle()
 export class ClerkWebhookController {
   constructor(private readonly service: ClerkWebhookService) {}
 
