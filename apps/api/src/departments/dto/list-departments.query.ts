@@ -1,5 +1,10 @@
-import { Transform } from 'class-transformer';
-import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+
+export enum DepartmentListStatus {
+  Active = 'active',
+  Archived = 'archived',
+  All = 'all',
+}
 
 export class ListDepartmentsQuery {
   @IsOptional()
@@ -7,7 +12,6 @@ export class ListDepartmentsQuery {
   branchId?: string;
 
   @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === true || value === 'true' || value === '1')
-  includeArchived?: boolean;
+  @IsEnum(DepartmentListStatus)
+  status?: DepartmentListStatus;
 }

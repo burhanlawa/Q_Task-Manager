@@ -25,7 +25,7 @@ import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateDepartmentDto } from './dto/create-department.dto';
-import { ListDepartmentsQuery } from './dto/list-departments.query';
+import { DepartmentListStatus, ListDepartmentsQuery } from './dto/list-departments.query';
 import { UpdateDepartmentDto } from './dto/update-department.dto';
 
 @Controller('departments')
@@ -34,11 +34,15 @@ import { UpdateDepartmentDto } from './dto/update-department.dto';
 export class DepartmentsController {
   @Get()
   async list(@TenantDb() db: Prisma.TransactionClient, @Query() q: ListDepartmentsQuery) {
+    const status = q.status ?? DepartmentListStatus.Active;
+    const statusWhere =
+      status === DepartmentListStatus.All
+        ? {}
+        : status === DepartmentListStatus.Archived
+          ? { NOT: { deletedAt: null } }
+          : { deletedAt: null };
     return db.department.findMany({
-      where: {
-        ...(q.branchId ? { branchId: q.branchId } : {}),
-        ...(q.includeArchived ? {} : { deletedAt: null }),
-      },
+      where: { ...(q.branchId ? { branchId: q.branchId } : {}), ...statusWhere },
       orderBy: [{ createdAt: 'asc' }],
     });
   }

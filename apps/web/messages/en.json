@@ -22,6 +22,34 @@
     "description": "Enable two-factor authentication, manage active sessions, and update your password."
   },
   "admin": {
+    "departments": {
+      "title": "Departments",
+      "description": "Manage your departments as a tree. Add sub-departments by hovering a node and clicking +.",
+      "branchLabel": "Branch",
+      "branchPlaceholder": "Select a branch",
+      "newRoot": "New root department",
+      "newRootPlaceholder": "Department name",
+      "newChildPlaceholder": "Sub-department name",
+      "loading": "Loading…",
+      "empty": "No departments yet for this branch. Create the first one.",
+      "autoCreated": "auto",
+      "actions": {
+        "expand": "Expand",
+        "collapse": "Collapse",
+        "addChild": "Add sub-department",
+        "rename": "Rename",
+        "archive": "Archive",
+        "create": "Create",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "toast": {
+        "created": "Department created.",
+        "saved": "Department saved.",
+        "archived": "Department archived.",
+        "error": "Something went wrong."
+      }
+    },
     "branches": {
       "title": "Branches",
       "description": "Manage your company's branches. Archive hides a branch from default lists.",

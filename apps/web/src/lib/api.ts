@@ -52,3 +52,15 @@ export type Branch = {
   updatedAt: string;
   deletedAt: string | null;
 };
+
+export type Department = {
+  id: string;
+  companyId: string;
+  branchId: string;
+  parentDepartmentId: string | null;
+  name: string;
+  isAutoCreated: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
