@@ -63,4 +63,13 @@ export class UpdateUserDto {
   @ValidateIf((_, v) => v !== null)
   @IsUUID()
   departmentId?: string | null;
+
+  // Sensitive — encrypted at rest via CryptoService before INSERT. Accept a
+  // plaintext digit string; PATCH-with-null clears it. Length bounds match
+  // common national-ID lengths globally (longest in our regions is ~20).
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @Length(4, 30)
+  nationalId?: string | null;
 }

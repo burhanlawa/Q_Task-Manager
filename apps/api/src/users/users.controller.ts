@@ -20,6 +20,7 @@ import { Prisma } from '@prisma/client';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
+import { CryptoService } from '../crypto/crypto.service';
 import { PrismaAdminService } from '../prisma/prisma-admin.service';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
@@ -43,6 +44,7 @@ export class UsersController {
     private readonly users: UsersService,
     private readonly activity: ActivityLogService,
     private readonly admin: PrismaAdminService,
+    private readonly crypto: CryptoService,
   ) {}
 
   @Get()
@@ -143,8 +145,13 @@ export class UsersController {
     if (!user) throw new NotFoundException('User not found');
 
     if (wantSensitive) {
-      // The DB sees this insert inside the same tx as the read, so either
-      // both land or neither does.
+      // Decrypt national_id at the API boundary. The DB stores ciphertext as
+      // bytea; Prisma returns it as Buffer | null.
+      const u = user as typeof user & { nationalId?: Buffer | null };
+      const decrypted: string | null = u.nationalId ? this.crypto.decrypt(u.nationalId) : null;
+      (u as Record<string, unknown>).nationalId = decrypted;
+
+      // Audit log row is atomic with the read (same per-request tx).
       const fields: string[] = [];
       if ('dateOfBirth' in user) fields.push('date_of_birth');
       if ('nationalId' in user) fields.push('national_id');
@@ -202,10 +209,7 @@ export class UsersController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: UpdateUserDto,
   ) {
-    const data: Prisma.UserUpdateManyMutationInput & {
-      branchId?: string | null;
-      departmentId?: string | null;
-    } = {};
+    const data: Prisma.UserUncheckedUpdateManyInput = {};
     for (const k of ['firstName', 'lastName', 'displayName', 'phone', 'timezone'] as const) {
       if (dto[k] !== undefined) data[k] = dto[k];
     }
@@ -214,6 +218,22 @@ export class UsersController {
     if (dto.status !== undefined) data.status = dto.status;
     if (dto.branchId !== undefined) data.branchId = dto.branchId;
     if (dto.departmentId !== undefined) data.departmentId = dto.departmentId;
+    if (dto.nationalId !== undefined) {
+      // Encrypt at the API boundary so plaintext never leaves the process.
+      // Prisma's bytes input wants Uint8Array<ArrayBuffer>; copy to be safe
+      // across Node 22's Buffer<ArrayBufferLike> typing.
+      if (dto.nationalId === null) {
+        data.nationalId = null;
+      } else {
+        const blob = this.crypto.encrypt(dto.nationalId);
+        // Copy into a fresh ArrayBuffer-backed Uint8Array so the inferred
+        // backing type is ArrayBuffer (not ArrayBufferLike), which is what
+        // Prisma's bytes field expects under Node 22's stricter Buffer types.
+        const out = new Uint8Array(blob.byteLength);
+        out.set(blob);
+        data.nationalId = out;
+      }
+    }
 
     try {
       const result = await db.user.updateMany({
