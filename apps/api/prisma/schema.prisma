@@ -57,23 +57,27 @@ model Branch {
 }
 
 model Department {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  companyId     String    @db.Uuid                                       @map("company_id")
-  branchId      String    @db.Uuid                                       @map("branch_id")
-  name          String
-  isAutoCreated Boolean   @default(false)                                @map("is_auto_created")
-  createdAt     DateTime  @default(now()) @db.Timestamptz(6)             @map("created_at")
-  updatedAt     DateTime  @default(now()) @db.Timestamptz(6)             @map("updated_at")
-  deletedAt     DateTime? @db.Timestamptz(6)                             @map("deleted_at")
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId           String    @db.Uuid                                       @map("company_id")
+  branchId            String    @db.Uuid                                       @map("branch_id")
+  parentDepartmentId  String?   @db.Uuid                                       @map("parent_department_id")
+  name                String
+  isAutoCreated       Boolean   @default(false)                                @map("is_auto_created")
+  createdAt           DateTime  @default(now()) @db.Timestamptz(6)             @map("created_at")
+  updatedAt           DateTime  @default(now()) @db.Timestamptz(6)             @map("updated_at")
+  deletedAt           DateTime? @db.Timestamptz(6)                             @map("deleted_at")
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  branch  Branch  @relation(fields: [branchId],  references: [id], onDelete: Restrict)
-  teams   Team[]
-  users   User[]
+  company  Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  branch   Branch       @relation(fields: [branchId],  references: [id], onDelete: Restrict)
+  parent   Department?  @relation("DepartmentTree", fields: [parentDepartmentId], references: [id], onDelete: Restrict)
+  children Department[] @relation("DepartmentTree")
+  teams    Team[]
+  users    User[]
 
-  @@index([companyId],       map: "idx_departments_company_id")
-  @@index([branchId],        map: "idx_departments_branch_id")
-  @@unique([branchId, name], map: "idx_departments_branch_name")
+  @@index([companyId],                                map: "idx_departments_company_id")
+  @@index([branchId],                                 map: "idx_departments_branch_id")
+  @@index([parentDepartmentId],                       map: "idx_departments_parent_id")
+  @@unique([branchId, parentDepartmentId, name],      map: "idx_departments_branch_parent_name")
   @@map("departments")
 }
 
