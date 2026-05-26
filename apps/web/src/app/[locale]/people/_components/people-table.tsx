@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { Link } from '@/i18n/routing';
 import { Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
@@ -177,7 +178,11 @@ export function PeopleTable() {
             {filtered.map((u) => (
               <TableRow key={u.id}>
                 <TableCell className="font-medium">
-                  {u.displayName ?? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() ?? u.email}
+                  <Link href={`/people/${u.id}`} className="hover:underline">
+                    {u.displayName ??
+                      `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() ??
+                      u.email}
+                  </Link>
                 </TableCell>
                 <TableCell className="text-muted-foreground">{u.email}</TableCell>
                 <TableCell>
