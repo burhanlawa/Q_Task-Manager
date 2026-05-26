@@ -14,6 +14,8 @@ import {
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateBranchDto } from './dto/create-branch.dto';
@@ -21,7 +23,7 @@ import { ListBranchesQuery } from './dto/list-branches.query';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 
 @Controller('branches')
-@UseGuards(ClerkAuthGuard)
+@UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class BranchesController {
   @Get()
@@ -33,6 +35,7 @@ export class BranchesController {
   }
 
   @Post()
+  @RequirePermissions('branch.create')
   async create(
     @TenantDb() db: Prisma.TransactionClient,
     @CurrentTenant() tenant: TenantContext,
@@ -54,6 +57,7 @@ export class BranchesController {
   }
 
   @Patch(':id')
+  @RequirePermissions('branch.update')
   async update(
     @TenantDb() db: Prisma.TransactionClient,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -69,6 +73,7 @@ export class BranchesController {
 
   @Post(':id/archive')
   @HttpCode(200)
+  @RequirePermissions('branch.archive')
   async archive(
     @TenantDb() db: Prisma.TransactionClient,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -83,6 +88,7 @@ export class BranchesController {
 
   @Post(':id/unarchive')
   @HttpCode(200)
+  @RequirePermissions('branch.archive')
   async unarchive(
     @TenantDb() db: Prisma.TransactionClient,
     @Param('id', new ParseUUIDPipe()) id: string,

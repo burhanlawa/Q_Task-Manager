@@ -16,6 +16,8 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -43,7 +45,7 @@ async function assertSupervisorInTenant(
 }
 
 @Controller('teams')
-@UseGuards(ClerkAuthGuard)
+@UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class TeamsController {
   @Get()
@@ -58,6 +60,7 @@ export class TeamsController {
   }
 
   @Post()
+  @RequirePermissions('team.create')
   async create(
     @TenantDb() db: Prisma.TransactionClient,
     @CurrentTenant() tenant: TenantContext,
@@ -99,6 +102,7 @@ export class TeamsController {
   }
 
   @Patch(':id')
+  @RequirePermissions('team.update')
   async update(
     @TenantDb() db: Prisma.TransactionClient,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -129,6 +133,7 @@ export class TeamsController {
 
   @Post(':id/archive')
   @HttpCode(200)
+  @RequirePermissions('team.archive')
   async archive(
     @TenantDb() db: Prisma.TransactionClient,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -143,6 +148,7 @@ export class TeamsController {
 
   @Post(':id/unarchive')
   @HttpCode(200)
+  @RequirePermissions('team.archive')
   async unarchive(
     @TenantDb() db: Prisma.TransactionClient,
     @Param('id', new ParseUUIDPipe()) id: string,

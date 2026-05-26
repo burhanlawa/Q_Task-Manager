@@ -76,7 +76,7 @@ export class ClerkWebhookService {
         },
       });
 
-      await tx.user.create({
+      const user = await tx.user.create({
         data: {
           companyId: company.id,
           branchId: branch.id,
@@ -90,6 +90,22 @@ export class ClerkWebhookService {
           status: 'active',
         },
       });
+
+      // Built-in CEO role with wildcard permissions. Sprint 6 will seed the
+      // other five built-in roles with their specific permission lists; for
+      // now '*' lets the founder use every guarded endpoint without us having
+      // to enumerate every permission key today.
+      const ceoRole = await tx.role.create({
+        data: {
+          companyId: company.id,
+          name: 'CEO',
+          description: 'Founder; full access to every action in the tenant.',
+          isBuiltin: true,
+          permissions: ['*'],
+        },
+      });
+
+      await tx.userRole.create({ data: { userId: user.id, roleId: ceoRole.id } });
 
       this.log.log(`Provisioned company ${company.id} for clerk user ${clerkUserId}`);
     });

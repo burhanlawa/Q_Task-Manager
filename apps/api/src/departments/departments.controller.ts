@@ -20,6 +20,8 @@ function isUniqueViolation(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
 }
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateDepartmentDto } from './dto/create-department.dto';
@@ -27,7 +29,7 @@ import { ListDepartmentsQuery } from './dto/list-departments.query';
 import { UpdateDepartmentDto } from './dto/update-department.dto';
 
 @Controller('departments')
-@UseGuards(ClerkAuthGuard)
+@UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class DepartmentsController {
   @Get()
@@ -42,6 +44,7 @@ export class DepartmentsController {
   }
 
   @Post()
+  @RequirePermissions('department.create')
   async create(
     @TenantDb() db: Prisma.TransactionClient,
     @CurrentTenant() tenant: TenantContext,
@@ -87,6 +90,7 @@ export class DepartmentsController {
   }
 
   @Patch(':id')
+  @RequirePermissions('department.update')
   async update(
     @TenantDb() db: Prisma.TransactionClient,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -139,6 +143,7 @@ export class DepartmentsController {
 
   @Post(':id/archive')
   @HttpCode(200)
+  @RequirePermissions('department.archive')
   async archive(
     @TenantDb() db: Prisma.TransactionClient,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -162,6 +167,7 @@ export class DepartmentsController {
 
   @Post(':id/unarchive')
   @HttpCode(200)
+  @RequirePermissions('department.archive')
   async unarchive(
     @TenantDb() db: Prisma.TransactionClient,
     @Param('id', new ParseUUIDPipe()) id: string,
