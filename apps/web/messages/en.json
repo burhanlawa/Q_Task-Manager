@@ -21,6 +21,43 @@
     "heading": "Account security",
     "description": "Enable two-factor authentication, manage active sessions, and update your password."
   },
+  "me": {
+    "profile": {
+      "title": "My profile",
+      "description": "Edit your personal information. Organizational details are managed by your admin.",
+      "loading": "Loading…",
+      "loadError": "Could not load your profile.",
+      "sections": {
+        "personal": "Personal info",
+        "organizational": "Organizational",
+        "organizationalHint": "These fields are set by your admin. Ask HR or your manager if anything looks wrong."
+      },
+      "fields": {
+        "firstName": "First name",
+        "lastName": "Last name",
+        "displayName": "Display name",
+        "phone": "Phone",
+        "dateOfBirth": "Date of birth",
+        "locale": "Language",
+        "timezone": "Timezone",
+        "email": "Email",
+        "orgRole": "Role",
+        "status": "Status",
+        "employmentStatus": "Employment status",
+        "branch": "Branch",
+        "department": "Department",
+        "company": "Company"
+      },
+      "actions": {
+        "save": "Save changes",
+        "saving": "Saving…"
+      },
+      "toast": {
+        "saved": "Profile updated.",
+        "error": "Could not save changes."
+      }
+    }
+  },
   "profile": {
     "backToList": "Back to people",
     "loading": "Loading…",
