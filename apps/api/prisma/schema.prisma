@@ -321,6 +321,52 @@ model ActivityLog {
   @@map("activity_log")
 }
 
+// Sprint 8 task 8.1: core task entity per blueprint §5.10.
+// assignee_count + reassignment_request_count are denormalized counters
+// (updated by the relevant transitions in Sprint 9–10). parent_task_id is
+// kept on the schema even though subtasks are Phase 1.5 — saves a future
+// migration.
+model Task {
+  id                       String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId                String        @db.Uuid @map("company_id")
+  branchId                 String?       @db.Uuid @map("branch_id")
+  departmentId             String        @db.Uuid @map("department_id")
+  teamId                   String?       @db.Uuid @map("team_id")
+  parentTaskId             String?       @db.Uuid @map("parent_task_id")
+
+  title                    String
+  description              String?       @db.Text
+
+  status                   task_status   @default(draft)
+  priority                 task_priority @default(medium)
+
+  createdByUserId          String        @db.Uuid @map("created_by_user_id")
+  assignedToUserId         String?       @db.Uuid @map("assigned_to_user_id")
+  assigneeCount            Int           @default(0) @map("assignee_count")
+  reassignmentRequestCount Int           @default(0) @map("reassignment_request_count")
+
+  dueDate                  DateTime?     @db.Date @map("due_date")
+  startedAt                DateTime?     @db.Timestamptz(6) @map("started_at")
+  completedAt              DateTime?     @db.Timestamptz(6) @map("completed_at")
+
+  createdAt                DateTime      @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt                DateTime      @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt                DateTime?     @db.Timestamptz(6) @map("deleted_at")
+
+  parentTask Task?  @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Restrict)
+  subtasks   Task[] @relation("TaskSubtasks")
+
+  @@index([companyId, deletedAt],                map: "idx_tasks_company_deleted")
+  @@index([companyId, status],                   map: "idx_tasks_company_status")
+  @@index([companyId, assignedToUserId],         map: "idx_tasks_company_assignee")
+  @@index([companyId, createdByUserId],          map: "idx_tasks_company_creator")
+  @@index([departmentId],                        map: "idx_tasks_department")
+  @@index([teamId],                              map: "idx_tasks_team")
+  @@index([parentTaskId],                        map: "idx_tasks_parent")
+  @@index([companyId, dueDate],                  map: "idx_tasks_company_due_date")
+  @@map("tasks")
+}
+
 enum billing_cycle {
   monthly
   annual
