@@ -16,5 +16,9 @@
   },
   "auth": {
     "signIn": "Sign in"
+  },
+  "security": {
+    "heading": "Account security",
+    "description": "Enable two-factor authentication, manage active sessions, and update your password."
   }
 }

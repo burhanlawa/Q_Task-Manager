@@ -16,5 +16,9 @@
   },
   "auth": {
     "signIn": "چوونەژوورەوە"
+  },
+  "security": {
+    "heading": "ئاسایشی هەژمار",
+    "description": "Two-factor authentication، بەڕێوەبردنی دانیشتنە چالاکەکان، و نوێکردنەوەی وشەی نهێنی."
   }
 }
