@@ -45,3 +45,71 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r test
+
+  # Integration tests run against an ephemeral Postgres 16 service container.
+  # Each CI run starts fresh: apply migrations, set app_user's password to a
+  # known value, run pnpm test:integration. This is what gates merges on the
+  # non-negotiable RLS isolation suite (3.9) and the upcoming task state
+  # machine suite (Sprint 8).
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci_owner
+          POSTGRES_PASSWORD: ci_owner_pw
+          POSTGRES_DB: qtm_ci
+        ports:
+          - 5432:5432
+        # Health check ensures the runner waits until Postgres accepts
+        # connections before starting the next step.
+        options: >-
+          --health-cmd "pg_isready -U ci_owner"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Migrations + tests' admin-role queries connect as ci_owner.
+      DATABASE_URL: postgresql://ci_owner:ci_owner_pw@localhost:5432/qtm_ci
+      # The integration suite's app-role client connects as app_user. The
+      # password is set in the "Reset app_user password" step below.
+      APP_DATABASE_URL: postgresql://app_user:ci_app_pw@localhost:5432/qtm_ci
+      # CryptoService env (sprint 5.5) — boot-time required.
+      APP_ENCRYPTION_KEYS: '{"1":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}'
+      APP_ENCRYPTION_ACTIVE_KEY_ID: '1'
+      # Clerk env keys must be present at boot (auth module reads them) but
+      # the integration tests don't actually call Clerk.
+      CLERK_SECRET_KEY: sk_test_ci_dummy
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_dummy
+      CLERK_WEBHOOK_SECRET: whsec_ci_dummy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # The Postgres service container needs pgcrypto for gen_random_uuid().
+      # Most migrations also rely on it; enable before applying.
+      - name: Enable pgcrypto
+        run: |
+          PGPASSWORD=ci_owner_pw psql -h localhost -U ci_owner -d qtm_ci -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+
+      - name: Apply Prisma migrations
+        working-directory: apps/api
+        run: pnpm exec prisma migrate deploy
+
+      # The RLS migration (2.7) creates app_user with the placeholder password
+      # 'replace_me_in_env'. Override to a known value so the integration
+      # suite's app-role client can authenticate.
+      - name: Reset app_user password for CI
+        run: |
+          PGPASSWORD=ci_owner_pw psql -h localhost -U ci_owner -d qtm_ci -c "ALTER USER app_user WITH PASSWORD 'ci_app_pw';"
+
+      - name: Run integration tests
+        working-directory: apps/api
+        run: pnpm test:integration
