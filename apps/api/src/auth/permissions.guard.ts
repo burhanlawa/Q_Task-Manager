@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@
 import { Reflector } from '@nestjs/core';
 import { PrismaAdminService } from '../prisma/prisma-admin.service';
 import type { RequestAuth } from './clerk-auth.guard';
+import { PermissionsService } from './permissions.service';
 import { PERMISSIONS_KEY } from './require-permissions.decorator';
 
 type AuthedRequest = { auth?: RequestAuth };
@@ -11,6 +12,7 @@ export class PermissionsGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly admin: PrismaAdminService,
+    private readonly permissions: PermissionsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -23,55 +25,19 @@ export class PermissionsGuard implements CanActivate {
 
     const req = context.switchToHttp().getRequest<AuthedRequest>();
     if (!req.auth) {
-      // ClerkAuthGuard must run before us. If req.auth is missing, wiring is wrong.
       throw new ForbiddenException('Permission check requires authentication');
     }
 
-    // Guards run before interceptors, so TenantContextInterceptor hasn't run yet
-    // — we resolve our own user via the admin client (same pattern the
-    // interceptor uses for the clerk-id → user-id lookup).
-    const user = await this.admin.user.findUnique({
+    // Resolve clerk_user_id → user_id once (cheap, single column lookup).
+    // The expensive permission union is then cached inside PermissionsService
+    // by user_id for 5 minutes — so the hot path stays one fast lookup.
+    const u = await this.admin.user.findUnique({
       where: { clerkUserId: req.auth.userId },
-      select: {
-        id: true,
-        companyId: true,
-        roles: {
-          where: { role: { deletedAt: null } },
-          select: { role: { select: { permissions: true } } },
-        },
-        systemRoles: { select: { systemRole: true } },
-      },
+      select: { id: true },
     });
+    if (!u) throw new ForbiddenException('No tenant for this user');
 
-    if (!user) throw new ForbiddenException('No tenant for this user');
-
-    const granted = new Set<string>();
-
-    // 1. Direct role grants via user_roles.
-    for (const ur of user.roles) {
-      const perms = ur.role.permissions;
-      if (Array.isArray(perms)) {
-        for (const p of perms) if (typeof p === 'string') granted.add(p);
-      }
-    }
-
-    // 2. System-role grants via user_system_roles. The `systemRole` string is
-    // a free-form pointer; we resolve it to a role by name within the tenant
-    // and union its permissions. This lets an admin grant "HR" power to an
-    // Employee-by-position without touching the user_roles table directly.
-    if (user.systemRoles.length > 0) {
-      const names = user.systemRoles.map((s) => s.systemRole);
-      const systemRoles = await this.admin.role.findMany({
-        where: { companyId: user.companyId, name: { in: names }, deletedAt: null },
-        select: { permissions: true },
-      });
-      for (const r of systemRoles) {
-        const perms = r.permissions;
-        if (Array.isArray(perms)) {
-          for (const p of perms) if (typeof p === 'string') granted.add(p);
-        }
-      }
-    }
+    const granted = await this.permissions.getEffectivePermissions(u.id);
     if (granted.has('*')) return true;
     for (const key of required) {
       if (!granted.has(key)) {

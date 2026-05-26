@@ -20,6 +20,7 @@ import { Prisma } from '@prisma/client';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
+import { PermissionsService } from '../auth/permissions.service';
 import { CryptoService } from '../crypto/crypto.service';
 import { PrismaAdminService } from '../prisma/prisma-admin.service';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
@@ -46,6 +47,7 @@ export class UsersController {
     private readonly activity: ActivityLogService,
     private readonly admin: PrismaAdminService,
     private readonly crypto: CryptoService,
+    private readonly permissions: PermissionsService,
   ) {}
 
   @Get()
@@ -75,8 +77,8 @@ export class UsersController {
     // example: they have user.read but not user.read.companywide, so /users
     // returns only their dept's people. HR/Admin/CEO have companywide and see
     // the whole tenant unless they apply an explicit departmentId filter.
-    const granted = await this.getEffectivePermissions(tenant.userId);
-    const companywide = this.hasPermission(granted, 'user.read.companywide');
+    const granted = await this.permissions.getEffectivePermissions(tenant.userId);
+    const companywide = this.permissions.has(granted, 'user.read.companywide');
     let scopedDepartmentId = q.departmentId;
     if (!companywide) {
       const actorDept = await this.getActorDepartmentId(tenant.userId);
@@ -139,8 +141,8 @@ export class UsersController {
     // it here rather than via @RequirePermissions because the same endpoint
     // is dual-purpose (basic profile vs. profile + PII).
     if (wantSensitive) {
-      const granted = await this.getEffectivePermissions(tenant.userId);
-      if (!this.hasPermission(granted, 'user.read.sensitive')) {
+      const granted = await this.permissions.getEffectivePermissions(tenant.userId);
+      if (!this.permissions.has(granted, 'user.read.sensitive')) {
         throw new ForbiddenException('Missing permission: user.read.sensitive');
       }
     }
@@ -190,47 +192,6 @@ export class UsersController {
     }
 
     return user;
-  }
-
-  /**
-   * Replicates PermissionsGuard's permission-collection logic (user_roles +
-   * user_system_roles unioned, wildcard short-circuit) so we can answer
-   * permission questions inside handler logic — not just at the @Require
-   * decorator layer. Uses the admin client because permission checks need
-   * to read across the tenant boundary safely.
-   */
-  private async getEffectivePermissions(userId: string): Promise<Set<string>> {
-    const u = await this.admin.user.findUnique({
-      where: { id: userId },
-      select: {
-        companyId: true,
-        departmentId: true,
-        roles: { select: { role: { select: { permissions: true } } } },
-        systemRoles: { select: { systemRole: true } },
-      },
-    });
-    const granted = new Set<string>();
-    if (!u) return granted;
-    for (const ur of u.roles) {
-      const perms = ur.role.permissions;
-      if (Array.isArray(perms)) for (const p of perms) if (typeof p === 'string') granted.add(p);
-    }
-    if (u.systemRoles.length > 0) {
-      const names = u.systemRoles.map((s) => s.systemRole);
-      const sysRoles = await this.admin.role.findMany({
-        where: { companyId: u.companyId, name: { in: names }, deletedAt: null },
-        select: { permissions: true },
-      });
-      for (const r of sysRoles) {
-        const perms = r.permissions;
-        if (Array.isArray(perms)) for (const p of perms) if (typeof p === 'string') granted.add(p);
-      }
-    }
-    return granted;
-  }
-
-  private hasPermission(granted: Set<string>, key: string): boolean {
-    return granted.has('*') || granted.has(key);
   }
 
   private async getActorDepartmentId(userId: string): Promise<string | null> {
@@ -432,11 +393,13 @@ export class UsersController {
       throw new BadRequestException(`systemRole '${dto.systemRole}' is not a role in this tenant`);
     }
 
-    return db.userSystemRole.upsert({
+    const row = await db.userSystemRole.upsert({
       where: { userId_systemRole: { userId, systemRole: dto.systemRole } },
       create: { userId, systemRole: dto.systemRole, grantedBy: tenant.userId },
       update: { grantedBy: tenant.userId },
     });
+    this.permissions.invalidateUser(userId);
+    return row;
   }
 
   @Delete(':id/system-roles/:role')
@@ -451,6 +414,7 @@ export class UsersController {
       where: { userId, systemRole },
     });
     if (result.count === 0) throw new NotFoundException('Grant not found');
+    this.permissions.invalidateUser(userId);
     return { revoked: true };
   }
 
@@ -496,11 +460,13 @@ export class UsersController {
     });
     if (!role) throw new NotFoundException('Role not found');
 
-    return db.userRole.upsert({
+    const row = await db.userRole.upsert({
       where: { userId_roleId: { userId, roleId: dto.roleId } },
       create: { userId, roleId: dto.roleId, grantedBy: tenant.userId },
       update: { grantedBy: tenant.userId },
     });
+    this.permissions.invalidateUser(userId);
+    return row;
   }
 
   @Delete(':id/roles/:roleId')
@@ -513,6 +479,7 @@ export class UsersController {
   ) {
     const result = await db.userRole.deleteMany({ where: { userId, roleId } });
     if (result.count === 0) throw new NotFoundException('Grant not found');
+    this.permissions.invalidateUser(userId);
     return { revoked: true };
   }
 }

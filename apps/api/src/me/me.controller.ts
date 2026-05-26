@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
+import { PermissionsService } from '../auth/permissions.service';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { UpdateMeDto } from './dto/update-me.dto';
@@ -38,6 +39,23 @@ const ME_SELECT = {
 @UseGuards(ClerkAuthGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class MeController {
+  constructor(private readonly permissions: PermissionsService) {}
+
+  /**
+   * Diagnostic-only: returns whether the caller's effective-permissions set
+   * is cached and the total cache size. Used to verify the 5-minute TTL works
+   * (Sprint 6 task 6.7's done check). Safe to expose — no permission data
+   * leaks, just hit/miss + a count.
+   */
+  @Get('permissions-debug')
+  permissionsDebug(@CurrentTenant() tenant: TenantContext) {
+    return {
+      userId: tenant.userId,
+      isCached: this.permissions.isCached(tenant.userId),
+      cacheSize: this.permissions.cacheSize(),
+    };
+  }
+
   @Get()
   async profile(@CurrentTenant() tenant: TenantContext, @TenantDb() db: Prisma.TransactionClient) {
     const user = await db.user.findUnique({

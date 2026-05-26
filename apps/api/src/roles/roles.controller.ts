@@ -15,6 +15,7 @@ import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PERMISSION_CATALOG } from '../auth/permission-catalog';
 import { PermissionsGuard } from '../auth/permissions.guard';
+import { PermissionsService } from '../auth/permissions.service';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
@@ -28,7 +29,10 @@ function isUniqueViolation(err: unknown): boolean {
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class RolesController {
-  constructor(private readonly activity: ActivityLogService) {}
+  constructor(
+    private readonly activity: ActivityLogService,
+    private readonly permissions: PermissionsService,
+  ) {}
 
   @Get('permission-catalog')
   @RequirePermissions('role.manage')
@@ -87,10 +91,11 @@ export class RolesController {
     @Body() dto: UpdateRoleDto,
   ) {
     // Read the existing role *inside* the request transaction so the audit
-    // log row we write below sees a consistent before-snapshot.
+    // log row we write below sees a consistent before-snapshot. Also grab the
+    // name so we can invalidate user_system_role holders that join by name.
     const existing = await db.role.findFirst({
       where: { id, deletedAt: null },
-      select: { isBuiltin: true, permissions: true },
+      select: { isBuiltin: true, name: true, permissions: true },
     });
     if (!existing) throw new NotFoundException('Role not found');
 
@@ -130,6 +135,12 @@ export class RolesController {
         before,
         after: dto.permissions,
       });
+      // Invalidate the permissions cache for every user holding this role —
+      // both via user_roles (by id) and via user_system_roles (by name).
+      // This is what makes the spec's "edits take effect for users holding
+      // that role" line true even with the 5-minute TTL: explicit busting.
+      await this.permissions.invalidateUsersWithRole(id);
+      await this.permissions.invalidateUsersWithSystemRoleName(existing.name);
     }
 
     return db.role.findUnique({
