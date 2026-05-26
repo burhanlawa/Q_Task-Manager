@@ -146,6 +146,11 @@ export class ClerkWebhookService {
         data: { managerId: user.id },
       });
 
+      // Per-company settings row (Sprint 7 task 7.1). 1:1 with companies;
+      // onboarding_approval_chain defaults to ['supervisor','manager'] at the
+      // DB level so we don't have to specify it here unless we want to override.
+      await tx.companySetting.create({ data: { companyId: company.id } });
+
       // Seed 4 default tag categories (Sprint 6 task 6.2). Just the category
       // names — tags inside each are user-populated.
       await tx.tagCategory.createMany({

@@ -29,9 +29,23 @@ model Company {
   teams       Team[]
   users       User[]
   roles       Role[]
+  settings    CompanySetting?
 
   @@index([country], map: "idx_companies_country")
   @@map("companies")
+}
+
+model CompanySetting {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId                String    @unique @db.Uuid @map("company_id")
+  onboardingApprovalChain  Json      @default("[\"supervisor\",\"manager\"]") @map("onboarding_approval_chain")
+  createdAt                DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt                DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt                DateTime? @db.Timestamptz(6) @map("deleted_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_settings")
 }
 
 model Branch {
