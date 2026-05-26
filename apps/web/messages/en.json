@@ -21,6 +21,39 @@
     "heading": "Account security",
     "description": "Enable two-factor authentication, manage active sessions, and update your password."
   },
+  "people": {
+    "title": "People",
+    "description": "Browse your company's users. Managers see their department; HR and admins see the whole company.",
+    "search": "Search by name or email",
+    "departmentLabel": "Department",
+    "teamLabel": "Team",
+    "allDepartments": "All departments",
+    "allTeams": "All teams",
+    "loading": "Loading…",
+    "loadError": "Could not load users.",
+    "empty": "No matching users.",
+    "filter": {
+      "active": "Active",
+      "invited": "Invited",
+      "suspended": "Suspended",
+      "deactivated": "Deactivated",
+      "all": "All"
+    },
+    "status": {
+      "active": "Active",
+      "invited": "Invited",
+      "suspended": "Suspended",
+      "deactivated": "Deactivated"
+    },
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "orgRole": "Role",
+      "branch": "Branch",
+      "department": "Department",
+      "status": "Status"
+    }
+  },
   "admin": {
     "teams": {
       "title": "Teams",

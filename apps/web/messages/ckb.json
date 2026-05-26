@@ -21,6 +21,39 @@
     "heading": "ئاسایشی هەژمار",
     "description": "Two-factor authentication، بەڕێوەبردنی دانیشتنە چالاکەکان، و نوێکردنەوەی وشەی نهێنی."
   },
+  "people": {
+    "title": "خەڵک",
+    "description": "بەکارهێنەرانی کۆمپانیاکەت ببینە. بەڕێوەبەران بەشی خۆیان دەبینن؛ HR و ئادمینەکان هەموو کۆمپانیا.",
+    "search": "گەڕان بە ناو یان ئیمەیڵ",
+    "departmentLabel": "بەش",
+    "teamLabel": "تیم",
+    "allDepartments": "هەموو بەشەکان",
+    "allTeams": "هەموو تیمەکان",
+    "loading": "بارکردن…",
+    "loadError": "نەتوانرا بەکارهێنەران باربکرێن.",
+    "empty": "هیچ بەکارهێنەرێک نییە.",
+    "filter": {
+      "active": "چالاک",
+      "invited": "بانگهێشتکراو",
+      "suspended": "ڕاگیراو",
+      "deactivated": "ناچالاککراو",
+      "all": "هەموو"
+    },
+    "status": {
+      "active": "چالاک",
+      "invited": "بانگهێشتکراو",
+      "suspended": "ڕاگیراو",
+      "deactivated": "ناچالاککراو"
+    },
+    "columns": {
+      "name": "ناو",
+      "email": "ئیمەیڵ",
+      "orgRole": "ڕۆڵ",
+      "branch": "لق",
+      "department": "بەش",
+      "status": "بار"
+    }
+  },
   "admin": {
     "teams": {
       "title": "تیمەکان",

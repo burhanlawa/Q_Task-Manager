@@ -49,7 +49,11 @@ export class UsersController {
 
   @Get()
   @RequirePermissions('user.read')
-  async list(@TenantDb() db: Prisma.TransactionClient, @Query() q: ListUsersQuery) {
+  async list(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Query() q: ListUsersQuery,
+  ) {
     // status semantics:
     //   - active / invited / suspended → filter by enum AND not soft-deleted
     //   - deactivated → filter by enum, INCLUDE soft-deleted (archive sets
@@ -64,10 +68,30 @@ export class UsersController {
           ? { status: 'deactivated' }
           : { status, deletedAt: null };
     const teamFilter = q.teamId ? { teams: { some: { teamId: q.teamId } } } : {};
+
+    // Authorization scope: callers without user.read.companywide get
+    // auto-scoped to their own department. Manager-by-position is the typical
+    // example: they have user.read but not user.read.companywide, so /users
+    // returns only their dept's people. HR/Admin/CEO have companywide and see
+    // the whole tenant unless they apply an explicit departmentId filter.
+    const granted = await this.getEffectivePermissions(tenant.userId);
+    const companywide = this.hasPermission(granted, 'user.read.companywide');
+    let scopedDepartmentId = q.departmentId;
+    if (!companywide) {
+      const actorDept = await this.getActorDepartmentId(tenant.userId);
+      // If the caller's own dept is unknown, default to "no rows" rather than
+      // accidentally exposing the full tenant.
+      if (!actorDept) return [];
+      // If the caller explicitly filtered by a different department, refuse —
+      // they only have visibility into their own.
+      if (q.departmentId && q.departmentId !== actorDept) return [];
+      scopedDepartmentId = actorDept;
+    }
+
     return db.user.findMany({
       where: {
         ...(q.branchId ? { branchId: q.branchId } : {}),
-        ...(q.departmentId ? { departmentId: q.departmentId } : {}),
+        ...(scopedDepartmentId ? { departmentId: scopedDepartmentId } : {}),
         ...teamFilter,
         ...statusWhere,
       },
@@ -114,8 +138,8 @@ export class UsersController {
     // it here rather than via @RequirePermissions because the same endpoint
     // is dual-purpose (basic profile vs. profile + PII).
     if (wantSensitive) {
-      const allowed = await this.hasSensitivePermission(tenant.userId);
-      if (!allowed) {
+      const granted = await this.getEffectivePermissions(tenant.userId);
+      if (!this.hasPermission(granted, 'user.read.sensitive')) {
         throw new ForbiddenException('Missing permission: user.read.sensitive');
       }
     }
@@ -168,22 +192,24 @@ export class UsersController {
   }
 
   /**
-   * Resolve whether the current user has `user.read.sensitive` by replicating
-   * the PermissionsGuard's permission-collection (user_roles + user_system_roles
-   * unioned, wildcard short-circuit). Uses the admin client because it's a
-   * permission check, not a tenant-scoped read.
+   * Replicates PermissionsGuard's permission-collection logic (user_roles +
+   * user_system_roles unioned, wildcard short-circuit) so we can answer
+   * permission questions inside handler logic — not just at the @Require
+   * decorator layer. Uses the admin client because permission checks need
+   * to read across the tenant boundary safely.
    */
-  private async hasSensitivePermission(userId: string): Promise<boolean> {
+  private async getEffectivePermissions(userId: string): Promise<Set<string>> {
     const u = await this.admin.user.findUnique({
       where: { id: userId },
       select: {
         companyId: true,
+        departmentId: true,
         roles: { select: { role: { select: { permissions: true } } } },
         systemRoles: { select: { systemRole: true } },
       },
     });
-    if (!u) return false;
     const granted = new Set<string>();
+    if (!u) return granted;
     for (const ur of u.roles) {
       const perms = ur.role.permissions;
       if (Array.isArray(perms)) for (const p of perms) if (typeof p === 'string') granted.add(p);
@@ -199,7 +225,19 @@ export class UsersController {
         if (Array.isArray(perms)) for (const p of perms) if (typeof p === 'string') granted.add(p);
       }
     }
-    return granted.has('*') || granted.has('user.read.sensitive');
+    return granted;
+  }
+
+  private hasPermission(granted: Set<string>, key: string): boolean {
+    return granted.has('*') || granted.has(key);
+  }
+
+  private async getActorDepartmentId(userId: string): Promise<string | null> {
+    const u = await this.admin.user.findUnique({
+      where: { id: userId },
+      select: { departmentId: true },
+    });
+    return u?.departmentId ?? null;
   }
 
   @Patch(':id')

@@ -21,6 +21,39 @@
     "heading": "أمان الحساب",
     "description": "فعّل المصادقة الثنائية، وأدر الجلسات النشطة، وحدّث كلمة المرور."
   },
+  "people": {
+    "title": "الأشخاص",
+    "description": "تصفّح مستخدمي شركتك. يرى المديرون قسمهم؛ يرى HR والإدارة الشركة كاملة.",
+    "search": "ابحث بالاسم أو البريد",
+    "departmentLabel": "القسم",
+    "teamLabel": "الفريق",
+    "allDepartments": "كل الأقسام",
+    "allTeams": "كل الفِرَق",
+    "loading": "جارٍ التحميل…",
+    "loadError": "تعذّر تحميل المستخدمين.",
+    "empty": "لا يوجد مستخدمون مطابقون.",
+    "filter": {
+      "active": "النشطون",
+      "invited": "المدعوّون",
+      "suspended": "الموقوفون",
+      "deactivated": "المعطّلون",
+      "all": "الكل"
+    },
+    "status": {
+      "active": "نشِط",
+      "invited": "مدعو",
+      "suspended": "موقوف",
+      "deactivated": "معطّل"
+    },
+    "columns": {
+      "name": "الاسم",
+      "email": "البريد",
+      "orgRole": "الدور",
+      "branch": "الفرع",
+      "department": "القسم",
+      "status": "الحالة"
+    }
+  },
   "admin": {
     "teams": {
       "title": "الفِرَق",
