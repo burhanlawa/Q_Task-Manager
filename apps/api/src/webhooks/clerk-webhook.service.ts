@@ -127,12 +127,23 @@ export class ClerkWebhookService {
         })),
       });
 
-      // Founder gets the CEO role.
-      const ceoRole = await tx.role.findFirstOrThrow({
-        where: { companyId: company.id, name: 'CEO', isBuiltin: true },
+      // Founder bootstrap (Sprint 6 task 6.1):
+      // 1. Link to CEO + Admin built-in roles (both wildcard — the founder
+      //    needs to be able to do anything in their fresh tenant).
+      // 2. Set the Executive department's manager_id to the founder, so the
+      //    spec's "Manager of Executive" labeling has a real DB pointer.
+      const founderRoles = await tx.role.findMany({
+        where: { companyId: company.id, name: { in: ['CEO', 'Admin'] }, isBuiltin: true },
         select: { id: true },
       });
-      await tx.userRole.create({ data: { userId: user.id, roleId: ceoRole.id } });
+      await tx.userRole.createMany({
+        data: founderRoles.map((r) => ({ userId: user.id, roleId: r.id })),
+      });
+
+      await tx.department.update({
+        where: { id: department.id },
+        data: { managerId: user.id },
+      });
 
       this.log.log(`Provisioned company ${company.id} for clerk user ${clerkUserId}`);
     });
