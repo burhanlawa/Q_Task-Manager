@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 type ClerkEmail = { id: string; email_address: string };
@@ -51,7 +52,7 @@ export class ClerkWebhookService {
     const displayName =
       [data.first_name, data.last_name].filter(Boolean).join(' ').trim() || email.split('@')[0];
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const company = await tx.company.create({
         data: {
           name: `${displayName}'s Workspace`,

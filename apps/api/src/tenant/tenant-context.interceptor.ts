@@ -48,7 +48,7 @@ export class TenantContextInterceptor implements NestInterceptor {
         // the controller's observable result through it.
         return new Observable((subscriber) => {
           this.prisma
-            .$transaction(async (tx) => {
+            .$transaction(async (tx: Prisma.TransactionClient) => {
               // set_config(name, value, is_local) — is_local=true behaves like SET LOCAL.
               // Using a parameter binding (not string concat) avoids any SQL injection
               // risk even though the UUID comes from our own DB.
