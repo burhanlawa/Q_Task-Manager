@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
+import { PERMISSION_CATALOG } from '../auth/permission-catalog';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { TenantDb } from '../tenant/current-tenant.decorator';
@@ -26,6 +27,14 @@ function isUniqueViolation(err: unknown): boolean {
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class RolesController {
+  @Get('permission-catalog')
+  @RequirePermissions('role.manage')
+  permissionCatalog() {
+    // Static — no DB lookup. Exposed under /roles/* because it's used by the
+    // Roles admin UI; same role.manage gate.
+    return { groups: PERMISSION_CATALOG };
+  }
+
   @Get()
   @RequirePermissions('role.manage')
   async list(@TenantDb() db: Prisma.TransactionClient) {

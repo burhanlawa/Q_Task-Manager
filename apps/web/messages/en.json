@@ -203,6 +203,28 @@
         "error": "Something went wrong."
       }
     },
+    "roles": {
+      "title": "Roles",
+      "description": "Manage what each role can do. Built-in role names are fixed; their permission lists are editable.",
+      "loading": "Loading…",
+      "loadError": "Could not load roles.",
+      "empty": "No roles. Sign up creates the six built-in roles automatically.",
+      "backToList": "Back to roles",
+      "builtin": "built-in",
+      "wildcard": "Full access",
+      "wildcardHelp": "Wildcard '*' — this role can perform any action in the tenant. Disables the checkbox grid below.",
+      "permissionCount": "{count} permissions",
+      "unknownKeysHeading": "Unknown keys",
+      "unknownKeysHelp": "These keys are on the role but not in the current catalog. They're preserved on save.",
+      "actions": {
+        "save": "Save changes",
+        "saving": "Saving…"
+      },
+      "toast": {
+        "saved": "Role updated.",
+        "error": "Could not save changes."
+      }
+    },
     "branches": {
       "title": "Branches",
       "description": "Manage your company's branches. Archive hides a branch from default lists.",
