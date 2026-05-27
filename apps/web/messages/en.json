@@ -1,4 +1,33 @@
 {
+  "files": {
+    "upload": {
+      "dragOrBrowse": "Drag and drop a file here, or click to choose",
+      "dropToUpload": "Drop to upload",
+      "limitHint": "Max {maxMb} MB",
+      "cancel": "Cancel",
+      "status": {
+        "queued": "Queued",
+        "requesting": "Preparing…",
+        "uploading": "Uploading…",
+        "completing": "Finishing…",
+        "done": "Done",
+        "error": "Failed"
+      },
+      "errors": {
+        "rejected": "This file was rejected.",
+        "invalidType": "This file type isn't allowed here.",
+        "tooLarge": "File is larger than the {maxMb} MB limit.",
+        "intentFailed": "Could not start the upload. Please try again.",
+        "uploadFailed": "Upload to storage failed.",
+        "network": "Network error during upload.",
+        "cancelled": "Upload cancelled.",
+        "completeFailed": "Could not finalize the upload. Please try again.",
+        "storageLimit": "Upload would exceed your plan's storage limit ({plan}, {limitMb} MB).",
+        "forbidden": "You don't have permission to upload here.",
+        "notFound": "The target for this upload was not found."
+      }
+    }
+  },
   "app": {
     "title": "Q Task Manager"
   },
