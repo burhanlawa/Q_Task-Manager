@@ -1,10 +1,16 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   ForbiddenException,
+  Get,
   NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -17,6 +23,12 @@ import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { ListTasksQuery } from './dto/list-tasks.query';
+import { UpdateTaskDto } from './dto/update-task.dto';
+
+// Statuses where content metadata is still editable. Anything past these
+// requires the state-machine endpoint (Sprint 8.6+) to transition first.
+const EDITABLE_STATUSES = new Set(['draft', 'assigned']);
 
 @Controller('tasks')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
@@ -127,6 +139,102 @@ export class TasksController {
 
     return db.task.findUnique({
       where: { id: task.id },
+      include: { assignees: { select: { userId: true, assignedAt: true } } },
+    });
+  }
+
+  @Get()
+  @RequirePermissions('task.read')
+  async list(@TenantDb() db: Prisma.TransactionClient, @Query() q: ListTasksQuery) {
+    return db.task.findMany({
+      where: {
+        ...(q.includeArchived ? {} : { deletedAt: null }),
+        ...(q.status && q.status.length > 0 ? { status: { in: q.status } } : {}),
+        ...(q.assigneeUserId
+          ? {
+              OR: [
+                { assignedToUserId: q.assigneeUserId },
+                { assignees: { some: { userId: q.assigneeUserId } } },
+              ],
+            }
+          : {}),
+        ...(q.departmentId ? { departmentId: q.departmentId } : {}),
+        ...(q.teamId ? { teamId: q.teamId } : {}),
+      },
+      orderBy: [{ createdAt: 'desc' }],
+    });
+  }
+
+  @Get(':id')
+  @RequirePermissions('task.read')
+  async get(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const task = await db.task.findUnique({
+      where: { id },
+      include: { assignees: { select: { userId: true, assignedAt: true } } },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+    return task;
+  }
+
+  @Patch(':id')
+  @RequirePermissions('task.update')
+  async update(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: UpdateTaskDto,
+  ) {
+    const existing = await db.task.findUnique({
+      where: { id },
+      select: { id: true, status: true, deletedAt: true, departmentId: true },
+    });
+    if (!existing || existing.deletedAt) throw new NotFoundException('Task not found');
+
+    // Sprint 8.5 done check: editing after the task is in_progress (or beyond)
+    // is rejected. PATCH is for content metadata while the task is still in
+    // the planning stage; once work starts, the state machine owns the row.
+    if (!EDITABLE_STATUSES.has(existing.status)) {
+      throw new ConflictException(
+        `Task is in status '${existing.status}'; edits via PATCH are only allowed in 'draft' or 'assigned'`,
+      );
+    }
+
+    // If reassigning to a different department, verify it exists in this tenant.
+    if (dto.departmentId && dto.departmentId !== existing.departmentId) {
+      const dept = await db.department.findUnique({
+        where: { id: dto.departmentId },
+        select: { id: true, deletedAt: true },
+      });
+      if (!dept || dept.deletedAt) throw new NotFoundException('Department not found');
+    }
+    if (dto.teamId) {
+      const team = await db.team.findUnique({
+        where: { id: dto.teamId },
+        select: { departmentId: true, deletedAt: true },
+      });
+      if (!team || team.deletedAt) throw new NotFoundException('Team not found');
+      const targetDept = dto.departmentId ?? existing.departmentId;
+      if (team.departmentId !== targetDept) {
+        throw new BadRequestException('Team belongs to a different department');
+      }
+    }
+
+    const data: Prisma.TaskUncheckedUpdateInput = {};
+    if (dto.title !== undefined) data.title = dto.title;
+    if (dto.description !== undefined) data.description = dto.description;
+    if (dto.priority !== undefined) data.priority = dto.priority;
+    if (dto.dueDate !== undefined) {
+      data.dueDate = dto.dueDate === null ? null : new Date(dto.dueDate);
+    }
+    if (dto.departmentId !== undefined) data.departmentId = dto.departmentId;
+    if (dto.teamId !== undefined) data.teamId = dto.teamId;
+    if (dto.branchId !== undefined) data.branchId = dto.branchId;
+
+    return db.task.update({
+      where: { id },
+      data,
       include: { assignees: { select: { userId: true, assignedAt: true } } },
     });
   }
