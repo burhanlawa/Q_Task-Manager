@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   ForbiddenException,
+  Get,
   HttpCode,
   NotFoundException,
   Param,
@@ -47,6 +48,26 @@ export class TaskReassignmentController {
     private readonly permissions: PermissionsService,
     private readonly activity: ActivityLogService,
   ) {}
+
+  // Returns the pending reassignment request for a task, if any, plus a
+  // small profile for the requester so the assigner-side UI can show who
+  // asked and why without making a follow-up users call.
+  @Get(':id/reassignment-requests/pending')
+  async pending(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const request = await db.taskReassignmentRequest.findFirst({
+      where: { taskId: id, status: 'pending' },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!request) return { request: null, requester: null };
+    const requester = await db.user.findUnique({
+      where: { id: request.requestedByUserId },
+      select: { id: true, displayName: true, firstName: true, lastName: true, email: true },
+    });
+    return { request, requester };
+  }
 
   @Post(':id/request-reassignment')
   @HttpCode(200)

@@ -7,6 +7,7 @@ import { Link } from '@/i18n/routing';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { api, ApiError, type Department } from '@/lib/api';
+import { ReassignmentDecisionPanel } from './reassignment-decision-panel';
 import { RequestReassignmentDialog } from './request-reassignment-dialog';
 
 type TaskStatus =
@@ -216,6 +217,13 @@ export function TaskDetail({ taskId }: { taskId: string }) {
   const canRequestReassignment =
     isAssigneeOf(task, myId) && (task.status === 'assigned' || task.status === 'in_progress');
 
+  // The decision panel renders only on the requested status and only when the
+  // viewer can actually decide. Server still 403s the assigner gate, but a
+  // hidden panel keeps the UI clean for employees.
+  const canDecideReassignment =
+    task.status === 'reassignment_requested' &&
+    (task.createdByUserId === myId || hasPerm(myPerms, 'task.assign'));
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -276,6 +284,8 @@ export function TaskDetail({ taskId }: { taskId: string }) {
           />
         </section>
       )}
+
+      {canDecideReassignment && <ReassignmentDecisionPanel taskId={taskId} />}
 
       <section className="rounded-md border p-5 space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">

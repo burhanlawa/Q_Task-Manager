@@ -290,6 +290,22 @@
       "cancel": "Cancel task"
     },
     "reassignment": {
+      "decide": {
+        "title": "Pending reassignment request",
+        "subtitle": "Requested by {who} on {when}",
+        "reasonLabel": "Reason given",
+        "noteLabel": "Decision note (optional)",
+        "notePlaceholder": "Add context that the requester will see…",
+        "approve": "Approve",
+        "reject": "Reject",
+        "confirm": {
+          "approved": "Approve this reassignment? The task will move to 'draft' and the requester will be removed from the assignees.",
+          "rejected": "Reject this reassignment? The task will return to its previous status."
+        },
+        "errors": {
+          "generic": "Could not record the decision. Please try again."
+        }
+      },
       "request": {
         "title": "Request reassignment",
         "description": "Tell the task creator why this task should go to someone else. They'll review and either approve or reject your request.",
