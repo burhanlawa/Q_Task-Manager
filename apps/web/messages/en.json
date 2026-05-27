@@ -23,6 +23,7 @@
         "cancelled": "Upload cancelled.",
         "completeFailed": "Could not finalize the upload. Please try again.",
         "storageLimit": "Upload would exceed your plan's storage limit ({plan}, {limitMb} MB).",
+        "imagesDisabled": "Image attachments are disabled for tasks in this company. An admin can re-enable them in company settings.",
         "forbidden": "You don't have permission to upload here.",
         "notFound": "The target for this upload was not found."
       }
@@ -60,6 +61,16 @@
         "empty": "No logo uploaded yet.",
         "currentAlt": "{name} logo",
         "currentHint": "Uploading a new file will replace the current logo."
+      },
+      "imageAttachments": {
+        "title": "Image attachments on tasks",
+        "body": "Allow employees to upload images (JPG/PNG) as task attachments and submissions. When disabled, only documents are accepted on tasks.",
+        "enabled": "Image attachments are allowed.",
+        "disabled": "Image attachments are blocked.",
+        "errors": {
+          "generic": "Could not update the setting. Please try again.",
+          "forbidden": "Only admins can change this setting."
+        }
       }
     }
   },

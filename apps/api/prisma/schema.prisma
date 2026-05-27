@@ -65,6 +65,9 @@ model CompanySetting {
   id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   companyId                String    @unique @db.Uuid @map("company_id")
   onboardingApprovalChain  Json      @default("[\"supervisor\",\"manager\"]") @map("onboarding_approval_chain")
+  /// When false, image MIMEs are rejected on task_attachment / task_submission
+  /// uploads. Avatar / logo / id_card uploads are not affected.
+  allowImageAttachments    Boolean   @default(true) @map("allow_image_attachments")
   createdAt                DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt                DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt                DateTime? @db.Timestamptz(6) @map("deleted_at")

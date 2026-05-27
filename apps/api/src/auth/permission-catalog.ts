@@ -100,6 +100,11 @@ export const PERMISSION_CATALOG: readonly PermissionGroup[] = [
     ],
   },
   {
+    category: 'Company',
+    description: 'Manage tenant-wide settings (logo, attachment policies, etc).',
+    permissions: [{ key: 'company.manage', label: 'Manage company settings' }],
+  },
+  {
     category: 'Comments',
     description: 'Comment on tasks (Sprint 13).',
     permissions: [

@@ -147,6 +147,28 @@ export class FilesController {
       );
     }
 
+    // 1b. Per-tenant image-on-task toggle (Sprint 12.6). Only applies to
+    //     task_attachment / task_submission. Profile photos, logos, and ID
+    //     card scans flow through their own purpose-specific allowlists and
+    //     aren't subject to this flag.
+    const isTaskPurpose =
+      dto.purpose === UploadIntentPurpose.task_attachment ||
+      dto.purpose === UploadIntentPurpose.task_submission;
+    if (isTaskPurpose && IMAGE_MIMES.has(dto.mime_type)) {
+      const settings = await db.companySetting.findUnique({
+        where: { companyId: tenant.companyId },
+        select: { allowImageAttachments: true },
+      });
+      // Settings row may not exist for very old tenants; treat missing row
+      // as the permissive default.
+      if (settings && settings.allowImageAttachments === false) {
+        throw new UnprocessableEntityException({
+          message: 'Image attachments are disabled for tasks in this company.',
+          setting: 'allow_image_attachments',
+        });
+      }
+    }
+
     // 2. attached_to_type must match the purpose. The size check is in the DTO.
     if (dto.attached_to_type !== rule.expectedAttachedTo) {
       throw new BadRequestException(

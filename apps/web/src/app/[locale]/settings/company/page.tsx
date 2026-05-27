@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { CompanyLogoSection } from './_components/company-logo-section';
+import { ImageAttachmentsSection } from './_components/image-attachments-section';
 
 export default async function CompanySettingsPage() {
   const t = await getTranslations('settings.company');
@@ -10,6 +11,7 @@ export default async function CompanySettingsPage() {
         <p className="text-sm text-muted-foreground">{t('description')}</p>
       </header>
       <CompanyLogoSection />
+      <ImageAttachmentsSection />
     </main>
   );
 }

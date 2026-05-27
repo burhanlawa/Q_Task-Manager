@@ -293,12 +293,20 @@ function formatBytes(n: number): string {
 // Map server error shapes to a translated message. The 422 storage-limit
 // error includes structured fields; everything else falls back to .message.
 function pickIntentErrorMessage(err: ApiError, t: Tx): string {
-  const body = err.body as { plan?: string; limit_bytes?: string; used_bytes?: string } | null;
+  const body = err.body as {
+    plan?: string;
+    limit_bytes?: string;
+    used_bytes?: string;
+    setting?: string;
+  } | null;
   if (err.status === 422 && body?.plan && body?.limit_bytes) {
     return t('errors.storageLimit', {
       plan: body.plan,
       limitMb: Math.round(Number(body.limit_bytes) / 1024 / 1024),
     });
+  }
+  if (err.status === 422 && body?.setting === 'allow_image_attachments') {
+    return t('errors.imagesDisabled');
   }
   if (err.status === 400) return err.message || t('errors.rejected');
   if (err.status === 403) return t('errors.forbidden');

@@ -15,6 +15,7 @@ import { TenantModule } from './tenant/tenant.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { BranchesModule } from './branches/branches.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { CompanySettingsModule } from './company-settings/company-settings.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { FilesModule } from './files/files.module';
 import { TeamsModule } from './teams/teams.module';
@@ -45,6 +46,7 @@ import { UsersModule } from './users/users.module';
     WebhooksModule,
     BranchesModule,
     CalendarModule,
+    CompanySettingsModule,
     DepartmentsModule,
     FilesModule,
     TeamsModule,
