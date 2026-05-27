@@ -10,6 +10,7 @@ import { MeModule } from './me/me.module';
 import { ActivityLogModule } from './activity-log/activity-log.module';
 import { CryptoModule } from './crypto/crypto.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { R2Module } from './r2/r2.module';
 import { TenantModule } from './tenant/tenant.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { BranchesModule } from './branches/branches.module';
@@ -32,6 +33,7 @@ import { UsersModule } from './users/users.module';
     // is real and we scale beyond one replica (deferred — see commit message).
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     PrismaModule,
+    R2Module,
     TenantModule,
     ActivityLogModule,
     CryptoModule,
