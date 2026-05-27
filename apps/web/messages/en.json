@@ -254,9 +254,13 @@
       "people": "people",
       "description": "Description",
       "actions": "Actions",
-      "actionsSoon": "Action buttons are read-only here; they'll be wired up in the next sprint.",
       "noActions": "No actions available for this status.",
-      "edit": "Edit"
+      "edit": "Edit",
+      "transitionError": "Could not perform that action. Please try again.",
+      "confirm": {
+        "cancel": "Cancel this task? This cannot be undone via this button.",
+        "requestRevision": "Send this task back to in-progress for revisions?"
+      }
     },
     "edit": {
       "title": "Edit task",

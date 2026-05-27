@@ -70,6 +70,17 @@ export class MeController {
     };
   }
 
+  /**
+   * Returns the caller's effective permission set as an array. The UI uses
+   * this to hide buttons the user can't successfully invoke. The server
+   * remains authoritative — a stale or tampered cache cannot bypass guards.
+   */
+  @Get('permissions')
+  async myPermissions(@CurrentTenant() tenant: TenantContext) {
+    const granted = await this.permissions.getEffectivePermissions(tenant.userId);
+    return { permissions: Array.from(granted) };
+  }
+
   @Get()
   async profile(@CurrentTenant() tenant: TenantContext, @TenantDb() db: Prisma.TransactionClient) {
     const user = await db.user.findUnique({

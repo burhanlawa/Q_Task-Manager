@@ -1,7 +1,8 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { Link } from '@/i18n/routing';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,9 @@ type Task = {
   assignees: Assignee[];
 };
 
+type Me = { id: string };
+type MyPerms = { permissions: string[] };
+
 const STATUS_VARIANT: Record<TaskStatus, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   draft: 'outline',
   assigned: 'default',
@@ -53,31 +57,90 @@ const STATUS_VARIANT: Record<TaskStatus, 'default' | 'secondary' | 'outline' | '
   cancelled: 'outline',
 };
 
-// Action buttons are stubbed for Sprint 8.10 — they'll be wired to the
-// transition endpoints (POST :id/accept etc.) in Sprint 9. Which buttons
-// are visible depends on the task's status, but for now we just render
-// every state-machine action as a disabled button so the UI shape is set.
-const ACTIONS_BY_STATUS: Record<TaskStatus, readonly string[]> = {
-  draft: [],
-  assigned: ['accept', 'requestReassignment', 'cancel'],
-  in_progress: ['submit', 'requestReassignment', 'cancel'],
-  submitted: ['approve', 'requestRevision', 'cancel'],
-  reassignment_requested: ['decideReassignment', 'cancel'],
-  approved: [],
-  rejected: [],
-  completed: [],
-  cancelled: [],
+// One row per transition. The button only renders when both `visible` and
+// the status precondition pass; the server remains the source of truth and
+// will 403/409 if a stale UI somehow shows a button it shouldn't.
+type Action = {
+  key: 'accept' | 'start' | 'submit' | 'approve' | 'requestRevision' | 'cancel';
+  endpoint: string; // POST /tasks/:id/<endpoint>
+  fromStatus: TaskStatus[];
+  // `actor` decides who sees the button:
+  //   'assignee'         → the viewer must be on the task_assignees list
+  //   'creatorOrPerm'    → viewer is the creator OR holds the permission key
+  actor:
+    | { type: 'assignee' }
+    | { type: 'creatorOrPerm'; permission: string };
+  variant?: 'outline' | 'destructive' | 'default';
 };
+
+const ACTIONS: readonly Action[] = [
+  {
+    key: 'accept',
+    endpoint: 'accept',
+    fromStatus: ['assigned'],
+    actor: { type: 'assignee' },
+  },
+  {
+    key: 'start',
+    endpoint: 'start',
+    fromStatus: ['assigned'],
+    actor: { type: 'assignee' },
+    variant: 'outline',
+  },
+  {
+    key: 'submit',
+    endpoint: 'submit',
+    fromStatus: ['in_progress'],
+    actor: { type: 'assignee' },
+  },
+  {
+    key: 'approve',
+    endpoint: 'approve',
+    fromStatus: ['submitted'],
+    actor: { type: 'creatorOrPerm', permission: 'task.approve' },
+  },
+  {
+    key: 'requestRevision',
+    endpoint: 'request-revision',
+    fromStatus: ['submitted'],
+    actor: { type: 'creatorOrPerm', permission: 'task.approve' },
+    variant: 'outline',
+  },
+  {
+    key: 'cancel',
+    endpoint: 'cancel',
+    fromStatus: [
+      'draft',
+      'assigned',
+      'in_progress',
+      'submitted',
+      'reassignment_requested',
+      'approved',
+      'rejected',
+    ],
+    actor: { type: 'creatorOrPerm', permission: 'task.cancel' },
+    variant: 'destructive',
+  },
+];
+
+function isAssigneeOf(task: Task, userId: string): boolean {
+  if (task.assignedToUserId === userId) return true;
+  return task.assignees.some((a) => a.userId === userId);
+}
+
+function hasPerm(perms: string[], key: string): boolean {
+  return perms.includes('*') || perms.includes(key);
+}
 
 export function TaskDetail({ taskId }: { taskId: string }) {
   const t = useTranslations('tasks');
+  const queryClient = useQueryClient();
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const { data: task, isLoading, error } = useQuery<Task, ApiError>({
     queryKey: ['task', taskId],
     queryFn: () => api.get<Task>(`tasks/${taskId}`),
     retry: (count, err) => {
-      // Don't retry on 404/403 — those mean the task is genuinely unreachable
-      // for this user (different tenant, archived, or doesn't exist).
       if (err.status === 404 || err.status === 403) return false;
       return count < 2;
     },
@@ -88,9 +151,31 @@ export function TaskDetail({ taskId }: { taskId: string }) {
     queryFn: () => api.get('departments?status=active'),
   });
 
-  if (isLoading) {
-    return <p className="text-muted-foreground">{t('loading')}</p>;
-  }
+  const { data: me } = useQuery<Me>({
+    queryKey: ['me'],
+    queryFn: () => api.get('me'),
+  });
+  const { data: perms } = useQuery<MyPerms>({
+    queryKey: ['me', 'permissions'],
+    queryFn: () => api.get('me/permissions'),
+  });
+
+  // One transition mutation, parameterised by endpoint. We update the cache
+  // optimistically with the server's response so the status badge + actions
+  // refresh without a separate GET.
+  const transition = useMutation({
+    mutationFn: (endpoint: string) => api.post<Task>(`tasks/${taskId}/${endpoint}`, {}),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['task', taskId], updated);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setActionError(null);
+    },
+    onError: (err: ApiError) => {
+      setActionError(err.message || t('detail.transitionError'));
+    },
+  });
+
+  if (isLoading) return <p className="text-muted-foreground">{t('loading')}</p>;
 
   if (error?.status === 404 || error?.status === 403) {
     return (
@@ -103,20 +188,30 @@ export function TaskDetail({ taskId }: { taskId: string }) {
       </div>
     );
   }
-
-  if (error || !task) {
-    return <p className="text-destructive">{t('loadError')}</p>;
-  }
+  if (error || !task) return <p className="text-destructive">{t('loadError')}</p>;
 
   const dept = departments?.find((d) => d.id === task.departmentId);
+  const myId = me?.id ?? '';
+  const myPerms = perms?.permissions ?? [];
+
+  // Filter the action list to what this viewer can actually do right now.
+  const visibleActions = ACTIONS.filter((a) => {
+    if (!a.fromStatus.includes(task.status)) return false;
+    if (a.actor.type === 'assignee') {
+      return isAssigneeOf(task, myId);
+    }
+    // creatorOrPerm
+    return task.createdByUserId === myId || hasPerm(myPerms, a.actor.permission);
+  });
+
+  // A confirm() prompt for the destructive ones — these are reversible only by
+  // re-doing the workflow, so a single tap shouldn't fire them by accident.
+  const needsConfirm = (key: Action['key']) => key === 'cancel' || key === 'requestRevision';
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Link
-          href="/tasks"
-          className="text-sm text-muted-foreground hover:underline"
-        >
+        <Link href="/tasks" className="text-sm text-muted-foreground hover:underline">
           {t('backToList')}
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -140,9 +235,7 @@ export function TaskDetail({ taskId }: { taskId: string }) {
         </h2>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <Field label={t('detail.priority')}>
-            <Badge variant="outline">
-              {t(`priority.${task.priority}` as 'priority.low')}
-            </Badge>
+            <Badge variant="outline">{t(`priority.${task.priority}` as 'priority.low')}</Badge>
           </Field>
           <Field label={t('detail.department')}>{dept?.name ?? '—'}</Field>
           <Field label={t('detail.dueDate')}>
@@ -155,7 +248,8 @@ export function TaskDetail({ taskId }: { taskId: string }) {
             {new Date(task.updatedAt).toLocaleString()}
           </Field>
           <Field label={t('detail.assignees')}>
-            {task.assigneeCount} {task.assigneeCount === 1 ? t('detail.person') : t('detail.people')}
+            {task.assigneeCount}{' '}
+            {task.assigneeCount === 1 ? t('detail.person') : t('detail.people')}
           </Field>
         </dl>
       </section>
@@ -165,7 +259,13 @@ export function TaskDetail({ taskId }: { taskId: string }) {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             {t('detail.description')}
           </h2>
-          <p className="whitespace-pre-wrap text-sm">{task.description}</p>
+          <div
+            className="prose prose-sm max-w-none dark:prose-invert"
+            // The description comes from the trusted server (we wrote it via
+            // TipTap), but it is still user-generated. Backend should sanitize
+            // before storing; we render as HTML here for the rich-text view.
+            dangerouslySetInnerHTML={{ __html: task.description }}
+          />
         </section>
       )}
 
@@ -173,16 +273,31 @@ export function TaskDetail({ taskId }: { taskId: string }) {
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           {t('detail.actions')}
         </h2>
-        <p className="text-xs text-muted-foreground">{t('detail.actionsSoon')}</p>
+        {actionError && (
+          <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {actionError}
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
-          {ACTIONS_BY_STATUS[task.status].map((action) => (
-            <Button key={action} variant="outline" disabled>
-              {t(`actions.${action}` as 'actions.accept')}
-            </Button>
-          ))}
-          {ACTIONS_BY_STATUS[task.status].length === 0 && (
+          {visibleActions.length === 0 && (
             <span className="text-sm text-muted-foreground">{t('detail.noActions')}</span>
           )}
+          {visibleActions.map((a) => (
+            <Button
+              key={a.key}
+              variant={a.variant ?? 'default'}
+              disabled={transition.isPending}
+              onClick={() => {
+                if (needsConfirm(a.key)) {
+                  const ok = window.confirm(t(`detail.confirm.${a.key}` as 'detail.confirm.cancel'));
+                  if (!ok) return;
+                }
+                transition.mutate(a.endpoint);
+              }}
+            >
+              {t(`actions.${a.key}` as 'actions.accept')}
+            </Button>
+          ))}
         </div>
       </section>
     </div>
