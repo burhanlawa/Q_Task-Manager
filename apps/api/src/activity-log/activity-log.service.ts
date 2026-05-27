@@ -77,6 +77,33 @@ export class ActivityLogService {
   }
 
   /**
+   * Generic event recorder for cases where the typed helpers don't fit.
+   * Same shape as the others; one row written inside the caller's tx.
+   */
+  async record(p: {
+    db: Prisma.TransactionClient;
+    companyId: string;
+    actorUserId: string | null;
+    actionType: string;
+    targetType: string;
+    targetId: string;
+    fieldChanged?: string;
+    metadata?: Prisma.InputJsonValue;
+  }): Promise<void> {
+    await p.db.activityLog.create({
+      data: {
+        companyId: p.companyId,
+        actorUserId: p.actorUserId,
+        actionType: p.actionType,
+        targetType: p.targetType,
+        targetId: p.targetId,
+        fieldChanged: p.fieldChanged,
+        metadata: p.metadata,
+      },
+    });
+  }
+
+  /**
    * Onboarding-flow events (Sprint 7 task 7.6). All target the invited user
    * id so a query "show me everything that happened to Adam" is one indexed
    * scan via idx_activity_log_target.
