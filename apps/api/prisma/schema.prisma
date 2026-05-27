@@ -297,15 +297,33 @@ model Tag {
   nameLower  String?   @map("name_lower")
   color      String?
   position   Int       @default(0)
+  /// Maintained by the trg_task_tags_usage_count trigger. Never written by app.
+  usageCount Int       @default(0) @map("usage_count")
   createdAt  DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt  DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt  DateTime? @db.Timestamptz(6) @map("deleted_at")
 
   category TagCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  taskTags TaskTag[]
 
   @@unique([categoryId, name], map: "idx_tags_category_name")
   @@index([companyId, categoryId, position], map: "idx_tags_company_category_position")
   @@map("tags")
+}
+
+model TaskTag {
+  taskId         String   @db.Uuid @map("task_id")
+  tagId          String   @db.Uuid @map("tag_id")
+  addedAt        DateTime @default(now()) @db.Timestamptz(6) @map("added_at")
+  addedByUserId  String?  @db.Uuid @map("added_by_user_id")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId],  references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@index([tagId],  map: "idx_task_tags_tag")
+  @@index([taskId], map: "idx_task_tags_task")
+  @@map("task_tags")
 }
 
 model ActivityLog {
@@ -361,6 +379,7 @@ model Task {
   subtasks             Task[]                    @relation("TaskSubtasks")
   assignees            TaskAssignee[]
   reassignmentRequests TaskReassignmentRequest[]
+  taskTags             TaskTag[]
 
   @@index([companyId, deletedAt],                map: "idx_tasks_company_deleted")
   @@index([companyId, status],                   map: "idx_tasks_company_status")
