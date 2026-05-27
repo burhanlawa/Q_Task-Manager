@@ -1,14 +1,21 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
+  ForbiddenException,
+  Get,
+  HttpCode,
   NotFoundException,
+  Param,
+  ParseUUIDPipe,
   Post,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
@@ -64,7 +71,10 @@ const PURPOSE_RULES: Record<
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class FilesController {
-  constructor(private readonly r2: R2Service) {}
+  constructor(
+    private readonly r2: R2Service,
+    private readonly activity: ActivityLogService,
+  ) {}
 
   // POST /files/upload-intent
   //   Body: filename, mime_type, size_bytes, purpose, attached_to_type, attached_to_id
@@ -171,4 +181,105 @@ export class FilesController {
       max_size_bytes: UPLOAD_MAX_BYTES,
     };
   }
+
+  // POST /files/:id/complete
+  //   Marks an upload as finished. Idempotent: calling on an already-
+  //   'uploaded' row returns 200 with the row (so a retried client request
+  //   doesn't surprise itself with a 409). RLS scopes to this tenant.
+  //   Only the original uploader can complete — otherwise a second user
+  //   could finalize a half-uploaded file they didn't own.
+  @Post(':id/complete')
+  @HttpCode(200)
+  @RequirePermissions('file.upload')
+  async complete(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const file = await db.file.findUnique({ where: { id } });
+    if (!file || file.deletedAt) throw new NotFoundException('File not found');
+    if (file.uploaderUserId !== tenant.userId) {
+      throw new ForbiddenException('Only the uploader can complete this upload');
+    }
+
+    if (file.uploadStatus === 'uploaded') {
+      // Idempotent path. Don't write a second activity_log entry.
+      return serializeFile(file);
+    }
+    if (file.uploadStatus !== 'pending_upload') {
+      throw new ConflictException(`Cannot complete a file in status '${file.uploadStatus}'`);
+    }
+
+    const updated = await db.file.update({
+      where: { id },
+      data: { uploadStatus: 'uploaded' },
+    });
+
+    await this.activity.record({
+      db,
+      companyId: tenant.companyId,
+      actorUserId: tenant.userId,
+      actionType: 'file_uploaded',
+      targetType: 'file',
+      targetId: id,
+      metadata: {
+        purpose: file.purpose,
+        ownerType: file.ownerType,
+        ownerId: file.ownerId,
+        contentType: file.contentType,
+        sizeBytes: file.sizeBytes.toString(),
+      },
+    });
+
+    return serializeFile(updated);
+  }
+
+  // GET /files/:id/download-url
+  //   Returns a short-lived pre-signed GET URL for the file. RLS scopes
+  //   read access to the tenant; an explicit deny for files that haven't
+  //   completed upload yet so half-written objects aren't served.
+  //
+  //   Note: a richer per-purpose authorization gate (e.g., task attachments
+  //   require task.read on the owning task) lands in 11.5; this endpoint
+  //   currently relies on file.read + RLS for tenant isolation, which is
+  //   the bar the 11.4 done check ("file is downloadable") requires.
+  @Get(':id/download-url')
+  @RequirePermissions('file.read')
+  async downloadUrl(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const file = await db.file.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        r2Key: true,
+        uploadStatus: true,
+        deletedAt: true,
+        contentType: true,
+        originalFilename: true,
+      },
+    });
+    if (!file || file.deletedAt) throw new NotFoundException('File not found');
+    if (file.uploadStatus !== 'uploaded') {
+      throw new ConflictException(`File is not ready for download (status: ${file.uploadStatus})`);
+    }
+
+    const signed = await this.r2.generatePresignedDownloadUrl({ key: file.r2Key });
+    return {
+      download_url: signed.url,
+      expires_in_seconds: signed.expiresInSeconds,
+      content_type: file.contentType,
+      original_filename: file.originalFilename,
+    };
+  }
+}
+
+// JSON.stringify can't handle BigInt — convert size_bytes to a string before
+// the controller's response leaves Nest's JSON serializer. Keep the camelCase
+// names that match the Prisma model.
+function serializeFile<T extends { sizeBytes: bigint }>(
+  f: T,
+): Omit<T, 'sizeBytes'> & { sizeBytes: string } {
+  return { ...f, sizeBytes: f.sizeBytes.toString() };
 }
