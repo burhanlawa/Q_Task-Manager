@@ -79,6 +79,8 @@ export const PERMISSION_CATALOG: readonly PermissionGroup[] = [
       { key: 'task.assign', label: 'Assign tasks' },
       { key: 'task.assign_cross_department', label: 'Assign tasks across departments' },
       { key: 'task.archive', label: 'Archive tasks' },
+      { key: 'task.approve', label: 'Approve or request revisions on submitted tasks' },
+      { key: 'task.cancel', label: 'Cancel tasks' },
     ],
   },
   {
