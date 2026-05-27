@@ -37,6 +37,7 @@ type Task = {
   status: TaskStatus;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   dueDate: string | null;
+  originalDueDate: string | null;
   createdByUserId: string;
   assignedToUserId: string | null;
   assigneeCount: number;
@@ -261,6 +262,13 @@ export function TaskDetail({ taskId }: { taskId: string }) {
           <Field label={t('detail.department')}>{dept?.name ?? '—'}</Field>
           <Field label={t('detail.dueDate')}>
             {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}
+            {task.originalDueDate && task.originalDueDate !== task.dueDate && (
+              <span className="ms-2 text-xs text-muted-foreground">
+                {t('detail.adjustedFrom', {
+                  date: new Date(task.originalDueDate).toLocaleDateString(),
+                })}
+              </span>
+            )}
           </Field>
           <Field label={t('detail.created')}>
             {new Date(task.createdAt).toLocaleString()}

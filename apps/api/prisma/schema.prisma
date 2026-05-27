@@ -398,6 +398,9 @@ model Task {
   reassignmentRequestCount Int           @default(0) @map("reassignment_request_count")
 
   dueDate                  DateTime?     @db.Date @map("due_date")
+  /// The user-typed due date before business-day auto-adjustment.
+  /// NULL means no adjustment was applied (typed date was already a working day).
+  originalDueDate          DateTime?     @db.Date @map("original_due_date")
   startedAt                DateTime?     @db.Timestamptz(6) @map("started_at")
   completedAt              DateTime?     @db.Timestamptz(6) @map("completed_at")
 

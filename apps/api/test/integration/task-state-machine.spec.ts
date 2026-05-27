@@ -3,6 +3,7 @@ import { PrismaClient, type Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { ActivityLogService } from '../../src/activity-log/activity-log.service';
 import { PermissionsService } from '../../src/auth/permissions.service';
+import { CalendarService } from '../../src/calendar/calendar.service';
 import { TaskReassignmentController } from '../../src/tasks/task-reassignment.controller';
 import { TaskTransitionsController } from '../../src/tasks/task-transitions.controller';
 import { TasksController } from '../../src/tasks/tasks.controller';
@@ -106,12 +107,13 @@ function stubPerms(): PermissionsService {
 
 // Real ActivityLogService — verifying log rows is part of the done check.
 const activity = new ActivityLogService();
+const calendar = new CalendarService();
 
 // Controller instances (recreated per test in case state ever creeps in).
 function makeControllers() {
   const perms = stubPerms();
   return {
-    tasks: new TasksController(perms, activity),
+    tasks: new TasksController(perms, activity, calendar),
     transitions: new TaskTransitionsController(perms, activity),
     reassign: new TaskReassignmentController(perms, activity),
   };

@@ -22,6 +22,7 @@ import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { PermissionsService } from '../auth/permissions.service';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
+import { CalendarService, type CalendarHoliday } from '../calendar/calendar.service';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -40,6 +41,7 @@ export class TasksController {
   constructor(
     private readonly permissions: PermissionsService,
     private readonly activity: ActivityLogService,
+    private readonly calendar: CalendarService,
   ) {}
 
   @Post()
@@ -130,21 +132,143 @@ export class TasksController {
     // these two cover the intent. Sprint 8.5+ transitions move it forward.
     const status = assigneeIds.length === 0 ? 'draft' : 'assigned';
 
+    // Business-day auto-adjust (Sprint 10.7). We only adjust when a due date
+    // was set AND there is at least one assignee. With no assignee there's no
+    // "whose calendar?" — keep the requested date as typed.
+    //
+    // We roll the date forward day-by-day until isWorkingDay() holds for
+    // EVERY assignee (and the branch+company). 60-day cap stops a misconfigured
+    // tenant (e.g. workingDays=0) from infinite looping; over the cap we
+    // accept the original date and skip the adjustment.
+    const branchId = dto.branchId ?? dept.branchId;
+    let adjustedDueDate: Date | null = dto.dueDate ? new Date(dto.dueDate) : null;
+    let originalDueDate: Date | null = null;
+    let adjustmentReason: string | null = null;
+    if (adjustedDueDate && assigneeIds.length > 0) {
+      const [company, branch, assigneeUsers] = await Promise.all([
+        db.company.findUnique({
+          where: { id: tenant.companyId },
+          select: { workingDays: true },
+        }),
+        branchId
+          ? db.branch.findUnique({
+              where: { id: branchId },
+              select: { id: true, workingDays: true },
+            })
+          : Promise.resolve(null),
+        db.user.findMany({
+          where: { id: { in: assigneeIds } },
+          select: { id: true, leaveStartDate: true, leaveEndDate: true },
+        }),
+      ]);
+
+      if (company && branch) {
+        // Pull holidays for company-wide AND this branch in a wide window
+        // around the target date once — cheaper than per-day queries.
+        const windowStart = new Date(adjustedDueDate);
+        const windowEnd = new Date(adjustedDueDate);
+        windowEnd.setUTCDate(windowEnd.getUTCDate() + 60);
+        const holidayRows = await db.holiday.findMany({
+          where: {
+            companyId: tenant.companyId,
+            deletedAt: null,
+            date: { gte: windowStart, lte: windowEnd },
+            OR: [{ branchId: null }, { branchId: branch.id }],
+          },
+          select: { date: true, branchId: true },
+        });
+        const holidays: CalendarHoliday[] = holidayRows;
+
+        const requested = new Date(adjustedDueDate);
+        let probe = new Date(adjustedDueDate);
+        let movedDays = 0;
+        const blockedBy: string[] = [];
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const allCanWork = assigneeUsers.every((u) =>
+            this.calendar.isWorkingDay({
+              company,
+              branch,
+              user: u,
+              holidays,
+              date: probe,
+            }),
+          );
+          if (allCanWork) break;
+          if (movedDays === 0) {
+            // First failure — record why we're moving so the activity log
+            // entry can be human-readable.
+            const dow = probe.getUTCDay();
+            const bitmask = branch.workingDays ?? company.workingDays;
+            const isWeekend = (bitmask & (1 << dow)) === 0;
+            const isHoliday = holidays.some(
+              (h) =>
+                h.date.toISOString().slice(0, 10) === probe.toISOString().slice(0, 10) &&
+                (h.branchId === null || h.branchId === branch.id),
+            );
+            if (isWeekend) blockedBy.push('weekend');
+            if (isHoliday) blockedBy.push('holiday');
+            const onLeave = assigneeUsers.filter(
+              (u) =>
+                u.leaveStartDate &&
+                u.leaveEndDate &&
+                probe.toISOString().slice(0, 10) >= u.leaveStartDate.toISOString().slice(0, 10) &&
+                probe.toISOString().slice(0, 10) <= u.leaveEndDate.toISOString().slice(0, 10),
+            );
+            if (onLeave.length > 0) blockedBy.push('assignee_on_leave');
+          }
+          probe.setUTCDate(probe.getUTCDate() + 1);
+          movedDays += 1;
+          if (movedDays > 60) {
+            // Misconfigured tenant — abandon the adjustment and keep the
+            // requested date. We log nothing; the date stays as typed.
+            probe = requested;
+            movedDays = 0;
+            break;
+          }
+        }
+
+        if (movedDays > 0) {
+          originalDueDate = requested;
+          adjustedDueDate = probe;
+          adjustmentReason = blockedBy.join('+') || 'non_working_day';
+        }
+      }
+    }
+
     const task = await db.task.create({
       data: {
         companyId: tenant.companyId,
         departmentId: dto.departmentId,
         teamId: dto.teamId ?? null,
-        branchId: dto.branchId ?? dept.branchId,
+        branchId: branchId,
         title: dto.title,
         description: dto.description ?? null,
         priority: dto.priority ?? 'medium',
-        dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+        dueDate: adjustedDueDate,
+        originalDueDate: originalDueDate,
         status,
         createdByUserId: tenant.userId,
         assignedToUserId: assigneeIds[0] ?? null,
       },
     });
+
+    if (adjustmentReason && originalDueDate && adjustedDueDate) {
+      await this.activity.record({
+        db,
+        companyId: tenant.companyId,
+        actorUserId: tenant.userId,
+        actionType: 'task_due_date_adjusted',
+        targetType: 'task',
+        targetId: task.id,
+        metadata: {
+          from: originalDueDate.toISOString().slice(0, 10),
+          to: adjustedDueDate.toISOString().slice(0, 10),
+          reason: adjustmentReason,
+        },
+      });
+    }
 
     if (assigneeIds.length > 0) {
       await db.taskAssignee.createMany({

@@ -256,6 +256,7 @@
       "actions": "Actions",
       "noActions": "No actions available for this status.",
       "edit": "Edit",
+      "adjustedFrom": "(adjusted from {date} — non-working day)",
       "transitionError": "Could not perform that action. Please try again.",
       "confirm": {
         "cancel": "Cancel this task? This cannot be undone via this button.",
