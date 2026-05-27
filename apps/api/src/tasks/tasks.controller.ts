@@ -12,6 +12,7 @@ import {
   Post,
   Put,
   Query,
+  UnprocessableEntityException,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -91,6 +92,39 @@ export class TasksController {
       }
     }
 
+    // Validate tags up-front (before creating the task row) so we can also
+    // enforce the mandatory-category rule from Sprint 10.5. Doing this here
+    // means a rejected create leaves no orphan task row behind.
+    const tagIds = dto.tagIds ?? [];
+    let tagsWithCategory: Array<{ id: string; categoryId: string }> = [];
+    if (tagIds.length > 0) {
+      tagsWithCategory = await db.tag.findMany({
+        where: { id: { in: tagIds }, deletedAt: null },
+        select: { id: true, categoryId: true },
+      });
+      if (tagsWithCategory.length !== tagIds.length) {
+        throw new BadRequestException('One or more tags do not exist in this tenant');
+      }
+    }
+
+    // Mandatory-category enforcement: every category flagged is_mandatory
+    // must be represented by at least one of the supplied tags. We pull
+    // mandatory categories with one query, then check coverage in memory.
+    const mandatoryCategories = await db.tagCategory.findMany({
+      where: { isMandatory: true, deletedAt: null },
+      select: { id: true, name: true },
+    });
+    if (mandatoryCategories.length > 0) {
+      const coveredCategoryIds = new Set(tagsWithCategory.map((t) => t.categoryId));
+      const missing = mandatoryCategories.filter((c) => !coveredCategoryIds.has(c.id));
+      if (missing.length > 0) {
+        throw new UnprocessableEntityException({
+          message: `Missing required tag from category: ${missing.map((c) => c.name).join(', ')}`,
+          missingCategories: missing.map((c) => ({ id: c.id, name: c.name })),
+        });
+      }
+    }
+
     // Status: 'draft' when no assignees, 'assigned' once we have someone on it.
     // Spec said "pending" but our task_status enum has no 'pending' value;
     // these two cover the intent. Sprint 8.5+ transitions move it forward.
@@ -123,18 +157,10 @@ export class TasksController {
       // The DB trigger from 8.2 maintains tasks.assignee_count automatically.
     }
 
-    // Attach tags if provided. Verify each is in this tenant first; RLS
-    // would hide cross-tenant rows but the count mismatch gives a clearer
-    // 400 than letting the FK insert fail.
-    const tagIds = dto.tagIds ?? [];
+    // Attach tags. The set was already validated above (existence +
+    // mandatory-category coverage). The DB trigger from 10.2 maintains
+    // tags.usage_count automatically.
     if (tagIds.length > 0) {
-      const tags = await db.tag.findMany({
-        where: { id: { in: tagIds }, deletedAt: null },
-        select: { id: true },
-      });
-      if (tags.length !== tagIds.length) {
-        throw new BadRequestException('One or more tags do not exist in this tenant');
-      }
       await db.taskTag.createMany({
         data: tagIds.map((tagId) => ({
           taskId: task.id,
@@ -142,7 +168,6 @@ export class TasksController {
           addedByUserId: tenant.userId,
         })),
       });
-      // The DB trigger from 10.2 maintains tags.usage_count automatically.
     }
 
     await this.activity.record({
