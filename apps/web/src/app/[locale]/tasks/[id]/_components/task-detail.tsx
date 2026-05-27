@@ -7,6 +7,8 @@ import { Link } from '@/i18n/routing';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { api, ApiError, type Department } from '@/lib/api';
+import { CancellationBanner } from './cancellation-banner';
+import { CancelTaskDialog } from './cancel-task-dialog';
 import { ReassignmentDecisionPanel } from './reassignment-decision-panel';
 import { ReassignmentHistoryPanel } from './reassignment-history-panel';
 import { RequestReassignmentDialog } from './request-reassignment-dialog';
@@ -140,6 +142,7 @@ export function TaskDetail({ taskId }: { taskId: string }) {
   const queryClient = useQueryClient();
   const [actionError, setActionError] = useState<string | null>(null);
   const [reassignOpen, setReassignOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const { data: task, isLoading, error } = useQuery<Task, ApiError>({
     queryKey: ['task', taskId],
@@ -208,9 +211,10 @@ export function TaskDetail({ taskId }: { taskId: string }) {
     return task.createdByUserId === myId || hasPerm(myPerms, a.actor.permission);
   });
 
-  // A confirm() prompt for the destructive ones — these are reversible only by
-  // re-doing the workflow, so a single tap shouldn't fire them by accident.
-  const needsConfirm = (key: Action['key']) => key === 'cancel' || key === 'requestRevision';
+  // requestRevision uses a quick browser confirm — it's reversible (just
+  // re-submit). Cancel is destructive AND needs a reason, so it opens a modal
+  // instead of firing from this onClick.
+  const needsConfirm = (key: Action['key']) => key === 'requestRevision';
 
   // Reassignment is an assignee-side action available while the task is
   // active (assigned/in_progress). It's a separate button because it opens
@@ -286,6 +290,8 @@ export function TaskDetail({ taskId }: { taskId: string }) {
         </section>
       )}
 
+      {task.status === 'cancelled' && <CancellationBanner taskId={taskId} />}
+
       {canDecideReassignment && <ReassignmentDecisionPanel taskId={taskId} />}
 
       <ReassignmentHistoryPanel taskId={taskId} />
@@ -309,6 +315,10 @@ export function TaskDetail({ taskId }: { taskId: string }) {
               variant={a.variant ?? 'default'}
               disabled={transition.isPending}
               onClick={() => {
+                if (a.key === 'cancel') {
+                  setCancelOpen(true);
+                  return;
+                }
                 if (needsConfirm(a.key)) {
                   const ok = window.confirm(t(`detail.confirm.${a.key}` as 'detail.confirm.cancel'));
                   if (!ok) return;
@@ -336,6 +346,7 @@ export function TaskDetail({ taskId }: { taskId: string }) {
         open={reassignOpen}
         onOpenChange={setReassignOpen}
       />
+      <CancelTaskDialog taskId={taskId} open={cancelOpen} onOpenChange={setCancelOpen} />
     </div>
   );
 }

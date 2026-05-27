@@ -193,6 +193,51 @@ export class TasksController {
     return task;
   }
 
+  // Activity log for a task, newest first. The actor is inlined so the UI
+  // doesn't need a follow-up users call to render "X did Y". RLS scopes the
+  // log to the caller's tenant; a wrong tenant gets an empty list.
+  @Get(':id/activity')
+  @RequirePermissions('task.read')
+  async getActivity(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    // Confirm the task exists / is visible before listing — otherwise a 404
+    // task would silently return [] which is confusing.
+    const task = await db.task.findUnique({ where: { id }, select: { id: true } });
+    if (!task) throw new NotFoundException('Task not found');
+
+    const rows = await db.activityLog.findMany({
+      where: { targetType: 'task', targetId: id },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        actionType: true,
+        metadata: true,
+        createdAt: true,
+        actorUserId: true,
+      },
+    });
+
+    const actorIds = Array.from(
+      new Set(rows.map((r) => r.actorUserId).filter((x): x is string => !!x)),
+    );
+    const actors = actorIds.length
+      ? await db.user.findMany({
+          where: { id: { in: actorIds } },
+          select: { id: true, displayName: true, firstName: true, lastName: true, email: true },
+        })
+      : [];
+    const actorById = new Map(actors.map((u) => [u.id, u]));
+
+    return {
+      items: rows.map((r) => ({
+        ...r,
+        actor: r.actorUserId ? (actorById.get(r.actorUserId) ?? null) : null,
+      })),
+    };
+  }
+
   @Patch(':id')
   @RequirePermissions('task.update')
   async update(

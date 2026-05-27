@@ -289,6 +289,26 @@
       "decideReassignment": "Review reassignment",
       "cancel": "Cancel task"
     },
+    "cancel": {
+      "title": "Cancel this task?",
+      "description": "Provide a reason for cancelling. It will be recorded on the task and visible to anyone who can read it.",
+      "reasonLabel": "Cancellation reason",
+      "reasonPlaceholder": "Why are you cancelling this task? (minimum 10 characters)",
+      "charCount": "{count, plural, =0 {0 of {min} characters minimum} one {1 character ({min} minimum)} other {# characters ({min} minimum)}}",
+      "submit": "Cancel task",
+      "submitting": "Cancelling…",
+      "keep": "Keep task",
+      "errors": {
+        "generic": "Could not cancel the task. Please try again.",
+        "tooShort": "Please write at least {min} characters explaining the reason."
+      },
+      "banner": {
+        "title": "This task was cancelled",
+        "subtitle": "Cancelled by {who} on {when}",
+        "reasonLabel": "Reason",
+        "noReason": "No reason was recorded."
+      }
+    },
     "reassignment": {
       "history": {
         "title": "{count, plural, one {Reassignment history (1)} other {Reassignment history (#)}}",
