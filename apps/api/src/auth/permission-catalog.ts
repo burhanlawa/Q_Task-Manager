@@ -84,6 +84,14 @@ export const PERMISSION_CATALOG: readonly PermissionGroup[] = [
     ],
   },
   {
+    category: 'Tags',
+    description: 'Browse and create tenant-scoped tags applied to tasks.',
+    permissions: [
+      { key: 'tag.read', label: 'View tags' },
+      { key: 'tag.create', label: 'Create tags' },
+    ],
+  },
+  {
     category: 'Comments',
     description: 'Comment on tasks (Sprint 13).',
     permissions: [

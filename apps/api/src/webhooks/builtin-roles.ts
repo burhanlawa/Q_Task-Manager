@@ -54,6 +54,8 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
       'task.approve',
       'task.cancel',
       'task.read',
+      'tag.read',
+      'tag.create',
       'report.read',
     ],
   },
@@ -70,6 +72,8 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
       'task.assign',
       'task.approve',
       'task.read',
+      'tag.read',
+      'tag.create',
       'comment.create',
       'comment.read',
     ],
@@ -77,7 +81,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
   {
     name: 'Employee',
     description: 'Default role for regular staff; can act on their own tasks.',
-    permissions: ['task.read', 'task.update.own', 'comment.create', 'comment.read'],
+    permissions: ['task.read', 'task.update.own', 'tag.read', 'comment.create', 'comment.read'],
   },
   {
     name: 'HR',

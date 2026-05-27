@@ -16,6 +16,7 @@ import { BranchesModule } from './branches/branches.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { TeamsModule } from './teams/teams.module';
 import { RolesModule } from './roles/roles.module';
+import { TagsModule } from './tags/tags.module';
 import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 
@@ -43,6 +44,7 @@ import { UsersModule } from './users/users.module';
     TeamsModule,
     UsersModule,
     RolesModule,
+    TagsModule,
     TasksModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
