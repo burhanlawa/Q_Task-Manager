@@ -389,6 +389,7 @@ model TaskReassignmentRequest {
   requestedByUserId   String    @db.Uuid @map("requested_by_user_id")
   requestedToUserId   String?   @db.Uuid @map("requested_to_user_id")
   reason              String?
+  previousStatus      task_status? @map("previous_status")
   status              String    @default("pending")
   decidedByUserId     String?   @db.Uuid @map("decided_by_user_id")
   decidedAt           DateTime? @db.Timestamptz(6) @map("decided_at")
