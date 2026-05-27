@@ -200,6 +200,7 @@
   "tasks": {
     "title": "المهام",
     "description": "جميع المهام في مؤسستك. صفّ حسب الحالة أو القسم أو اعرض مهامك فقط.",
+    "newTask": "مهمة جديدة",
     "statusLabel": "الحالة",
     "departmentLabel": "القسم",
     "allStatuses": "كل الحالات",
@@ -264,6 +265,53 @@
       "requestReassignment": "طلب إعادة إسناد",
       "decideReassignment": "مراجعة طلب الإسناد",
       "cancel": "إلغاء المهمة"
+    },
+    "new": {
+      "title": "مهمة جديدة",
+      "description": "حدّد تفاصيل المهمة واختياريًا أسندها لأشخاص. تبدأ الحالة بـ 'مسودة' إن لم يُضَف أحد، وإلا 'مُسندة'.",
+      "submit": "إنشاء المهمة",
+      "submitting": "جارٍ الإنشاء…",
+      "cancel": "إلغاء",
+      "fields": {
+        "title": "العنوان",
+        "titlePlaceholder": "ملخّص قصير للعمل المطلوب",
+        "description": "الوصف",
+        "descriptionPlaceholder": "ما الذي يجب أن يحدث؟",
+        "priority": "الأولوية",
+        "dueDate": "تاريخ الاستحقاق",
+        "department": "القسم",
+        "departmentPlaceholder": "اختر قسمًا",
+        "team": "الفريق",
+        "teamPlaceholder": "اختر فريقًا",
+        "noTeam": "بدون فريق",
+        "assignees": "المُكلَّفون",
+        "assigneesHint": "الإسناد بين الأقسام يتطلب صلاحية 'task.assign_cross_department'.",
+        "tags": "الوسوم",
+        "tagsPlaceholder": "أداة اختيار الوسوم قادمة قريبًا",
+        "tagsSoon": "ستُضاف الوسوم في سبرنت لاحق."
+      },
+      "priority": {
+        "low": "منخفضة",
+        "medium": "متوسطة",
+        "high": "عالية",
+        "urgent": "عاجلة"
+      },
+      "editor": {
+        "bold": "غامق",
+        "italic": "مائل",
+        "bullets": "تعداد نقطي",
+        "numbers": "تعداد رقمي",
+        "heading": "عنوان"
+      },
+      "picker": {
+        "search": "ابحث عن شخص…",
+        "remove": "إزالة"
+      },
+      "errors": {
+        "generic": "تعذّر إنشاء المهمة. الرجاء المحاولة مرة أخرى.",
+        "titleRequired": "العنوان مطلوب.",
+        "departmentRequired": "اختر قسمًا للمهمة."
+      }
     }
   },
   "admin": {

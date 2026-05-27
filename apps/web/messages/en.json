@@ -200,6 +200,7 @@
   "tasks": {
     "title": "Tasks",
     "description": "All tasks across your tenant. Filter by status, department, or show only yours.",
+    "newTask": "New task",
     "statusLabel": "Status",
     "departmentLabel": "Department",
     "allStatuses": "All statuses",
@@ -264,6 +265,53 @@
       "requestReassignment": "Request reassignment",
       "decideReassignment": "Review reassignment",
       "cancel": "Cancel task"
+    },
+    "new": {
+      "title": "New task",
+      "description": "Set the task details and optionally assign people. Status starts at 'draft' if you don't add anyone, otherwise 'assigned'.",
+      "submit": "Create task",
+      "submitting": "Creating…",
+      "cancel": "Cancel",
+      "fields": {
+        "title": "Title",
+        "titlePlaceholder": "Short summary of the work",
+        "description": "Description",
+        "descriptionPlaceholder": "What needs to happen?",
+        "priority": "Priority",
+        "dueDate": "Due date",
+        "department": "Department",
+        "departmentPlaceholder": "Choose a department",
+        "team": "Team",
+        "teamPlaceholder": "Choose a team",
+        "noTeam": "No team",
+        "assignees": "Assignees",
+        "assigneesHint": "Cross-department assignment needs the 'task.assign_cross_department' permission.",
+        "tags": "Tags",
+        "tagsPlaceholder": "Tag picker coming soon",
+        "tagsSoon": "Tags will land in a later sprint."
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "urgent": "Urgent"
+      },
+      "editor": {
+        "bold": "Bold",
+        "italic": "Italic",
+        "bullets": "Bullets",
+        "numbers": "Numbers",
+        "heading": "Heading"
+      },
+      "picker": {
+        "search": "Search people…",
+        "remove": "Remove"
+      },
+      "errors": {
+        "generic": "Could not create task. Please try again.",
+        "titleRequired": "A title is required.",
+        "departmentRequired": "Choose a department for this task."
+      }
     }
   },
   "admin": {

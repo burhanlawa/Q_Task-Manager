@@ -200,6 +200,7 @@
   "tasks": {
     "title": "ئەرکەکان",
     "description": "هەموو ئەرکەکانی کۆمپانیاکەت. پاڵاوتن بەپێی دۆخ، بەش، یان تەنها هی خۆت پیشان بدە.",
+    "newTask": "ئەرکی نوێ",
     "statusLabel": "دۆخ",
     "departmentLabel": "بەش",
     "allStatuses": "هەموو دۆخەکان",
@@ -264,6 +265,53 @@
       "requestReassignment": "داوای گواستنەوە",
       "decideReassignment": "پێداچوونەوەی داواکاری",
       "cancel": "هەڵوەشاندنەوەی ئەرک"
+    },
+    "new": {
+      "title": "ئەرکی نوێ",
+      "description": "وردەکارییەکانی ئەرک دیاری بکە و دەکرێت کەسانێک بۆی دیاری بکەیت. ئەگەر کەسێک زیاد نەکەیت دۆخ دەبێتە 'ڕەشنووس'، ئەگەرنا 'سپێردراو'.",
+      "submit": "دروستکردنی ئەرک",
+      "submitting": "دروستکردن…",
+      "cancel": "ڕەتکردنەوە",
+      "fields": {
+        "title": "ناونیشان",
+        "titlePlaceholder": "کورتە دەربارەی کارەکە",
+        "description": "وەسف",
+        "descriptionPlaceholder": "پێویستە چی ڕووبدات؟",
+        "priority": "گرنگی",
+        "dueDate": "بەرواری کۆتایی",
+        "department": "بەش",
+        "departmentPlaceholder": "بەشێک هەڵبژێرە",
+        "team": "تیم",
+        "teamPlaceholder": "تیمێک هەڵبژێرە",
+        "noTeam": "بێ تیم",
+        "assignees": "سپێردراوەکان",
+        "assigneesHint": "سپاردن بۆ بەشێکی دیکە دەسەڵاتی 'task.assign_cross_department'ی پێویستە.",
+        "tags": "تاگەکان",
+        "tagsPlaceholder": "هەڵبژاردنی تاگ بەم زووانە",
+        "tagsSoon": "تاگەکان لە سپرینتێکی داهاتوودا زیاد دەکرێن."
+      },
+      "priority": {
+        "low": "نزم",
+        "medium": "ناوەند",
+        "high": "بەرز",
+        "urgent": "خێرا"
+      },
+      "editor": {
+        "bold": "تۆخ",
+        "italic": "لار",
+        "bullets": "خاڵ",
+        "numbers": "ژمارە",
+        "heading": "ناونیشان"
+      },
+      "picker": {
+        "search": "گەڕان بەدوای کەسەکان…",
+        "remove": "لابردن"
+      },
+      "errors": {
+        "generic": "نەتوانرا ئەرکەکە دروستبکرێت. تکایە دووبارە هەوڵ بدەرەوە.",
+        "titleRequired": "ناونیشان پێویستە.",
+        "departmentRequired": "بەشێک بۆ ئەرکەکە دیاری بکە."
+      }
     }
   },
   "admin": {
