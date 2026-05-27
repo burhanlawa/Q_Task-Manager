@@ -423,6 +423,7 @@ model Task {
   assignees            TaskAssignee[]
   reassignmentRequests TaskReassignmentRequest[]
   taskTags             TaskTag[]
+  comments             Comment[]
 
   @@index([companyId, deletedAt],                map: "idx_tasks_company_deleted")
   @@index([companyId, status],                   map: "idx_tasks_company_status")
@@ -469,6 +470,51 @@ model TaskReassignmentRequest {
   @@index([taskId],               map: "idx_task_reassignment_requests_task")
   @@index([requestedByUserId],    map: "idx_task_reassignment_requests_requested_by")
   @@map("task_reassignment_requests")
+}
+
+model Comment {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String    @db.Uuid @map("company_id")
+  taskId          String    @db.Uuid @map("task_id")
+  authorUserId    String    @db.Uuid @map("author_user_id")
+  /// Reserved for nested threads. v1 inserts NULL; column exists so we can
+  /// flip on nesting later without a migration.
+  parentCommentId String?   @db.Uuid @map("parent_comment_id")
+  /// Rich-text HTML from the TipTap editor. CHECK constraint requires
+  /// non-whitespace content so empty comments can't slip through.
+  body            String
+  createdAt       DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt       DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  /// Set when an edit lands inside the 15-min window. NULL means never edited.
+  editedAt        DateTime? @db.Timestamptz(6) @map("edited_at")
+  deletedAt       DateTime? @db.Timestamptz(6) @map("deleted_at")
+
+  task          Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  parent        Comment?         @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies       Comment[]        @relation("CommentReplies")
+  mentions      CommentMention[]
+
+  @@index([taskId, createdAt],            map: "idx_comments_task_created")
+  @@index([companyId, createdAt],         map: "idx_comments_company_created")
+  @@index([authorUserId],                 map: "idx_comments_author")
+  @@index([parentCommentId],              map: "idx_comments_parent")
+  @@map("comments")
+}
+
+model CommentMention {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String   @db.Uuid @map("company_id")
+  commentId        String   @db.Uuid @map("comment_id")
+  mentionedUserId  String   @db.Uuid @map("mentioned_user_id")
+  createdAt        DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, mentionedUserId], map: "comment_mentions_unique")
+  @@index([mentionedUserId, createdAt(sort: Desc)], map: "idx_comment_mentions_user")
+  @@index([commentId],                              map: "idx_comment_mentions_comment")
+  @@index([companyId, createdAt(sort: Desc)],       map: "idx_comment_mentions_company")
+  @@map("comment_mentions")
 }
 
 model File {
