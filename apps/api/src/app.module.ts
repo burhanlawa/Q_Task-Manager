@@ -16,6 +16,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { BranchesModule } from './branches/branches.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { DepartmentsModule } from './departments/departments.module';
+import { FilesModule } from './files/files.module';
 import { TeamsModule } from './teams/teams.module';
 import { RolesModule } from './roles/roles.module';
 import { TagsModule } from './tags/tags.module';
@@ -45,6 +46,7 @@ import { UsersModule } from './users/users.module';
     BranchesModule,
     CalendarModule,
     DepartmentsModule,
+    FilesModule,
     TeamsModule,
     UsersModule,
     RolesModule,

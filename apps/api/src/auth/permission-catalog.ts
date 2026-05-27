@@ -92,6 +92,14 @@ export const PERMISSION_CATALOG: readonly PermissionGroup[] = [
     ],
   },
   {
+    category: 'Files',
+    description: 'Upload, view, and manage files stored in R2.',
+    permissions: [
+      { key: 'file.read', label: 'View files' },
+      { key: 'file.upload', label: 'Upload files' },
+    ],
+  },
+  {
     category: 'Comments',
     description: 'Comment on tasks (Sprint 13).',
     permissions: [
