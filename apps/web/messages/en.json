@@ -256,7 +256,14 @@
       "actions": "Actions",
       "noActions": "No actions available for this status.",
       "edit": "Edit",
-      "adjustedFrom": "(adjusted from {date} — non-working day)",
+      "adjustmentLine": "Due {adjusted}, originally {original} — {reason}",
+      "adjustmentReason": {
+        "weekend": "extended past the weekend",
+        "holiday": "extended past a company holiday",
+        "assignee_on_leave": "extended for assignee leave",
+        "combined": "extended past non-working days",
+        "generic": "extended to the next working day"
+      },
       "transitionError": "Could not perform that action. Please try again.",
       "confirm": {
         "cancel": "Cancel this task? This cannot be undone via this button.",

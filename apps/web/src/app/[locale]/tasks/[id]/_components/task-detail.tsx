@@ -38,6 +38,7 @@ type Task = {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   dueDate: string | null;
   originalDueDate: string | null;
+  dueDateAdjustmentReason: string | null;
   createdByUserId: string;
   assignedToUserId: string | null;
   assigneeCount: number;
@@ -263,11 +264,20 @@ export function TaskDetail({ taskId }: { taskId: string }) {
           <Field label={t('detail.dueDate')}>
             {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}
             {task.originalDueDate && task.originalDueDate !== task.dueDate && (
-              <span className="ms-2 text-xs text-muted-foreground">
-                {t('detail.adjustedFrom', {
-                  date: new Date(task.originalDueDate).toLocaleDateString(),
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                {t('detail.adjustmentLine', {
+                  adjusted: new Date(task.dueDate as string).toLocaleDateString(),
+                  original: new Date(task.originalDueDate).toLocaleDateString(),
+                  reason: t(
+                    `detail.adjustmentReason.${pickReasonKey(task.dueDateAdjustmentReason)}` as
+                      | 'detail.adjustmentReason.weekend'
+                      | 'detail.adjustmentReason.holiday'
+                      | 'detail.adjustmentReason.assignee_on_leave'
+                      | 'detail.adjustmentReason.combined'
+                      | 'detail.adjustmentReason.generic',
+                  ),
                 })}
-              </span>
+              </div>
             )}
           </Field>
           <Field label={t('detail.created')}>
@@ -366,4 +376,18 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <dd className="mt-0.5">{children}</dd>
     </div>
   );
+}
+
+// Map the server's reason token to the message-key suffix the UI uses.
+// Reasons can be '+'-joined (e.g. 'weekend+assignee_on_leave'); we render
+// 'combined' for those rather than try to enumerate every pair.
+function pickReasonKey(
+  reason: string | null,
+): 'weekend' | 'holiday' | 'assignee_on_leave' | 'combined' | 'generic' {
+  if (!reason) return 'generic';
+  if (reason.includes('+')) return 'combined';
+  if (reason === 'weekend' || reason === 'holiday' || reason === 'assignee_on_leave') {
+    return reason;
+  }
+  return 'generic';
 }

@@ -248,6 +248,7 @@ export class TasksController {
         priority: dto.priority ?? 'medium',
         dueDate: adjustedDueDate,
         originalDueDate: originalDueDate,
+        dueDateAdjustmentReason: adjustmentReason,
         status,
         createdByUserId: tenant.userId,
         assignedToUserId: assigneeIds[0] ?? null,

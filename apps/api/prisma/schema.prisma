@@ -401,6 +401,8 @@ model Task {
   /// The user-typed due date before business-day auto-adjustment.
   /// NULL means no adjustment was applied (typed date was already a working day).
   originalDueDate          DateTime?     @db.Date @map("original_due_date")
+  /// Reason token: 'weekend', 'holiday', 'assignee_on_leave', or '+'-joined.
+  dueDateAdjustmentReason  String?       @map("due_date_adjustment_reason")
   startedAt                DateTime?     @db.Timestamptz(6) @map("started_at")
   completedAt              DateTime?     @db.Timestamptz(6) @map("completed_at")
 
