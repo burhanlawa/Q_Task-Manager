@@ -289,6 +289,22 @@
       "decideReassignment": "Review reassignment",
       "cancel": "Cancel task"
     },
+    "reassignment": {
+      "request": {
+        "title": "Request reassignment",
+        "description": "Tell the task creator why this task should go to someone else. They'll review and either approve or reject your request.",
+        "reasonLabel": "Reason",
+        "reasonPlaceholder": "Explain what's blocking you or why someone else would be a better fit (minimum 10 characters)…",
+        "charCount": "{count, plural, =0 {0 of {min} characters minimum} one {1 character ({min} minimum)} other {# characters ({min} minimum)}}",
+        "submit": "Send request",
+        "submitting": "Sending…",
+        "cancel": "Cancel",
+        "errors": {
+          "generic": "Could not send the request. Please try again.",
+          "tooShort": "Please write at least {min} characters explaining the reason."
+        }
+      }
+    },
     "new": {
       "title": "New task",
       "description": "Set the task details and optionally assign people. Status starts at 'draft' if you don't add anyone, otherwise 'assigned'.",

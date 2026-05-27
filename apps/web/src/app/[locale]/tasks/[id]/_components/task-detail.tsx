@@ -7,6 +7,7 @@ import { Link } from '@/i18n/routing';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { api, ApiError, type Department } from '@/lib/api';
+import { RequestReassignmentDialog } from './request-reassignment-dialog';
 
 type TaskStatus =
   | 'draft'
@@ -136,6 +137,7 @@ export function TaskDetail({ taskId }: { taskId: string }) {
   const t = useTranslations('tasks');
   const queryClient = useQueryClient();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [reassignOpen, setReassignOpen] = useState(false);
 
   const { data: task, isLoading, error } = useQuery<Task, ApiError>({
     queryKey: ['task', taskId],
@@ -208,6 +210,12 @@ export function TaskDetail({ taskId }: { taskId: string }) {
   // re-doing the workflow, so a single tap shouldn't fire them by accident.
   const needsConfirm = (key: Action['key']) => key === 'cancel' || key === 'requestRevision';
 
+  // Reassignment is an assignee-side action available while the task is
+  // active (assigned/in_progress). It's a separate button because it opens
+  // a modal for the required reason rather than firing immediately.
+  const canRequestReassignment =
+    isAssigneeOf(task, myId) && (task.status === 'assigned' || task.status === 'in_progress');
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -279,7 +287,7 @@ export function TaskDetail({ taskId }: { taskId: string }) {
           </div>
         )}
         <div className="flex flex-wrap gap-2">
-          {visibleActions.length === 0 && (
+          {visibleActions.length === 0 && !canRequestReassignment && (
             <span className="text-sm text-muted-foreground">{t('detail.noActions')}</span>
           )}
           {visibleActions.map((a) => (
@@ -298,8 +306,23 @@ export function TaskDetail({ taskId }: { taskId: string }) {
               {t(`actions.${a.key}` as 'actions.accept')}
             </Button>
           ))}
+          {canRequestReassignment && (
+            <Button
+              variant="outline"
+              disabled={transition.isPending}
+              onClick={() => setReassignOpen(true)}
+            >
+              {t('actions.requestReassignment')}
+            </Button>
+          )}
         </div>
       </section>
+
+      <RequestReassignmentDialog
+        taskId={taskId}
+        open={reassignOpen}
+        onOpenChange={setReassignOpen}
+      />
     </div>
   );
 }
