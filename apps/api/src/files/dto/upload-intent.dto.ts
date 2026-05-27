@@ -56,4 +56,11 @@ export class UploadIntentDto {
   @IsOptional()
   @IsUUID()
   attached_to_id?: string;
+
+  // When set, this upload is a new version of an existing file. The server
+  // resolves the prior row, validates it shares purpose + owner, then sets
+  // the new row's version_number = previous.version_number + 1.
+  @IsOptional()
+  @IsUUID()
+  previous_version_id?: string;
 }

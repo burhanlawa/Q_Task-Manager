@@ -141,7 +141,42 @@ export class FilesController {
         ? tenant.companyId
         : dto.attached_to_id!;
 
-    // 4. Plan storage limit (Sprint 11.8). Reject up-front if the new file
+    // 4. Versioning (Sprint 12.1). When previous_version_id is supplied the
+    //    new row inherits the prior's owner + purpose and bumps version_number.
+    //    A version chain that crosses purposes or owners would corrupt the
+    //    audit story, so we reject the mismatch up-front.
+    let previousVersionId: string | null = null;
+    let versionNumber = 1;
+    if (dto.previous_version_id) {
+      const prev = await db.file.findUnique({
+        where: { id: dto.previous_version_id },
+        select: {
+          id: true,
+          deletedAt: true,
+          purpose: true,
+          ownerType: true,
+          ownerId: true,
+          versionNumber: true,
+        },
+      });
+      if (!prev || prev.deletedAt) {
+        throw new NotFoundException('Previous version not found');
+      }
+      if (prev.purpose !== dto.purpose) {
+        throw new BadRequestException(
+          `Previous version has purpose '${prev.purpose}', cannot version-link a '${dto.purpose}' file to it`,
+        );
+      }
+      if (prev.ownerType !== dto.attached_to_type || prev.ownerId !== ownerId) {
+        throw new BadRequestException(
+          'Previous version belongs to a different owner; cannot version-link across owners',
+        );
+      }
+      previousVersionId = prev.id;
+      versionNumber = prev.versionNumber + 1;
+    }
+
+    // 5. Plan storage limit (Sprint 11.8). Reject up-front if the new file
     //    would push the tenant past its plan's cap. growth's "+1 GB/user"
     //    component scales with the current active-user count (RLS-scoped
     //    so we see only this tenant's users).
@@ -195,6 +230,8 @@ export class FilesController {
         contentType: dto.mime_type,
         sizeBytes: BigInt(dto.size_bytes),
         uploadStatus: 'pending_upload',
+        previousVersionId,
+        versionNumber,
       },
     });
 
@@ -205,6 +242,8 @@ export class FilesController {
       expires_in_seconds: presigned.expiresInSeconds,
       r2_key: r2Key,
       max_size_bytes: UPLOAD_MAX_BYTES,
+      version_number: versionNumber,
+      previous_version_id: previousVersionId,
     };
   }
 

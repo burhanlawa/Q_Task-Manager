@@ -485,14 +485,23 @@ model File {
   /// 'pending_upload' | 'uploaded' | 'failed'. Separate from virus scan.
   uploadStatus     String            @default("pending_upload") @map("upload_status")
   virusScanStatus  virus_scan_status @default(not_scanned) @map("virus_scan_status")
+  /// Version chain (Sprint 12.1). The previous version's id, or null for v1.
+  /// Resolved into version_number at insert time so callers don't have to
+  /// walk the chain to learn where a row sits.
+  previousVersionId String?          @db.Uuid @map("previous_version_id")
+  versionNumber    Int               @default(1) @map("version_number")
   createdAt        DateTime          @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt        DateTime          @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt        DateTime?         @db.Timestamptz(6) @map("deleted_at")
 
-  @@index([companyId],            map: "idx_files_company_id")
-  @@index([companyId, purpose],   map: "idx_files_company_purpose")
-  @@index([ownerType, ownerId],   map: "idx_files_owner")
-  @@index([uploaderUserId],       map: "idx_files_uploader")
+  previousVersion  File?             @relation("FileVersionChain", fields: [previousVersionId], references: [id], onDelete: SetNull)
+  nextVersions     File[]            @relation("FileVersionChain")
+
+  @@index([companyId],             map: "idx_files_company_id")
+  @@index([companyId, purpose],    map: "idx_files_company_purpose")
+  @@index([ownerType, ownerId],    map: "idx_files_owner")
+  @@index([uploaderUserId],        map: "idx_files_uploader")
+  @@index([previousVersionId],     map: "idx_files_previous_version")
   @@map("files")
 }
 
