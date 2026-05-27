@@ -255,7 +255,26 @@
       "description": "Description",
       "actions": "Actions",
       "actionsSoon": "Action buttons are read-only here; they'll be wired up in the next sprint.",
-      "noActions": "No actions available for this status."
+      "noActions": "No actions available for this status.",
+      "edit": "Edit"
+    },
+    "edit": {
+      "title": "Edit task",
+      "description": "Update task details. Available only while the task is in draft or assigned.",
+      "loading": "Loading task…",
+      "loadError": "Could not load task.",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "back": "Back to task",
+      "locked": {
+        "title": "This task can no longer be edited here",
+        "body": "Once work starts, the state-machine actions take over. Edits via this form are only allowed while the task is in draft or assigned.",
+        "statusLabel": "Current status"
+      },
+      "errors": {
+        "generic": "Could not save changes. Please try again."
+      }
     },
     "actions": {
       "accept": "Accept",

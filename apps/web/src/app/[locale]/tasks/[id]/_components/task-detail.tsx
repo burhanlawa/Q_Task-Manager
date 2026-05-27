@@ -121,9 +121,16 @@ export function TaskDetail({ taskId }: { taskId: string }) {
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">{task.title}</h1>
-          <Badge variant={STATUS_VARIANT[task.status]}>
-            {t(`status.${task.status}` as 'status.draft')}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={STATUS_VARIANT[task.status]}>
+              {t(`status.${task.status}` as 'status.draft')}
+            </Badge>
+            {(task.status === 'draft' || task.status === 'assigned') && (
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/tasks/${task.id}/edit`}>{t('detail.edit')}</Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
