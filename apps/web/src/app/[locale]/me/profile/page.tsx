@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { ProfileFilesSection } from './_components/profile-files-section';
 import { ProfileForm } from './_components/profile-form';
 
 export default async function MyProfilePage() {
@@ -10,6 +11,7 @@ export default async function MyProfilePage() {
         <p className="text-sm text-muted-foreground">{t('description')}</p>
       </header>
       <ProfileForm />
+      <ProfileFilesSection />
     </main>
   );
 }

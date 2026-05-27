@@ -68,6 +68,20 @@ const PURPOSE_RULES: Record<
     mimes: IMAGE_MIMES,
     expectedAttachedTo: UploadIntentAttachedToType.company,
   },
+  // Profile files (Sprint 12.4). CV and certificate accept the same office
+  // formats as task attachments; id_card is image-only (photo of a card).
+  [UploadIntentPurpose.cv]: {
+    mimes: OFFICE_DOC_MIMES,
+    expectedAttachedTo: UploadIntentAttachedToType.user,
+  },
+  [UploadIntentPurpose.id_card]: {
+    mimes: IMAGE_MIMES,
+    expectedAttachedTo: UploadIntentAttachedToType.user,
+  },
+  [UploadIntentPurpose.certificate]: {
+    mimes: TASK_MIMES,
+    expectedAttachedTo: UploadIntentAttachedToType.user,
+  },
 };
 
 @Controller('files')

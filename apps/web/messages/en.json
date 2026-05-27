@@ -84,6 +84,31 @@
       "toast": {
         "saved": "Profile updated.",
         "error": "Could not save changes."
+      },
+      "files": {
+        "sectionTitle": "Documents",
+        "sectionBody": "Upload your profile photo and supporting documents. Replacing a file keeps the previous version on record.",
+        "replaceHint": "Current version: v{version}. Uploading again will replace it.",
+        "avatar": {
+          "title": "Profile photo",
+          "body": "Square image, JPG or PNG.",
+          "empty": "No profile photo yet."
+        },
+        "cv": {
+          "title": "CV / Résumé",
+          "body": "PDF or Word document.",
+          "empty": "No CV uploaded yet."
+        },
+        "idCard": {
+          "title": "ID card",
+          "body": "Photo of your government-issued ID (JPG or PNG). Visible only to you and HR.",
+          "empty": "No ID card uploaded yet."
+        },
+        "certificate": {
+          "title": "Certificates",
+          "body": "Diplomas, training certificates, anything supporting your role. Add as many as needed.",
+          "empty": "No certificates uploaded yet."
+        }
       }
     }
   },

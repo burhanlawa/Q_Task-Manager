@@ -29,8 +29,16 @@ type UploadIntentResponse = {
 };
 
 export type FileUploadProps = {
-  // Which purpose to send in the upload-intent body.
-  purpose: 'task_attachment' | 'task_submission' | 'avatar' | 'company_logo';
+  // Which purpose to send in the upload-intent body. The backend's purpose
+  // → mime allowlist + attached_to_type pairings still apply.
+  purpose:
+    | 'task_attachment'
+    | 'task_submission'
+    | 'avatar'
+    | 'company_logo'
+    | 'cv'
+    | 'id_card'
+    | 'certificate';
   attachedToType: 'task' | 'user' | 'company';
   attachedToId?: string;
   // Comma-separated MIME pattern for the dropzone (e.g. 'image/png,image/jpeg').

@@ -528,6 +528,9 @@ enum file_purpose {
   task_submission
   avatar
   company_logo
+  cv
+  id_card
+  certificate
 }
 
 enum invoice_status {

@@ -15,6 +15,9 @@ export enum UploadIntentPurpose {
   task_submission = 'task_submission',
   avatar = 'avatar',
   company_logo = 'company_logo',
+  cv = 'cv',
+  id_card = 'id_card',
+  certificate = 'certificate',
 }
 
 export enum UploadIntentAttachedToType {
