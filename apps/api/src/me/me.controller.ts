@@ -42,7 +42,9 @@ const ME_SELECT = {
   emergencyContactRelationship: true,
   onboardingCompletedAt: true,
   lastLoginAt: true,
-  company: { select: { id: true, name: true, slug: true, status: true, country: true } },
+  company: {
+    select: { id: true, name: true, slug: true, status: true, country: true, logoFileId: true },
+  },
 } satisfies Prisma.UserSelect;
 
 @Controller('me')

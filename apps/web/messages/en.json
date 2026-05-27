@@ -50,6 +50,19 @@
     "heading": "Account security",
     "description": "Enable two-factor authentication, manage active sessions, and update your password."
   },
+  "settings": {
+    "company": {
+      "title": "Company settings",
+      "description": "Manage your company's logo and branding. Available to admins.",
+      "logo": {
+        "title": "Logo",
+        "body": "Square image, JPG or PNG. Shown in the app header and on invoices later.",
+        "empty": "No logo uploaded yet.",
+        "currentAlt": "{name} logo",
+        "currentHint": "Uploading a new file will replace the current logo."
+      }
+    }
+  },
   "me": {
     "profile": {
       "title": "My profile",

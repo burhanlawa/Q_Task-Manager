@@ -325,6 +325,23 @@ export class FilesController {
       data: { uploadStatus: 'uploaded' },
     });
 
+    // Side effect: link the canonical "current" file id on related rows.
+    //   - company_logo → companies.logo_file_id
+    //   - avatar       → users.avatar_file_id (for the row's owner)
+    // Both run in the same RLS-scoped tx so they're tenant-safe. We only
+    // link on transition, not on idempotent re-completes (which return early).
+    if (file.purpose === 'company_logo') {
+      await db.company.update({
+        where: { id: tenant.companyId },
+        data: { logoFileId: id },
+      });
+    } else if (file.purpose === 'avatar' && file.ownerType === 'user' && file.ownerId) {
+      await db.user.update({
+        where: { id: file.ownerId },
+        data: { avatarFileId: id },
+      });
+    }
+
     await this.activity.record({
       db,
       companyId: tenant.companyId,
