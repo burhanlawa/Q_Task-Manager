@@ -22,15 +22,27 @@ function isUniqueViolation(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
 }
 
-@Controller('tags')
+@Controller()
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class TagsController {
+  // Categories live alongside tags; the picker needs them to drive the
+  // "Create new tag" flow (every tag belongs to a category).
+  @Get('tag-categories')
+  @RequirePermissions('tag.read')
+  async categories(@TenantDb() db: Prisma.TransactionClient) {
+    return db.tagCategory.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ position: 'asc' }, { name: 'asc' }],
+      select: { id: true, name: true, position: true, isBuiltin: true },
+    });
+  }
+
   // List + suggest. Case-insensitive substring match on name (driven by the
   // 10.1 name_lower generated column), capped at `limit` (default 25). Sort
   // by usage_count desc so picker suggestions surface the most-used tags
   // first, then alphabetical to keep ordering stable when counts tie.
-  @Get()
+  @Get('tags')
   @RequirePermissions('tag.read')
   async list(@TenantDb() db: Prisma.TransactionClient, @Query() q: ListTagsQuery) {
     const limit = q.limit ?? 25;
@@ -48,7 +60,7 @@ export class TagsController {
     });
   }
 
-  @Post()
+  @Post('tags')
   @RequirePermissions('tag.create')
   async create(
     @TenantDb() db: Prisma.TransactionClient,

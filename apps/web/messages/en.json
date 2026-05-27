@@ -289,6 +289,18 @@
       "decideReassignment": "Review reassignment",
       "cancel": "Cancel task"
     },
+    "tagPicker": {
+      "searchPlaceholder": "Search tags or type a new name…",
+      "remove": "Remove tag",
+      "createNew": "Create new tag: \"{name}\"",
+      "create": "Create",
+      "creating": "Creating…",
+      "chooseCategory": "Category",
+      "noMatchEmployee": "No matching tag. Ask a manager to create new tags.",
+      "errors": {
+        "createFailed": "Could not create the tag. It may already exist."
+      }
+    },
     "cancel": {
       "title": "Cancel this task?",
       "description": "Provide a reason for cancelling. It will be recorded on the task and visible to anyone who can read it.",

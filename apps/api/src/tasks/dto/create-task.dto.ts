@@ -57,4 +57,15 @@ export class CreateTaskDto {
   @IsUUID('all', { each: true })
   @Type(() => String)
   assigneeUserIds?: string[];
+
+  // Tags to attach to the new task. Each must exist in this tenant; tag
+  // categories are not enforced here (the category-mandate check lands
+  // with Sprint 10.5+).
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ArrayUnique()
+  @IsUUID('all', { each: true })
+  @Type(() => String)
+  tagIds?: string[];
 }

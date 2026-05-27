@@ -15,8 +15,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { api, ApiError, type Department, type Team } from '@/lib/api';
+import { TagPicker } from '../../_components/tag-picker';
 import { AssigneePicker } from './assignee-picker';
 import { RichTextEditor } from './rich-text-editor';
+
+type Tag = { id: string; name: string; color: string | null; categoryId: string };
+type MyPerms = { permissions: string[] };
+
+function hasPerm(perms: string[], key: string): boolean {
+  return perms.includes('*') || perms.includes(key);
+}
 
 type User = {
   id: string;
@@ -42,7 +50,14 @@ export function CreateTaskForm() {
   const [departmentId, setDepartmentId] = useState('');
   const [teamId, setTeamId] = useState<string>(NONE);
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const { data: perms } = useQuery<MyPerms>({
+    queryKey: ['me', 'permissions'],
+    queryFn: () => api.get('me/permissions'),
+  });
+  const canCreateTags = hasPerm(perms?.permissions ?? [], 'tag.create');
 
   const { data: departments } = useQuery<Department[]>({
     queryKey: ['departments', { status: 'active' }],
@@ -98,6 +113,7 @@ export function CreateTaskForm() {
     if (dueDate) body.dueDate = new Date(dueDate).toISOString();
     if (teamId !== NONE) body.teamId = teamId;
     if (assigneeIds.length > 0) body.assigneeUserIds = assigneeIds;
+    if (tags.length > 0) body.tagIds = tags.map((t) => t.id);
     create.mutate(body);
   }
 
@@ -199,10 +215,9 @@ export function CreateTaskForm() {
         <p className="mt-1 text-xs text-muted-foreground">{t('fields.assigneesHint')}</p>
       </Field>
 
-      {/* Tags placeholder */}
+      {/* Tags */}
       <Field label={t('fields.tags')}>
-        <Input disabled placeholder={t('fields.tagsPlaceholder')} />
-        <p className="mt-1 text-xs text-muted-foreground">{t('fields.tagsSoon')}</p>
+        <TagPicker selected={tags} onChange={setTags} canCreate={canCreateTags} />
       </Field>
 
       {submitError && (

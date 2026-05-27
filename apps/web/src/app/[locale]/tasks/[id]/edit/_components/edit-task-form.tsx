@@ -16,6 +16,15 @@ import {
 } from '@/components/ui/select';
 import { api, ApiError, type Department, type Team } from '@/lib/api';
 import { RichTextEditor } from '../../../new/_components/rich-text-editor';
+import { TagPicker } from '../../../_components/tag-picker';
+
+type Tag = { id: string; name: string; color: string | null; categoryId: string };
+type TaskTagRow = { tagId: string; tag: Tag };
+type MyPerms = { permissions: string[] };
+
+function hasPerm(perms: string[], key: string): boolean {
+  return perms.includes('*') || perms.includes(key);
+}
 
 type TaskStatus =
   | 'draft'
@@ -40,6 +49,7 @@ type Task = {
   departmentId: string;
   teamId: string | null;
   branchId: string | null;
+  taskTags?: TaskTagRow[];
 };
 
 const EDITABLE_STATUSES: ReadonlySet<TaskStatus> = new Set(['draft', 'assigned']);
@@ -74,7 +84,14 @@ export function EditTaskForm({ taskId }: { taskId: string }) {
   const [dueDate, setDueDate] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [teamId, setTeamId] = useState<string>(NONE);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const { data: perms } = useQuery<MyPerms>({
+    queryKey: ['me', 'permissions'],
+    queryFn: () => api.get('me/permissions'),
+  });
+  const canCreateTags = hasPerm(perms?.permissions ?? [], 'tag.create');
 
   // Seed form state once on first successful load.
   const [seeded, setSeeded] = useState(false);
@@ -86,11 +103,23 @@ export function EditTaskForm({ taskId }: { taskId: string }) {
     setDueDate(task.dueDate ? task.dueDate.slice(0, 10) : '');
     setDepartmentId(task.departmentId);
     setTeamId(task.teamId ?? NONE);
+    setTags((task.taskTags ?? []).map((tt) => tt.tag));
     setSeeded(true);
   }, [task, seeded]);
 
   const update = useMutation({
-    mutationFn: (body: Record<string, unknown>) => api.patch(`tasks/${taskId}`, body),
+    mutationFn: async ({
+      patch,
+      tagIds,
+    }: {
+      patch: Record<string, unknown>;
+      tagIds: string[];
+    }) => {
+      await api.patch(`tasks/${taskId}`, patch);
+      // PUT replaces the full tag set. Sent unconditionally so a user
+      // clearing tags is honoured.
+      await api.put(`tasks/${taskId}/tags`, { tagIds });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task', taskId] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -159,7 +188,7 @@ export function EditTaskForm({ taskId }: { taskId: string }) {
     body.description = cleanDesc ? descriptionHtml : null;
     body.dueDate = dueDate ? new Date(dueDate).toISOString() : null;
     body.teamId = teamId === NONE ? null : teamId;
-    update.mutate(body);
+    update.mutate({ patch: body, tagIds: tags.map((tg) => tg.id) });
   }
 
   return (
@@ -239,6 +268,10 @@ export function EditTaskForm({ taskId }: { taskId: string }) {
           </Select>
         </Field>
       </div>
+
+      <Field label={tNew('fields.tags')}>
+        <TagPicker selected={tags} onChange={setTags} canCreate={canCreateTags} />
+      </Field>
 
       {submitError && (
         <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">

@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
   UseInterceptors,
@@ -24,6 +25,7 @@ import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-t
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { ListTasksQuery } from './dto/list-tasks.query';
+import { SetTaskTagsDto } from './dto/set-task-tags.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
 // Statuses where content metadata is still editable. Anything past these
@@ -121,6 +123,28 @@ export class TasksController {
       // The DB trigger from 8.2 maintains tasks.assignee_count automatically.
     }
 
+    // Attach tags if provided. Verify each is in this tenant first; RLS
+    // would hide cross-tenant rows but the count mismatch gives a clearer
+    // 400 than letting the FK insert fail.
+    const tagIds = dto.tagIds ?? [];
+    if (tagIds.length > 0) {
+      const tags = await db.tag.findMany({
+        where: { id: { in: tagIds }, deletedAt: null },
+        select: { id: true },
+      });
+      if (tags.length !== tagIds.length) {
+        throw new BadRequestException('One or more tags do not exist in this tenant');
+      }
+      await db.taskTag.createMany({
+        data: tagIds.map((tagId) => ({
+          taskId: task.id,
+          tagId,
+          addedByUserId: tenant.userId,
+        })),
+      });
+      // The DB trigger from 10.2 maintains tags.usage_count automatically.
+    }
+
     await this.activity.record({
       db,
       companyId: tenant.companyId,
@@ -134,12 +158,21 @@ export class TasksController {
         priority: task.priority,
         departmentId: task.departmentId,
         assigneeCount: assigneeIds.length,
+        tagCount: tagIds.length,
       },
     });
 
     return db.task.findUnique({
       where: { id: task.id },
-      include: { assignees: { select: { userId: true, assignedAt: true } } },
+      include: {
+        assignees: { select: { userId: true, assignedAt: true } },
+        taskTags: {
+          select: {
+            tagId: true,
+            tag: { select: { id: true, name: true, color: true, categoryId: true } },
+          },
+        },
+      },
     });
   }
 
@@ -187,7 +220,15 @@ export class TasksController {
   ) {
     const task = await db.task.findUnique({
       where: { id },
-      include: { assignees: { select: { userId: true, assignedAt: true } } },
+      include: {
+        assignees: { select: { userId: true, assignedAt: true } },
+        taskTags: {
+          select: {
+            tagId: true,
+            tag: { select: { id: true, name: true, color: true, categoryId: true } },
+          },
+        },
+      },
     });
     if (!task) throw new NotFoundException('Task not found');
     return task;
@@ -295,6 +336,78 @@ export class TasksController {
       where: { id },
       data,
       include: { assignees: { select: { userId: true, assignedAt: true } } },
+    });
+  }
+
+  // PUT /tasks/:id/tags — replace the full tag set on a task. This is the
+  // only mutation on task_tags from the app (POST /tasks attaches the
+  // initial set; the trigger maintains usage_count both ways). Like PATCH,
+  // we lock this to the editable statuses — once work has begun, the tag
+  // set is part of the work record.
+  @Put(':id/tags')
+  @RequirePermissions('task.update')
+  async setTags(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: SetTaskTagsDto,
+  ) {
+    const existing = await db.task.findUnique({
+      where: { id },
+      select: { id: true, status: true, deletedAt: true },
+    });
+    if (!existing || existing.deletedAt) throw new NotFoundException('Task not found');
+    if (!EDITABLE_STATUSES.has(existing.status)) {
+      throw new ConflictException(
+        `Task is in status '${existing.status}'; tag edits are only allowed in 'draft' or 'assigned'`,
+      );
+    }
+
+    // Validate that every tag exists in this tenant before any mutation.
+    if (dto.tagIds.length > 0) {
+      const tags = await db.tag.findMany({
+        where: { id: { in: dto.tagIds }, deletedAt: null },
+        select: { id: true },
+      });
+      if (tags.length !== dto.tagIds.length) {
+        throw new BadRequestException('One or more tags do not exist in this tenant');
+      }
+    }
+
+    // Diff against current rows so usage_count moves correctly (the trigger
+    // fires per row inserted/deleted; leaving unchanged rows alone keeps
+    // counts stable).
+    const current = await db.taskTag.findMany({
+      where: { taskId: id },
+      select: { tagId: true },
+    });
+    const currentSet = new Set(current.map((r) => r.tagId));
+    const targetSet = new Set(dto.tagIds);
+
+    const toAdd = dto.tagIds.filter((t) => !currentSet.has(t));
+    const toRemove = current.map((r) => r.tagId).filter((t) => !targetSet.has(t));
+
+    if (toRemove.length > 0) {
+      await db.taskTag.deleteMany({
+        where: { taskId: id, tagId: { in: toRemove } },
+      });
+    }
+    if (toAdd.length > 0) {
+      await db.taskTag.createMany({
+        data: toAdd.map((tagId) => ({ taskId: id, tagId })),
+      });
+    }
+
+    return db.task.findUnique({
+      where: { id },
+      include: {
+        assignees: { select: { userId: true, assignedAt: true } },
+        taskTags: {
+          select: {
+            tagId: true,
+            tag: { select: { id: true, name: true, color: true, categoryId: true } },
+          },
+        },
+      },
     });
   }
 }
