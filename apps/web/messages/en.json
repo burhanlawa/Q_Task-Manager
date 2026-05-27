@@ -234,6 +234,36 @@
       "medium": "Medium",
       "high": "High",
       "urgent": "Urgent"
+    },
+    "backToList": "← Back to tasks",
+    "notFound": {
+      "title": "Task not found",
+      "body": "This task doesn't exist, or you don't have access to it.",
+      "back": "Back to tasks"
+    },
+    "detail": {
+      "overview": "Overview",
+      "priority": "Priority",
+      "department": "Department",
+      "dueDate": "Due date",
+      "created": "Created",
+      "updated": "Last updated",
+      "assignees": "Assignees",
+      "person": "person",
+      "people": "people",
+      "description": "Description",
+      "actions": "Actions",
+      "actionsSoon": "Action buttons are read-only here; they'll be wired up in the next sprint.",
+      "noActions": "No actions available for this status."
+    },
+    "actions": {
+      "accept": "Accept",
+      "submit": "Submit",
+      "approve": "Approve",
+      "requestRevision": "Request revision",
+      "requestReassignment": "Request reassignment",
+      "decideReassignment": "Review reassignment",
+      "cancel": "Cancel task"
     }
   },
   "admin": {

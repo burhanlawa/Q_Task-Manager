@@ -234,6 +234,36 @@
       "medium": "متوسطة",
       "high": "عالية",
       "urgent": "عاجلة"
+    },
+    "backToList": "← العودة إلى المهام",
+    "notFound": {
+      "title": "المهمة غير موجودة",
+      "body": "هذه المهمة غير موجودة، أو لا تملك صلاحية الوصول إليها.",
+      "back": "العودة إلى المهام"
+    },
+    "detail": {
+      "overview": "نظرة عامة",
+      "priority": "الأولوية",
+      "department": "القسم",
+      "dueDate": "تاريخ الاستحقاق",
+      "created": "أُنشئت في",
+      "updated": "آخر تحديث",
+      "assignees": "المُكلَّفون",
+      "person": "شخص",
+      "people": "أشخاص",
+      "description": "الوصف",
+      "actions": "الإجراءات",
+      "actionsSoon": "أزرار الإجراءات للعرض فقط هنا؛ ستُفعَّل في السبرنت القادم.",
+      "noActions": "لا توجد إجراءات متاحة لهذه الحالة."
+    },
+    "actions": {
+      "accept": "قبول",
+      "submit": "إرسال",
+      "approve": "اعتماد",
+      "requestRevision": "طلب مراجعة",
+      "requestReassignment": "طلب إعادة إسناد",
+      "decideReassignment": "مراجعة طلب الإسناد",
+      "cancel": "إلغاء المهمة"
     }
   },
   "admin": {
