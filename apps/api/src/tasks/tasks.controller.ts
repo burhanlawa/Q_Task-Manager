@@ -146,7 +146,11 @@ export class TasksController {
   @Get()
   @RequirePermissions('task.read')
   async list(@TenantDb() db: Prisma.TransactionClient, @Query() q: ListTasksQuery) {
-    return db.task.findMany({
+    // Cursor pagination: fetch limit+1 rows; if we get the extra, peel it off
+    // and return its id as the next cursor. Ordering must be deterministic, so
+    // we tie-break on id when createdAt collides.
+    const limit = q.limit ?? 25;
+    const rows = await db.task.findMany({
       where: {
         ...(q.includeArchived ? {} : { deletedAt: null }),
         ...(q.status && q.status.length > 0 ? { status: { in: q.status } } : {}),
@@ -161,8 +165,18 @@ export class TasksController {
         ...(q.departmentId ? { departmentId: q.departmentId } : {}),
         ...(q.teamId ? { teamId: q.teamId } : {}),
       },
-      orderBy: [{ createdAt: 'desc' }],
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      ...(q.cursor ? { cursor: { id: q.cursor }, skip: 1 } : {}),
     });
+
+    let nextCursor: string | null = null;
+    let items = rows;
+    if (rows.length > limit) {
+      items = rows.slice(0, limit);
+      nextCursor = items[items.length - 1]?.id ?? null;
+    }
+    return { items, nextCursor };
   }
 
   @Get(':id')

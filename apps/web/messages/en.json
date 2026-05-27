@@ -197,6 +197,45 @@
       "status": "Status"
     }
   },
+  "tasks": {
+    "title": "Tasks",
+    "description": "All tasks across your tenant. Filter by status, department, or show only yours.",
+    "statusLabel": "Status",
+    "departmentLabel": "Department",
+    "allStatuses": "All statuses",
+    "allDepartments": "All departments",
+    "mineOnly": "Assigned to me only",
+    "loading": "Loading…",
+    "loadError": "Could not load tasks.",
+    "empty": "No tasks match these filters.",
+    "prev": "Previous",
+    "next": "Next",
+    "pageHint": "{count, plural, =0 {No results} one {1 task} other {# tasks}} on this page",
+    "columns": {
+      "title": "Title",
+      "status": "Status",
+      "priority": "Priority",
+      "department": "Department",
+      "dueDate": "Due"
+    },
+    "status": {
+      "draft": "Draft",
+      "assigned": "Assigned",
+      "in_progress": "In progress",
+      "submitted": "Submitted",
+      "reassignment_requested": "Reassignment requested",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    }
+  },
   "admin": {
     "teams": {
       "title": "Teams",

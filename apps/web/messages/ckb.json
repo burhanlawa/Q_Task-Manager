@@ -197,6 +197,45 @@
       "status": "بار"
     }
   },
+  "tasks": {
+    "title": "ئەرکەکان",
+    "description": "هەموو ئەرکەکانی کۆمپانیاکەت. پاڵاوتن بەپێی دۆخ، بەش، یان تەنها هی خۆت پیشان بدە.",
+    "statusLabel": "دۆخ",
+    "departmentLabel": "بەش",
+    "allStatuses": "هەموو دۆخەکان",
+    "allDepartments": "هەموو بەشەکان",
+    "mineOnly": "تەنها ئەوانەی بۆ من سپێردراون",
+    "loading": "بارکردن…",
+    "loadError": "نەتوانرا ئەرکەکان باربکرێن.",
+    "empty": "هیچ ئەرکێک ناگونجێ لەگەڵ ئەم پاڵاوتنانە.",
+    "prev": "پێشوو",
+    "next": "دواتر",
+    "pageHint": "{count, plural, =0 {هیچ ئەنجامێک نییە} one {١ ئەرک} other {# ئەرک}} لەم پەڕەیە",
+    "columns": {
+      "title": "ناونیشان",
+      "status": "دۆخ",
+      "priority": "گرنگی",
+      "department": "بەش",
+      "dueDate": "بەرواری کۆتایی"
+    },
+    "status": {
+      "draft": "ڕەشنووس",
+      "assigned": "سپێردراو",
+      "in_progress": "لە بەردەوامبوون",
+      "submitted": "پێشکەشکراو",
+      "reassignment_requested": "داوای گواستنەوە",
+      "approved": "پەسەندکراو",
+      "rejected": "ڕەتکراوە",
+      "completed": "تەواوبوو",
+      "cancelled": "هەڵوەشاوەتەوە"
+    },
+    "priority": {
+      "low": "نزم",
+      "medium": "ناوەند",
+      "high": "بەرز",
+      "urgent": "خێرا"
+    }
+  },
   "admin": {
     "teams": {
       "title": "تیمەکان",

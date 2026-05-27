@@ -197,6 +197,45 @@
       "status": "الحالة"
     }
   },
+  "tasks": {
+    "title": "المهام",
+    "description": "جميع المهام في مؤسستك. صفّ حسب الحالة أو القسم أو اعرض مهامك فقط.",
+    "statusLabel": "الحالة",
+    "departmentLabel": "القسم",
+    "allStatuses": "كل الحالات",
+    "allDepartments": "كل الأقسام",
+    "mineOnly": "المهام المسندة إليّ فقط",
+    "loading": "جارٍ التحميل…",
+    "loadError": "تعذّر تحميل المهام.",
+    "empty": "لا توجد مهام مطابقة لهذه التصفية.",
+    "prev": "السابق",
+    "next": "التالي",
+    "pageHint": "{count, plural, =0 {لا نتائج} one {مهمة واحدة} other {# مهام}} في هذه الصفحة",
+    "columns": {
+      "title": "العنوان",
+      "status": "الحالة",
+      "priority": "الأولوية",
+      "department": "القسم",
+      "dueDate": "الاستحقاق"
+    },
+    "status": {
+      "draft": "مسودة",
+      "assigned": "مُسندة",
+      "in_progress": "قيد التنفيذ",
+      "submitted": "مُقدَّمة",
+      "reassignment_requested": "طلب إعادة إسناد",
+      "approved": "مُعتمدة",
+      "rejected": "مرفوضة",
+      "completed": "مكتملة",
+      "cancelled": "ملغاة"
+    },
+    "priority": {
+      "low": "منخفضة",
+      "medium": "متوسطة",
+      "high": "عالية",
+      "urgent": "عاجلة"
+    }
+  },
   "admin": {
     "teams": {
       "title": "الفِرَق",
