@@ -17,6 +17,8 @@ model Company {
   defaultLocale   String              @default("en")            @map("default_locale")
   defaultTimezone String              @default("Asia/Baghdad")  @map("default_timezone")
   defaultCurrency String              @default("IQD")           @map("default_currency")
+  /// Bitmask: bit 0=Sun … bit 6=Sat. Default 31 (Sun–Thu working).
+  workingDays     Int                 @default(31) @db.SmallInt @map("working_days")
   logoFileId      String?   @db.Uuid                  @map("logo_file_id")
   contactEmail    String?                             @map("contact_email")
   contactPhone    String?                             @map("contact_phone")
@@ -76,17 +78,39 @@ model Branch {
   city      String?
   address   String?
   timezone  String?
+  /// Optional branch-level override of the company's working_days bitmask.
+  /// NULL means "inherit from company."
+  workingDays Int?    @db.SmallInt @map("working_days")
   createdAt DateTime  @default(now()) @db.Timestamptz(6)              @map("created_at")
   updatedAt DateTime  @default(now()) @db.Timestamptz(6)              @map("updated_at")
   deletedAt DateTime? @db.Timestamptz(6)                              @map("deleted_at")
 
   company     Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
   departments Department[]
+  holidays    Holiday[]
   users       User[]
 
   @@unique([companyId, code], map: "idx_branches_company_code")
   @@index([companyId],         map: "idx_branches_company_id")
   @@map("branches")
+}
+
+model Holiday {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String    @db.Uuid @map("company_id")
+  /// NULL = applies to all branches in the company. Set to scope to one branch.
+  branchId  String?   @db.Uuid @map("branch_id")
+  date      DateTime  @db.Date
+  name      String
+  createdAt DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt DateTime? @db.Timestamptz(6) @map("deleted_at")
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, date], map: "idx_holidays_company_date")
+  @@index([branchId, date],  map: "idx_holidays_branch_date")
+  @@map("holidays")
 }
 
 model Department {
@@ -173,6 +197,10 @@ model User {
   emergencyContactPhone        String? @map("emergency_contact_phone")
   emergencyContactRelationship String? @map("emergency_contact_relationship")
   onboardingCompletedAt        DateTime? @db.Timestamptz(6) @map("onboarding_completed_at")
+
+  /// Approved leave window (inclusive). NULL means no current leave.
+  leaveStartDate DateTime? @db.Date @map("leave_start_date")
+  leaveEndDate   DateTime? @db.Date @map("leave_end_date")
 
   lastLoginAt DateTime? @db.Timestamptz(6) @map("last_login_at")
   createdAt   DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")

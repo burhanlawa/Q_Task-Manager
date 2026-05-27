@@ -13,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { TenantModule } from './tenant/tenant.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { BranchesModule } from './branches/branches.module';
+import { CalendarModule } from './calendar/calendar.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { TeamsModule } from './teams/teams.module';
 import { RolesModule } from './roles/roles.module';
@@ -40,6 +41,7 @@ import { UsersModule } from './users/users.module';
     MeModule,
     WebhooksModule,
     BranchesModule,
+    CalendarModule,
     DepartmentsModule,
     TeamsModule,
     UsersModule,
