@@ -234,19 +234,22 @@ export class FilesController {
     return serializeFile(updated);
   }
 
-  // GET /files/:id/download-url
-  //   Returns a short-lived pre-signed GET URL for the file. RLS scopes
-  //   read access to the tenant; an explicit deny for files that haven't
-  //   completed upload yet so half-written objects aren't served.
+  // GET /files/:id/download
+  //   Returns a 5-minute pre-signed GET URL for the file and writes a
+  //   file_downloaded activity_log entry so we have an audit trail of who
+  //   pulled the file and when. RLS scopes read access to the tenant; an
+  //   explicit 409 keeps us from serving half-written objects (uploads in
+  //   pending_upload state).
   //
-  //   Note: a richer per-purpose authorization gate (e.g., task attachments
-  //   require task.read on the owning task) lands in 11.5; this endpoint
-  //   currently relies on file.read + RLS for tenant isolation, which is
-  //   the bar the 11.4 done check ("file is downloadable") requires.
-  @Get(':id/download-url')
+  //   The pre-signed URL is valid for the full TTL once issued — R2 has
+  //   no native single-use mechanism. The audit row is per /download call
+  //   rather than per byte stream; that's the right granularity for "who
+  //   requested access" logging.
+  @Get(':id/download')
   @RequirePermissions('file.read')
-  async downloadUrl(
+  async download(
     @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
     const file = await db.file.findUnique({
@@ -258,6 +261,9 @@ export class FilesController {
         deletedAt: true,
         contentType: true,
         originalFilename: true,
+        purpose: true,
+        ownerType: true,
+        ownerId: true,
       },
     });
     if (!file || file.deletedAt) throw new NotFoundException('File not found');
@@ -266,6 +272,23 @@ export class FilesController {
     }
 
     const signed = await this.r2.generatePresignedDownloadUrl({ key: file.r2Key });
+
+    await this.activity.record({
+      db,
+      companyId: tenant.companyId,
+      actorUserId: tenant.userId,
+      actionType: 'file_downloaded',
+      targetType: 'file',
+      targetId: id,
+      metadata: {
+        purpose: file.purpose,
+        ownerType: file.ownerType,
+        ownerId: file.ownerId,
+        contentType: file.contentType,
+        ttlSeconds: signed.expiresInSeconds,
+      },
+    });
+
     return {
       download_url: signed.url,
       expires_in_seconds: signed.expiresInSeconds,
