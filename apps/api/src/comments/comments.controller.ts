@@ -21,6 +21,7 @@ import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-t
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { MentionParserService } from './mention-parser.service';
 
 // 15-minute edit window per the spec. After this, PATCH returns 409 and the
 // row is immutable (server-side; UI also greys out the button).
@@ -30,7 +31,10 @@ const EDIT_WINDOW_MS = 15 * 60 * 1000;
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class CommentsController {
-  constructor(private readonly activity: ActivityLogService) {}
+  constructor(
+    private readonly activity: ActivityLogService,
+    private readonly mentionParser: MentionParserService,
+  ) {}
 
   // GET /tasks/:id/comments
   //   Oldest first (chronological is the natural reading order for threads).
@@ -99,7 +103,12 @@ export class CommentsController {
     });
     if (!task || task.deletedAt) throw new NotFoundException('Task not found');
 
-    const mentionIds = await this.validateMentions(db, dto.mentioned_user_ids);
+    // Two sources of mentions, unioned + de-duped:
+    //   - explicit IDs from the TipTap mention extension (when it lands)
+    //   - text parsed from the body for plain "@alice" tokens
+    const explicit = await this.validateMentions(db, dto.mentioned_user_ids);
+    const parsed = await this.mentionParser.parse(db, dto.body);
+    const mentionIds = Array.from(new Set([...explicit, ...parsed]));
 
     const comment = await db.comment.create({
       data: {
@@ -162,7 +171,9 @@ export class CommentsController {
       );
     }
 
-    const nextMentions = await this.validateMentions(db, dto.mentioned_user_ids);
+    const explicit = await this.validateMentions(db, dto.mentioned_user_ids);
+    const parsed = await this.mentionParser.parse(db, dto.body);
+    const nextMentions = Array.from(new Set([...explicit, ...parsed]));
     const prevMentions = new Set(existing.mentions.map((m) => m.mentionedUserId));
     const nextSet = new Set(nextMentions);
     const toAdd = nextMentions.filter((u) => !prevMentions.has(u));
