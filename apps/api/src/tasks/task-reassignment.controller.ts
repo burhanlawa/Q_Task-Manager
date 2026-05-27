@@ -69,6 +69,40 @@ export class TaskReassignmentController {
     return { request, requester };
   }
 
+  // Returns every reassignment request for a task, oldest first, with the
+  // requester and decider profiles inlined. Used by the history panel on
+  // the detail page (9.6). The list is small per task in practice, so we
+  // don't paginate.
+  @Get(':id/reassignment-requests')
+  async history(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const requests = await db.taskReassignmentRequest.findMany({
+      where: { taskId: id },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (requests.length === 0) return { items: [] };
+
+    const userIds = new Set<string>();
+    for (const r of requests) {
+      userIds.add(r.requestedByUserId);
+      if (r.decidedByUserId) userIds.add(r.decidedByUserId);
+    }
+    const users = await db.user.findMany({
+      where: { id: { in: Array.from(userIds) } },
+      select: { id: true, displayName: true, firstName: true, lastName: true, email: true },
+    });
+    const usersById = new Map(users.map((u) => [u.id, u]));
+
+    const items = requests.map((r) => ({
+      ...r,
+      requester: usersById.get(r.requestedByUserId) ?? null,
+      decider: r.decidedByUserId ? (usersById.get(r.decidedByUserId) ?? null) : null,
+    }));
+    return { items };
+  }
+
   @Post(':id/request-reassignment')
   @HttpCode(200)
   @RequirePermissions('task.read')

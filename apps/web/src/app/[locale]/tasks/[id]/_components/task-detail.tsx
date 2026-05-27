@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { api, ApiError, type Department } from '@/lib/api';
 import { ReassignmentDecisionPanel } from './reassignment-decision-panel';
+import { ReassignmentHistoryPanel } from './reassignment-history-panel';
 import { RequestReassignmentDialog } from './request-reassignment-dialog';
 
 type TaskStatus =
@@ -286,6 +287,8 @@ export function TaskDetail({ taskId }: { taskId: string }) {
       )}
 
       {canDecideReassignment && <ReassignmentDecisionPanel taskId={taskId} />}
+
+      <ReassignmentHistoryPanel taskId={taskId} />
 
       <section className="rounded-md border p-5 space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">

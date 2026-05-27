@@ -290,6 +290,21 @@
       "cancel": "إلغاء المهمة"
     },
     "reassignment": {
+      "history": {
+        "title": "{count, plural, one {سجل إعادة الإسناد (١)} other {سجل إعادة الإسناد (#)}}",
+        "requestedOn": "طُلب في {when}",
+        "reason": "السبب",
+        "decidedOn": {
+          "approved": "تمت الموافقة في {when}",
+          "rejected": "رُفض في {when}",
+          "pending": "قيد الانتظار منذ {when}"
+        },
+        "status": {
+          "pending": "قيد الانتظار",
+          "approved": "مُعتمد",
+          "rejected": "مرفوض"
+        }
+      },
       "decide": {
         "title": "طلب إعادة إسناد قيد الانتظار",
         "subtitle": "طلبه {who} في {when}",

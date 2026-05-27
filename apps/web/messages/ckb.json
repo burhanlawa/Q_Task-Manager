@@ -290,6 +290,21 @@
       "cancel": "هەڵوەشاندنەوەی ئەرک"
     },
     "reassignment": {
+      "history": {
+        "title": "{count, plural, one {مێژووی گواستنەوە (١)} other {مێژووی گواستنەوە (#)}}",
+        "requestedOn": "داواکراوە لە {when}",
+        "reason": "هۆکار",
+        "decidedOn": {
+          "approved": "پەسەندکرا لە {when}",
+          "rejected": "ڕەتکرایەوە لە {when}",
+          "pending": "چاوەڕێی بڕیار لە {when}"
+        },
+        "status": {
+          "pending": "چاوەڕێ",
+          "approved": "پەسەندکراو",
+          "rejected": "ڕەتکراوە"
+        }
+      },
       "decide": {
         "title": "داواکاری گواستنەوەی چاوەڕێکراو",
         "subtitle": "داواکاری لەلایەن {who} لە {when}",

@@ -290,6 +290,21 @@
       "cancel": "Cancel task"
     },
     "reassignment": {
+      "history": {
+        "title": "{count, plural, one {Reassignment history (1)} other {Reassignment history (#)}}",
+        "requestedOn": "requested {when}",
+        "reason": "Reason",
+        "decidedOn": {
+          "approved": "approved {when}",
+          "rejected": "rejected {when}",
+          "pending": "pending since {when}"
+        },
+        "status": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected"
+        }
+      },
       "decide": {
         "title": "Pending reassignment request",
         "subtitle": "Requested by {who} on {when}",

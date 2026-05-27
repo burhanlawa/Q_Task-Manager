@@ -37,6 +37,7 @@ export function RequestReassignmentDialog({ taskId, open, onOpenChange }: Props)
       const updated = (data as { task: unknown }).task;
       if (updated) queryClient.setQueryData(['task', taskId], updated);
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task', taskId, 'reassignmentHistory'] });
       setReason('');
       setError(null);
       onOpenChange(false);

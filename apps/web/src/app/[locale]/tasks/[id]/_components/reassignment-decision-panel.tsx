@@ -50,6 +50,7 @@ export function ReassignmentDecisionPanel({ taskId }: { taskId: string }) {
       const updated = (resp as { task: unknown }).task;
       if (updated) queryClient.setQueryData(['task', taskId], updated);
       queryClient.invalidateQueries({ queryKey: ['task', taskId, 'pendingReassignment'] });
+      queryClient.invalidateQueries({ queryKey: ['task', taskId, 'reassignmentHistory'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setNote('');
       setError(null);
