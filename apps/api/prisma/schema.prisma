@@ -19,6 +19,8 @@ model Company {
   defaultCurrency String              @default("IQD")           @map("default_currency")
   /// Bitmask: bit 0=Sun … bit 6=Sat. Default 31 (Sun–Thu working).
   workingDays     Int                 @default(31) @db.SmallInt @map("working_days")
+  /// Maintained by trg_files_storage_used trigger. Never written by app.
+  storageUsedBytes BigInt             @default(0) @map("storage_used_bytes")
   logoFileId      String?   @db.Uuid                  @map("logo_file_id")
   contactEmail    String?                             @map("contact_email")
   contactPhone    String?                             @map("contact_phone")
