@@ -21,6 +21,9 @@ model Company {
   workingDays     Int                 @default(31) @db.SmallInt @map("working_days")
   /// Maintained by trg_files_storage_used trigger. Never written by app.
   storageUsedBytes BigInt             @default(0) @map("storage_used_bytes")
+  /// Billing plan; gates storage limit. Lives here until a real
+  /// subscriptions table arrives with the rest of the billing schema.
+  plan            subscription_plan   @default(starter)
   logoFileId      String?   @db.Uuid                  @map("logo_file_id")
   contactEmail    String?                             @map("contact_email")
   contactPhone    String?                             @map("contact_phone")

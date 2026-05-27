@@ -10,6 +10,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  UnprocessableEntityException,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -28,6 +29,7 @@ import {
   UploadIntentDto,
   UploadIntentPurpose,
 } from './dto/upload-intent.dto';
+import { storageLimitBytes } from './plan-storage-limit';
 
 // Mime allowlists by purpose. Avatars/logos are visual — JPG/PNG only.
 // Task attachments + submissions are working files — common office formats
@@ -139,13 +141,37 @@ export class FilesController {
         ? tenant.companyId
         : dto.attached_to_id!;
 
-    // 4. Generate the row + R2 key. The key embeds company_id so the bucket
+    // 4. Plan storage limit (Sprint 11.8). Reject up-front if the new file
+    //    would push the tenant past its plan's cap. growth's "+1 GB/user"
+    //    component scales with the current active-user count (RLS-scoped
+    //    so we see only this tenant's users).
+    const [company, activeUserCount] = await Promise.all([
+      db.company.findUnique({
+        where: { id: tenant.companyId },
+        select: { plan: true, storageUsedBytes: true },
+      }),
+      db.user.count({ where: { status: 'active', deletedAt: null } }),
+    ]);
+    if (!company) throw new NotFoundException('Company not found');
+    const limit = storageLimitBytes(company.plan, activeUserCount);
+    const prospective = company.storageUsedBytes + BigInt(dto.size_bytes);
+    if (prospective > limit) {
+      throw new UnprocessableEntityException({
+        message: `Upload would exceed your plan's storage limit (${limit} bytes; in use ${company.storageUsedBytes}; this file ${dto.size_bytes}).`,
+        plan: company.plan,
+        limit_bytes: limit.toString(),
+        used_bytes: company.storageUsedBytes.toString(),
+        attempted_bytes: dto.size_bytes,
+      });
+    }
+
+    // 5. Generate the row + R2 key. The key embeds company_id so the bucket
     //    layout is structurally tenant-isolated even if RLS were bypassed.
     const fileId = randomUUID();
     const safeFilename = dto.filename.replace(/[^\w.\-]/g, '_');
     const r2Key = `${tenant.companyId}/${fileId}/${safeFilename}`;
 
-    // 5. Sign the upload URL. ContentLength would lock the size, but R2's
+    // 6. Sign the upload URL. ContentLength would lock the size, but R2's
     //    SDK currently treats it strictly and the browser sends
     //    Content-Length automatically when uploading a Blob — so we pin
     //    just content-type and rely on the DTO + bucket lifecycle rules
@@ -155,7 +181,7 @@ export class FilesController {
       contentType: dto.mime_type,
     });
 
-    // 6. Insert the pending row. RLS scopes on tenant.companyId.
+    // 7. Insert the pending row. RLS scopes on tenant.companyId.
     await db.file.create({
       data: {
         id: fileId,
