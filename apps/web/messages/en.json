@@ -326,6 +326,20 @@
       "decideReassignment": "Review reassignment",
       "cancel": "Cancel task"
     },
+    "files": {
+      "count": "{n, plural, =0 {0 files} one {1 file} other {# files}}",
+      "reference": {
+        "title": "Reference files",
+        "empty": "No reference files attached yet."
+      },
+      "deliverables": {
+        "title": "Deliverables",
+        "empty": "No deliverables submitted yet."
+      },
+      "errors": {
+        "downloadFailed": "Could not download the file."
+      }
+    },
     "tagPicker": {
       "searchPlaceholder": "Search tags or type a new name…",
       "remove": "Remove tag",

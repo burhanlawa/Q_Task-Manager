@@ -11,6 +11,7 @@ import { CancellationBanner } from './cancellation-banner';
 import { CancelTaskDialog } from './cancel-task-dialog';
 import { ReassignmentDecisionPanel } from './reassignment-decision-panel';
 import { ReassignmentHistoryPanel } from './reassignment-history-panel';
+import { TaskFilesPanel } from './task-files-panel';
 import { RequestReassignmentDialog } from './request-reassignment-dialog';
 
 type TaskStatus =
@@ -311,6 +312,8 @@ export function TaskDetail({ taskId }: { taskId: string }) {
       {task.status === 'cancelled' && <CancellationBanner taskId={taskId} />}
 
       {canDecideReassignment && <ReassignmentDecisionPanel taskId={taskId} />}
+
+      <TaskFilesPanel taskId={taskId} />
 
       <ReassignmentHistoryPanel taskId={taskId} />
 

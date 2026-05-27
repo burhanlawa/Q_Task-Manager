@@ -10,6 +10,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   UnprocessableEntityException,
   UseGuards,
   UseInterceptors,
@@ -77,6 +78,36 @@ export class FilesController {
     private readonly r2: R2Service,
     private readonly activity: ActivityLogService,
   ) {}
+
+  // GET /files?owner_type=task&owner_id=<uuid>
+  //   Returns the files attached to an owner (task / user / company), most
+  //   recent first. RLS hides cross-tenant rows. Only completed uploads are
+  //   returned — pending_upload rows are book-keeping that the UI shouldn't
+  //   surface as "attached files."
+  //
+  //   For task attachments we also return purpose so the UI can split into
+  //   "Reference files" (task_attachment) and "Deliverables" (task_submission).
+  @Get()
+  @RequirePermissions('file.read')
+  async list(
+    @TenantDb() db: Prisma.TransactionClient,
+    @Query('owner_type') ownerType?: string,
+    @Query('owner_id', new ParseUUIDPipe({ optional: true })) ownerId?: string,
+  ) {
+    if (!ownerType || !ownerId) {
+      throw new BadRequestException('owner_type and owner_id are required');
+    }
+    const rows = await db.file.findMany({
+      where: {
+        ownerType,
+        ownerId,
+        deletedAt: null,
+        uploadStatus: 'uploaded',
+      },
+      orderBy: [{ createdAt: 'desc' }],
+    });
+    return { items: rows.map(serializeFile) };
+  }
 
   // POST /files/upload-intent
   //   Body: filename, mime_type, size_bytes, purpose, attached_to_type, attached_to_id

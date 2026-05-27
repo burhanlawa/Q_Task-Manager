@@ -326,6 +326,20 @@
       "decideReassignment": "مراجعة طلب الإسناد",
       "cancel": "إلغاء المهمة"
     },
+    "files": {
+      "count": "{n, plural, =0 {٠ ملفات} one {ملف واحد} other {# ملفات}}",
+      "reference": {
+        "title": "الملفات المرجعية",
+        "empty": "لم تُرفق أي ملفات مرجعية بعد."
+      },
+      "deliverables": {
+        "title": "المُسلَّمات",
+        "empty": "لم يُسلَّم أي ملف بعد."
+      },
+      "errors": {
+        "downloadFailed": "تعذّر تنزيل الملف."
+      }
+    },
     "tagPicker": {
       "searchPlaceholder": "ابحث عن وسم أو اكتب اسمًا جديدًا…",
       "remove": "إزالة الوسم",
