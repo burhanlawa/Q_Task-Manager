@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { MeModule } from './me/me.module';
 import { ActivityLogModule } from './activity-log/activity-log.module';
 import { CryptoModule } from './crypto/crypto.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { R2Module } from './r2/r2.module';
 import { TenantModule } from './tenant/tenant.module';
@@ -40,6 +41,7 @@ import { UsersModule } from './users/users.module';
     TenantModule,
     ActivityLogModule,
     CryptoModule,
+    NotificationsModule,
     HealthModule,
     DebugModule,
     AuthModule,
