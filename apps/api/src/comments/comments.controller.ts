@@ -3,8 +3,10 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
+  HttpCode,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -295,6 +297,43 @@ export class CommentsController {
     });
 
     return { ...updated, mentioned_user_ids: nextMentions };
+  }
+
+  // DELETE /comments/:id
+  //   Soft-delete (sets deleted_at). Author-only. No 15-min window — users
+  //   should be able to retract their own old comments even past the edit
+  //   window. Idempotent: deleting an already-deleted comment returns 204.
+  @Delete('comments/:id')
+  @HttpCode(204)
+  @RequirePermissions('comment.create')
+  async remove(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const existing = await db.comment.findUnique({
+      where: { id },
+      select: { id: true, authorUserId: true, taskId: true, deletedAt: true },
+    });
+    if (!existing) throw new NotFoundException('Comment not found');
+    if (existing.authorUserId !== tenant.userId) {
+      throw new ForbiddenException('Only the author can delete this comment');
+    }
+    if (existing.deletedAt) return; // idempotent
+
+    await db.comment.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+    await this.activity.record({
+      db,
+      companyId: tenant.companyId,
+      actorUserId: tenant.userId,
+      actionType: 'comment_deleted',
+      targetType: 'comment',
+      targetId: id,
+      metadata: { taskId: existing.taskId },
+    });
   }
 
   // Mentions must be active users in this tenant. RLS hides cross-tenant

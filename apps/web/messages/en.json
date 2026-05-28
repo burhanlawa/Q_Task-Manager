@@ -400,8 +400,19 @@
         "submitting": "Posting…",
         "attachmentsQueued": "{n, plural, one {1 attachment ready} other {# attachments ready}}"
       },
+      "actions": {
+        "menu": "Comment actions",
+        "edit": "Edit",
+        "delete": "Delete",
+        "confirmDelete": "Delete this comment?",
+        "cancelEdit": "Cancel",
+        "save": "Save",
+        "saving": "Saving…"
+      },
       "errors": {
-        "createFailed": "Could not post the comment. Please try again."
+        "createFailed": "Could not post the comment. Please try again.",
+        "editFailed": "Could not save the edit. The 15-minute window may have closed.",
+        "deleteFailed": "Could not delete the comment."
       }
     },
     "tagPicker": {

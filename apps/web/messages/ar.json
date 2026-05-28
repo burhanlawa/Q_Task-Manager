@@ -400,8 +400,19 @@
         "submitting": "جارٍ النشر…",
         "attachmentsQueued": "{n, plural, one {مرفق واحد جاهز} other {# مرفقات جاهزة}}"
       },
+      "actions": {
+        "menu": "إجراءات التعليق",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "confirmDelete": "حذف هذا التعليق؟",
+        "cancelEdit": "إلغاء",
+        "save": "حفظ",
+        "saving": "جارٍ الحفظ…"
+      },
       "errors": {
-        "createFailed": "تعذّر نشر التعليق. الرجاء المحاولة مرة أخرى."
+        "createFailed": "تعذّر نشر التعليق. الرجاء المحاولة مرة أخرى.",
+        "editFailed": "تعذّر حفظ التعديل. ربما انتهت نافذة الـ ١٥ دقيقة.",
+        "deleteFailed": "تعذّر حذف التعليق."
       }
     },
     "tagPicker": {

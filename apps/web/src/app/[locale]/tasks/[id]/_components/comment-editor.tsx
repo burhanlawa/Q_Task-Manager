@@ -13,6 +13,9 @@ import { api } from '@/lib/api';
 export type CommentEditorHandle = {
   clear: () => void;
   getHTML: () => string;
+  /// Replace the editor's content. Used by the inline-edit flow to seed
+  /// an existing comment's body into a fresh editor instance.
+  setHTML: (html: string) => void;
   getMentionIds: () => string[];
   isEmpty: () => boolean;
 };
@@ -239,6 +242,7 @@ export const CommentEditor = forwardRef<
     () => ({
       clear: () => editor?.commands.clearContent(),
       getHTML: () => editor?.getHTML() ?? '',
+      setHTML: (html: string) => editor?.commands.setContent(html, { emitUpdate: false }),
       getMentionIds: () => {
         if (!editor) return [];
         const ids = new Set<string>();
