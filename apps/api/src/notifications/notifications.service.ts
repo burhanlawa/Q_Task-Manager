@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { PusherService } from '../pusher/pusher.service';
 
 // Spec-shaped input. The service maps these onto our column names so the
 // schema stays the canonical reference and callers use the names from the
@@ -35,6 +36,8 @@ export type NotificationCreateInput = {
 @Injectable()
 export class NotificationsService {
   private readonly log = new Logger(NotificationsService.name);
+
+  constructor(private readonly pusher: PusherService) {}
 
   /**
    * Create a notification for one recipient.
@@ -112,6 +115,23 @@ export class NotificationsService {
         ${expiresAtSql}
       )
     `;
+
+    // 4. Real-time fan-out (Sprint 14.6). Fire-and-forget — the row is already
+    //    durable in Postgres; Pusher is a UX accelerator, not the source of
+    //    truth. We DON'T await this on the request critical path; instead we
+    //    schedule it after the current microtask so a slow Pusher trigger
+    //    can't bottleneck the response.
+    void this.pusher.safeTrigger(`private-user-${input.recipientId}`, 'notification', {
+      id,
+      type: input.type,
+      title: input.title ?? null,
+      body: input.message ?? null,
+      link: input.actionUrl ?? null,
+      source_target_type: input.relatedEntityType ?? null,
+      source_target_id: input.relatedEntityId ?? null,
+      created_at: new Date().toISOString(),
+    });
+
     return { id };
   }
 }

@@ -121,7 +121,10 @@ function stubPerms(): PermissionsService {
 // Real ActivityLogService — verifying log rows is part of the done check.
 const activity = new ActivityLogService();
 const calendar = new CalendarService();
-const notifications = new NotificationsService();
+// PusherService reads PUSHER_* env vars; in tests we just want a no-op trigger.
+// new PusherService() with the env vars present would actually attempt to call
+// Pusher's REST API on every notification write, which spams real traffic.
+const notifications = new NotificationsService({ safeTrigger: async () => {} } as never);
 
 // Controller instances (recreated per test in case state ever creeps in).
 function makeControllers() {

@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { ClerkProvider } from '@clerk/nextjs';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { setRequestLocale, getMessages } from 'next-intl/server';
+import { NotificationsDebugToaster } from '@/components/notifications-debug-toaster';
+import { NotificationsSubscription } from '@/components/notifications-subscription';
 import { OnboardingGate } from '@/components/onboarding-gate';
 import { PostHogProvider } from '@/components/posthog-provider';
 import { QueryProvider } from '@/components/query-provider';
@@ -50,6 +52,8 @@ export default async function LocaleLayout({
               <QueryProvider>
                 <PostHogProvider />
                 <OnboardingGate />
+                <NotificationsSubscription />
+                <NotificationsDebugToaster />
                 <SiteHeader />
                 {children}
                 <Toaster richColors position="top-center" />
