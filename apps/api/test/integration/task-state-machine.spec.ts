@@ -128,8 +128,8 @@ function makeControllers() {
   const perms = stubPerms();
   return {
     tasks: new TasksController(perms, activity, calendar, notifications),
-    transitions: new TaskTransitionsController(perms, activity),
-    reassign: new TaskReassignmentController(perms, activity),
+    transitions: new TaskTransitionsController(perms, activity, notifications),
+    reassign: new TaskReassignmentController(perms, activity, notifications),
   };
 }
 
@@ -480,7 +480,7 @@ describe('task state machine (Sprint 8 non-negotiable)', () => {
         getEffectivePermissions: async () => new Set<string>(),
         has: (g: Set<string>, k: string) => g.has(k),
       } as unknown as PermissionsService;
-      const guarded = new TaskTransitionsController(emptyPerms, activity);
+      const guarded = new TaskTransitionsController(emptyPerms, activity, notifications);
       await expect(
         asTenant(s.companyId, (tx) =>
           guarded.approve(tx, { companyId: s.companyId, userId: s.employeeId }, id, {}),

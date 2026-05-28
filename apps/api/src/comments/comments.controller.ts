@@ -20,6 +20,7 @@ import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -37,6 +38,7 @@ export class CommentsController {
   constructor(
     private readonly activity: ActivityLogService,
     private readonly mentionParser: MentionParserService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // GET /tasks/:id/comments
@@ -165,6 +167,20 @@ export class CommentsController {
           mentionedUserId: userId,
         })),
       });
+      for (const userId of mentionIds) {
+        if (userId === tenant.userId) continue;
+        await this.notifications.create(db, {
+          recipientId: userId,
+          companyId: tenant.companyId,
+          type: 'comment_mentioned',
+          message: 'You were mentioned in a comment.',
+          relatedEntityType: 'comment',
+          relatedEntityId: comment.id,
+          actionUrl: `/tasks/${taskId}#comment-${comment.id}`,
+          actorUserId: tenant.userId,
+          metadata: { taskId, commentId: comment.id },
+        });
+      }
     }
 
     // Claim any uploaded comment_attachment files (Sprint 13.4). Each file
@@ -279,6 +295,20 @@ export class CommentsController {
           mentionedUserId: userId,
         })),
       });
+      for (const userId of toAdd) {
+        if (userId === tenant.userId) continue;
+        await this.notifications.create(db, {
+          recipientId: userId,
+          companyId: tenant.companyId,
+          type: 'comment_mentioned',
+          message: 'You were mentioned in a comment.',
+          relatedEntityType: 'comment',
+          relatedEntityId: id,
+          actionUrl: `/tasks/${existing.taskId}#comment-${id}`,
+          actorUserId: tenant.userId,
+          metadata: { taskId: existing.taskId, commentId: id },
+        });
+      }
     }
 
     await this.activity.record({

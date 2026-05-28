@@ -19,6 +19,7 @@ import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { PermissionsService } from '../auth/permissions.service';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { ReassignmentDecision, ReassignmentDecisionDto } from './dto/reassignment-decision.dto';
@@ -47,6 +48,7 @@ export class TaskReassignmentController {
   constructor(
     private readonly permissions: PermissionsService,
     private readonly activity: ActivityLogService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // Returns the pending reassignment request for a task, if any, plus a
@@ -187,6 +189,23 @@ export class TaskReassignmentController {
         reason: dto.reason,
       },
     });
+
+    // Sprint 14.4 — notify the task creator (typically the assigner). Skip
+    // if the requester IS the creator (someone reassigning their own task
+    // against themselves — unusual but possible).
+    if (task.createdByUserId !== tenant.userId) {
+      await this.notifications.create(db, {
+        recipientId: task.createdByUserId,
+        companyId: tenant.companyId,
+        type: 'task_reassignment_requested',
+        message: dto.reason,
+        relatedEntityType: 'task',
+        relatedEntityId: task.id,
+        actionUrl: `/tasks/${task.id}`,
+        actorUserId: tenant.userId,
+        metadata: { requestId: request.id, reason: dto.reason },
+      });
+    }
 
     return { task: await this.reloadTask(db, task.id), request };
   }

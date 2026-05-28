@@ -17,6 +17,7 @@ import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { PermissionsService } from '../auth/permissions.service';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { TransitionTaskDto } from './dto/transition-task.dto';
@@ -59,6 +60,7 @@ export class TaskTransitionsController {
   constructor(
     private readonly permissions: PermissionsService,
     private readonly activity: ActivityLogService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   @Post(':id/accept')
@@ -250,6 +252,59 @@ export class TaskTransitionsController {
       },
     });
 
+    // Sprint 14.4 — notify the right people based on the transition.
+    //   submitted              → creator
+    //   approved               → all assignees
+    //   request-revision       → all assignees
+    //   cancelled              → all assignees + creator (whoever isn't the actor)
+    // The other transitions (accept/start) don't notify per the spec — the
+    // creator can see them via the task view if they care.
+    const recipients = new Set<string>();
+    if (actionType === 'task_submitted') {
+      recipients.add(updated.createdByUserId);
+    } else if (actionType === 'task_approved' || actionType === 'task_revision_requested') {
+      for (const a of updated.assignees) recipients.add(a.userId);
+    } else if (actionType === 'task_cancelled') {
+      recipients.add(updated.createdByUserId);
+      for (const a of updated.assignees) recipients.add(a.userId);
+    }
+    // No self-notifications.
+    recipients.delete(tenant.userId);
+
+    for (const userId of recipients) {
+      await this.notifications.create(db, {
+        recipientId: userId,
+        companyId: tenant.companyId,
+        type: actionType,
+        title: updated.title,
+        message: noteForType(actionType, note),
+        relatedEntityType: 'task',
+        relatedEntityId: task.id,
+        actionUrl: `/tasks/${task.id}`,
+        actorUserId: tenant.userId,
+        metadata: { from, to, ...(note ? { note } : {}) },
+      });
+    }
+
     return updated;
+  }
+}
+
+// Plain-language fallback message for the in-app inbox. The UI localizes
+// from `type` + metadata at render time; this string only shows in fallback
+// renderers that can't translate.
+function noteForType(actionType: string, note: string | undefined): string {
+  if (note) return note;
+  switch (actionType) {
+    case 'task_submitted':
+      return 'A task was submitted for your review.';
+    case 'task_approved':
+      return 'Your submission was approved.';
+    case 'task_revision_requested':
+      return 'Revisions were requested on your submission.';
+    case 'task_cancelled':
+      return 'A task you were involved in was cancelled.';
+    default:
+      return '';
   }
 }
