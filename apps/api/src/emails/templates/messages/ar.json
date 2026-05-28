@@ -1,0 +1,67 @@
+{
+  "task_assigned": {
+    "subject": "تم تكليفك بمهمة: {taskTitle}",
+    "preheader": "{actorName} كلّفك بهذه المهمة.",
+    "body": "مرحبًا {recipientName}،\n\nقام {actorName} بتكليفك بمهمة: «{taskTitle}».\n\nافتح المهمة لمعرفة التفاصيل والبدء بها."
+  },
+  "task_submitted": {
+    "subject": "تم تقديم مهمة للمراجعة: {taskTitle}",
+    "preheader": "{actorName} أنهى مهمةً وبانتظار مراجعتك.",
+    "body": "مرحبًا {recipientName}،\n\nقام {actorName} بتقديم «{taskTitle}» للمراجعة. يمكنك اعتمادها أو طلب تعديلات عند توفرك."
+  },
+  "task_approved": {
+    "subject": "تمت الموافقة على تسليمك: {taskTitle}",
+    "preheader": "{actorName} اعتمد عملك.",
+    "body": "مرحبًا {recipientName}،\n\nخبر سار — اعتمد {actorName} تسليمك لمهمة «{taskTitle}». اكتملت المهمة الآن."
+  },
+  "task_revision_requested": {
+    "subject": "تم طلب تعديلات على: {taskTitle}",
+    "preheader": "{actorName} طلب إجراء تعديلات قبل الاعتماد.",
+    "body": "مرحبًا {recipientName}،\n\nراجع {actorName} مهمة «{taskTitle}» وطلب بعض التعديلات قبل اعتمادها. افتح المهمة لمعرفة ما هو مطلوب."
+  },
+  "task_cancelled": {
+    "subject": "تم إلغاء مهمة: {taskTitle}",
+    "preheader": "{actorName} ألغى مهمة كنت فيها.",
+    "body": "مرحبًا {recipientName}،\n\nألغى {actorName} مهمة «{taskTitle}». لا حاجة لأي إجراء آخر."
+  },
+  "task_reassignment_requested": {
+    "subject": "طلب إعادة تكليف: {taskTitle}",
+    "preheader": "{actorName} طلب إعادة تكليف المهمة.",
+    "body": "مرحبًا {recipientName}،\n\nطلب {actorName} إعادة تكليفه من «{taskTitle}». افتح المهمة للموافقة على الطلب أو رفضه."
+  },
+  "comment_mentioned": {
+    "subject": "تمت الإشارة إليك في تعليق",
+    "preheader": "{actorName} أشار إليك في نقاش.",
+    "body": "مرحبًا {recipientName}،\n\nأشار إليك {actorName} في تعليق على «{taskTitle}». افتح المهمة للقراءة والرد."
+  },
+  "comment_created": {
+    "subject": "تعليق جديد على: {taskTitle}",
+    "preheader": "{actorName} أضاف تعليقًا.",
+    "body": "مرحبًا {recipientName}،\n\nأضاف {actorName} تعليقًا جديدًا على «{taskTitle}»."
+  },
+  "deadline_approaching": {
+    "subject": "اقتراب الموعد النهائي: {taskTitle}",
+    "preheader": "موعد الاستحقاق {dueDate}.",
+    "body": "مرحبًا {recipientName}،\n\nتذكير سريع — «{taskTitle}» مستحقة في {dueDate}."
+  },
+  "overdue": {
+    "subject": "مهمة متأخرة: {taskTitle}",
+    "preheader": "تجاوز الموعد النهائي.",
+    "body": "مرحبًا {recipientName}،\n\nكان موعد «{taskTitle}» في {dueDate} وأصبحت الآن متأخرة. يُرجى تحديث حالتها أو التواصل مع المُكلِّف."
+  },
+  "onboarding_approval": {
+    "subject": "أهلًا بك في {companyName} — تمت الموافقة على حسابك",
+    "preheader": "تمت الموافقة على دعوتك.",
+    "body": "مرحبًا {recipientName}،\n\nتمت الموافقة على دعوتك للانضمام إلى {companyName}. سجّل الدخول لاستكمال ملفك الشخصي والبدء."
+  },
+  "new_employee": {
+    "subject": "زميل جديد في {companyName}: {newUserName}",
+    "preheader": "رحّب بزميل جديد.",
+    "body": "مرحبًا {recipientName}،\n\nانضم {newUserName} للتو إلى {companyName}. مرّ به للترحيب."
+  },
+  "leave_reminder": {
+    "subject": "إجازة قادمة: {leaveDate}",
+    "preheader": "تذكير بإجازتك المجدولة.",
+    "body": "مرحبًا {recipientName}،\n\nهذا تذكير بأن لديك إجازة مجدولة تبدأ في {leaveDate}. تأكد من تسليم مهامك قبل ذلك."
+  }
+}

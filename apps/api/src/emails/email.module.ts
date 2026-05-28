@@ -4,6 +4,7 @@ import { EmailDebugController } from './email-debug.controller';
 import { EmailSendProcessor } from './email-send.processor';
 import { EMAIL_SEND_QUEUE } from './email.constants';
 import { EmailService } from './email.service';
+import { EmailTemplateService } from './templates/render';
 
 // Global so any feature module can @InjectQueue(EMAIL_SEND_QUEUE) without
 // re-importing. Same pattern as QueueModule for notifications-cleanup.
@@ -11,7 +12,7 @@ import { EmailService } from './email.service';
 @Module({
   imports: [BullModule.registerQueue({ name: EMAIL_SEND_QUEUE })],
   controllers: [EmailDebugController],
-  providers: [EmailService, EmailSendProcessor],
-  exports: [EmailService, BullModule],
+  providers: [EmailService, EmailSendProcessor, EmailTemplateService],
+  exports: [EmailService, EmailTemplateService, BullModule],
 })
 export class EmailModule {}

@@ -1,0 +1,67 @@
+{
+  "task_assigned": {
+    "subject": "ئەرکێکت پێ سپێردراوە: {taskTitle}",
+    "preheader": "{actorName} ئەم ئەرکەی بۆ تۆ سپاردووە.",
+    "body": "سڵاو {recipientName}،\n\n{actorName} ئەرکێکی پێ سپاردووی: «{taskTitle}».\n\nبیکەرەوە بۆ بینینی وردەکاریەکان و دەستپێکردن."
+  },
+  "task_submitted": {
+    "subject": "ئەرکێک بۆ پێداچوونەوە پێشکەش کراوە: {taskTitle}",
+    "preheader": "{actorName} ئەرکێکی تەواو کرد و چاوەڕێی تۆیە.",
+    "body": "سڵاو {recipientName}،\n\n{actorName} «{taskTitle}» بۆ پێداچوونەوەی تۆ پێشکەش کرد. کاتێک کاتت هەبوو پەسەندی بکە یان داوای گۆڕانکاری بکە."
+  },
+  "task_approved": {
+    "subject": "ئەرکەکەت پەسەند کراوە: {taskTitle}",
+    "preheader": "{actorName} کارەکەتی پەسەند کرد.",
+    "body": "سڵاو {recipientName}،\n\nهەواڵێکی باش — {actorName} پێشکەشکراوەکەی تۆی بۆ «{taskTitle}» پەسەند کرد. ئەرکەکە ئێستا تەواو بووە."
+  },
+  "task_revision_requested": {
+    "subject": "داوای گۆڕانکاری کراوە لە: {taskTitle}",
+    "preheader": "{actorName} داوای گۆڕانکاری کرد پێش پەسەندکردن.",
+    "body": "سڵاو {recipientName}،\n\n{actorName} «{taskTitle}»ی پێداچوونەوە کرد و داوای هەندێک گۆڕانکاری کرد پێش پەسەندکردن. ئەرکەکە بکەرەوە بۆ بینینی پێویستەکان."
+  },
+  "task_cancelled": {
+    "subject": "ئەرکێک هەڵوەشایەوە: {taskTitle}",
+    "preheader": "{actorName} ئەرکێکی تۆی هەڵوەشاندەوە.",
+    "body": "سڵاو {recipientName}،\n\n{actorName} «{taskTitle}»ی هەڵوەشاندەوە. پێویست بە هیچ کردارێکی تر ناکات."
+  },
+  "task_reassignment_requested": {
+    "subject": "داواکاری دیاریکردنەوە: {taskTitle}",
+    "preheader": "{actorName} داوای گۆڕانی ئەرکی کرد.",
+    "body": "سڵاو {recipientName}،\n\n{actorName} داوای کرد ئەرکی «{taskTitle}» لێی بگۆڕدرێت. ئەرکەکە بکەرەوە بۆ پەسەندکردن یان ڕەتکردنەوەی داواکارییەکە."
+  },
+  "comment_mentioned": {
+    "subject": "تۆ لە لێدوانێکدا ئاماژەت پێدراوە",
+    "preheader": "{actorName} لە گفتوگۆیەکدا ئاماژەی بە تۆ کرد.",
+    "body": "سڵاو {recipientName}،\n\n{actorName} لە لێدوانێکدا لەسەر «{taskTitle}» ئاماژەی بە تۆ کرد. ئەرکەکە بکەرەوە بۆ خوێندنەوە و وەڵامدانەوە."
+  },
+  "comment_created": {
+    "subject": "لێدوانێکی نوێ لەسەر: {taskTitle}",
+    "preheader": "{actorName} لێدوانێکی زیاد کرد.",
+    "body": "سڵاو {recipientName}،\n\n{actorName} لێدوانێکی نوێی زیاد کرد لەسەر «{taskTitle}»."
+  },
+  "deadline_approaching": {
+    "subject": "نزیکبوونەوەی کۆتا وادە: {taskTitle}",
+    "preheader": "وادەی کۆتایی {dueDate}.",
+    "body": "سڵاو {recipientName}،\n\nبیرخستنەوەیەکی خێرا — «{taskTitle}» لە {dueDate} وادەی کۆتاییەتی."
+  },
+  "overdue": {
+    "subject": "ئەرکی دواکەوتوو: {taskTitle}",
+    "preheader": "کۆتا وادە تێپەڕیوە.",
+    "body": "سڵاو {recipientName}،\n\nوادەی «{taskTitle}» {dueDate} بوو و ئێستا دواکەوتووە. تکایە دۆخەکەی بگۆڕە یان پەیوەندی بە سپێردەرەکەوە بکە."
+  },
+  "onboarding_approval": {
+    "subject": "بەخێربێی بۆ {companyName} — هەژمارەکەت پەسەند کرا",
+    "preheader": "بانگهێشتنامەکەت پەسەند کرا.",
+    "body": "سڵاو {recipientName}،\n\nبانگهێشتنامەکەت بۆ بەشداری لە {companyName} پەسەند کرا. بچۆ ژوورەوە بۆ تەواوکردنی پرۆفایلت و دەستپێکردن."
+  },
+  "new_employee": {
+    "subject": "هاوەڵێکی نوێ لە {companyName}: {newUserName}",
+    "preheader": "سڵاو لە هاوەڵێکی نوێ بکە.",
+    "body": "سڵاو {recipientName}،\n\n{newUserName} ئێستا پەیوەست بوو بە {companyName}. بڕۆ بۆ سڵاوکردن."
+  },
+  "leave_reminder": {
+    "subject": "مۆڵەتی داهاتوو: {leaveDate}",
+    "preheader": "بیرخستنەوەی مۆڵەتی پلاندانراو.",
+    "body": "سڵاو {recipientName}،\n\nئەمە بیرخستنەوەیە کە مۆڵەتی پلاندانراوت لە {leaveDate} دەست پێ دەکات. دڵنیابە لەوەی ئەرکەکانت پێش ئەو کاتە دەسپێردەی."
+  }
+}

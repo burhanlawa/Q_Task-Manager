@@ -1,0 +1,67 @@
+{
+  "task_assigned": {
+    "subject": "You were assigned a task: {taskTitle}",
+    "preheader": "{actorName} assigned this task to you.",
+    "body": "Hi {recipientName},\n\n{actorName} assigned you a task: \"{taskTitle}\".\n\nOpen it to see the details and get started."
+  },
+  "task_submitted": {
+    "subject": "A task was submitted for review: {taskTitle}",
+    "preheader": "{actorName} finished a task and is waiting on you.",
+    "body": "Hi {recipientName},\n\n{actorName} submitted \"{taskTitle}\" for your review. Approve it or request changes when you have a moment."
+  },
+  "task_approved": {
+    "subject": "Your submission was approved: {taskTitle}",
+    "preheader": "{actorName} approved your work.",
+    "body": "Hi {recipientName},\n\nGood news — {actorName} approved your submission for \"{taskTitle}\". The task is now complete."
+  },
+  "task_revision_requested": {
+    "subject": "Revisions requested on: {taskTitle}",
+    "preheader": "{actorName} asked for changes before approval.",
+    "body": "Hi {recipientName},\n\n{actorName} reviewed \"{taskTitle}\" and asked for some revisions before approval. Open the task to see what's needed."
+  },
+  "task_cancelled": {
+    "subject": "A task was cancelled: {taskTitle}",
+    "preheader": "{actorName} cancelled a task you were on.",
+    "body": "Hi {recipientName},\n\n{actorName} cancelled \"{taskTitle}\". No further action is needed."
+  },
+  "task_reassignment_requested": {
+    "subject": "Reassignment request: {taskTitle}",
+    "preheader": "{actorName} asked to hand a task back.",
+    "body": "Hi {recipientName},\n\n{actorName} requested to be reassigned from \"{taskTitle}\". Open the task to approve or reject the request."
+  },
+  "comment_mentioned": {
+    "subject": "You were mentioned in a comment",
+    "preheader": "{actorName} tagged you in a discussion.",
+    "body": "Hi {recipientName},\n\n{actorName} mentioned you in a comment on \"{taskTitle}\". Open the task to read and reply."
+  },
+  "comment_created": {
+    "subject": "New comment on: {taskTitle}",
+    "preheader": "{actorName} added a comment.",
+    "body": "Hi {recipientName},\n\n{actorName} added a new comment on \"{taskTitle}\"."
+  },
+  "deadline_approaching": {
+    "subject": "Deadline approaching: {taskTitle}",
+    "preheader": "Due {dueDate}.",
+    "body": "Hi {recipientName},\n\nA quick reminder — \"{taskTitle}\" is due {dueDate}."
+  },
+  "overdue": {
+    "subject": "Task overdue: {taskTitle}",
+    "preheader": "Due date has passed.",
+    "body": "Hi {recipientName},\n\n\"{taskTitle}\" was due {dueDate} and is now overdue. Please update its status or contact the assigner."
+  },
+  "onboarding_approval": {
+    "subject": "Welcome to {companyName} — your account is approved",
+    "preheader": "Your invitation has been approved.",
+    "body": "Hi {recipientName},\n\nYour invitation to join {companyName} has been approved. Sign in to complete your profile and get started."
+  },
+  "new_employee": {
+    "subject": "New teammate at {companyName}: {newUserName}",
+    "preheader": "Say hi to a new colleague.",
+    "body": "Hi {recipientName},\n\n{newUserName} just joined {companyName}. Drop by to say hello."
+  },
+  "leave_reminder": {
+    "subject": "Upcoming leave: {leaveDate}",
+    "preheader": "Reminder for your scheduled time off.",
+    "body": "Hi {recipientName},\n\nThis is a reminder that you have scheduled leave starting {leaveDate}. Make sure your tasks are handed off before then."
+  }
+}
