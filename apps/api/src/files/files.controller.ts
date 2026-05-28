@@ -82,6 +82,14 @@ const PURPOSE_RULES: Record<
     mimes: TASK_MIMES,
     expectedAttachedTo: UploadIntentAttachedToType.user,
   },
+  // Sprint 13.4 — same allowlist as task attachments. The upload is created
+  // with ownerType='comment' but ownerId is null until the user posts the
+  // comment that claims it (see POST /tasks/:id/comments). The image-toggle
+  // gate (12.6) also applies because we run the same body-of-rules.
+  [UploadIntentPurpose.comment_attachment]: {
+    mimes: TASK_MIMES,
+    expectedAttachedTo: UploadIntentAttachedToType.comment,
+  },
 };
 
 @Controller('files')
@@ -202,11 +210,23 @@ export class FilesController {
       if (dto.attached_to_id && dto.attached_to_id !== tenant.companyId) {
         throw new BadRequestException('Cannot upload a company logo for another company');
       }
+    } else if (dto.attached_to_type === UploadIntentAttachedToType.comment) {
+      // Comment attachments are uploaded BEFORE the comment exists (the
+      // user is still typing). The owner row gets backfilled when the
+      // comment is POSTed and claims the upload. Reject any attached_to_id
+      // here to prevent confusion.
+      if (dto.attached_to_id) {
+        throw new BadRequestException(
+          'attached_to_id must be null for comment uploads; the comment claims the file when POSTed',
+        );
+      }
     }
     const ownerId =
       dto.attached_to_type === UploadIntentAttachedToType.company
         ? tenant.companyId
-        : dto.attached_to_id!;
+        : dto.attached_to_type === UploadIntentAttachedToType.comment
+          ? null
+          : dto.attached_to_id!;
 
     // 4. Versioning (Sprint 12.1). When previous_version_id is supplied the
     //    new row inherits the prior's owner + purpose and bumps version_number.

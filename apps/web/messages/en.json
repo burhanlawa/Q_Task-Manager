@@ -389,6 +389,21 @@
         "downloadFailed": "Could not download the file."
       }
     },
+    "comments": {
+      "title": "{count, plural, =0 {Comments} one {Comments (1)} other {Comments (#)}}",
+      "empty": "No comments yet.",
+      "edited": "edited",
+      "composer": {
+        "title": "Add a comment",
+        "placeholder": "Write a comment… Use @name to mention someone.",
+        "submit": "Post comment",
+        "submitting": "Posting…",
+        "attachmentsQueued": "{n, plural, one {1 attachment ready} other {# attachments ready}}"
+      },
+      "errors": {
+        "createFailed": "Could not post the comment. Please try again."
+      }
+    },
     "tagPicker": {
       "searchPlaceholder": "Search tags or type a new name…",
       "remove": "Remove tag",

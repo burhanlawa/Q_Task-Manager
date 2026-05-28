@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { Link } from '@/i18n/routing';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -204,7 +205,11 @@ export function TasksTable() {
             )}
             {items.map((task) => (
               <TableRow key={task.id}>
-                <TableCell className="font-medium">{task.title}</TableCell>
+                <TableCell className="font-medium">
+                  <Link href={`/tasks/${task.id}`} className="hover:underline">
+                    {task.title}
+                  </Link>
+                </TableCell>
                 <TableCell>
                   <Badge variant={STATUS_VARIANT[task.status]}>
                     {t(`status.${task.status}` as 'status.draft')}

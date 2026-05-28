@@ -28,4 +28,15 @@ export class CreateCommentDto {
   @IsUUID('all', { each: true })
   @Type(() => String)
   mentioned_user_ids?: string[];
+
+  // File ids the client just uploaded with purpose=comment_attachment and
+  // ownerId still null. The server claims each on create by setting
+  // owner_type='comment' and owner_id=<new comment id>.
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ArrayUnique()
+  @IsUUID('all', { each: true })
+  @Type(() => String)
+  attachment_file_ids?: string[];
 }

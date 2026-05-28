@@ -389,6 +389,21 @@
         "downloadFailed": "تعذّر تنزيل الملف."
       }
     },
+    "comments": {
+      "title": "{count, plural, =0 {التعليقات} one {التعليقات (١)} other {التعليقات (#)}}",
+      "empty": "لا توجد تعليقات بعد.",
+      "edited": "مُعدَّل",
+      "composer": {
+        "title": "أضف تعليقًا",
+        "placeholder": "اكتب تعليقًا… استخدم @اسم للإشارة إلى شخص.",
+        "submit": "نشر التعليق",
+        "submitting": "جارٍ النشر…",
+        "attachmentsQueued": "{n, plural, one {مرفق واحد جاهز} other {# مرفقات جاهزة}}"
+      },
+      "errors": {
+        "createFailed": "تعذّر نشر التعليق. الرجاء المحاولة مرة أخرى."
+      }
+    },
     "tagPicker": {
       "searchPlaceholder": "ابحث عن وسم أو اكتب اسمًا جديدًا…",
       "remove": "إزالة الوسم",

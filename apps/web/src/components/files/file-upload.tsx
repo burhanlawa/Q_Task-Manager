@@ -38,8 +38,9 @@ export type FileUploadProps = {
     | 'company_logo'
     | 'cv'
     | 'id_card'
-    | 'certificate';
-  attachedToType: 'task' | 'user' | 'company';
+    | 'certificate'
+    | 'comment_attachment';
+  attachedToType: 'task' | 'user' | 'company' | 'comment';
   attachedToId?: string;
   // Comma-separated MIME pattern for the dropzone (e.g. 'image/png,image/jpeg').
   // The backend re-enforces a stricter allowlist per purpose; this is just UX.

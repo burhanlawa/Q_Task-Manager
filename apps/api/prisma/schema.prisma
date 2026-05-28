@@ -580,6 +580,7 @@ enum file_purpose {
   cv
   id_card
   certificate
+  comment_attachment
 }
 
 enum invoice_status {

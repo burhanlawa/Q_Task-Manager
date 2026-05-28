@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -73,6 +74,34 @@ export class CommentsController {
       : [];
     const authorById = new Map(authors.map((a) => [a.id, a]));
 
+    // Inline attachments per comment. Same pattern as task attachments —
+    // owner_type='comment' + owner_id matches the comment id. Only
+    // 'uploaded' rows render to avoid showing half-uploaded files.
+    const attachments = rows.length
+      ? await db.file.findMany({
+          where: {
+            ownerType: 'comment',
+            ownerId: { in: rows.map((r) => r.id) },
+            uploadStatus: 'uploaded',
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            ownerId: true,
+            originalFilename: true,
+            contentType: true,
+            sizeBytes: true,
+            createdAt: true,
+          },
+        })
+      : [];
+    const attByComment = new Map<string, typeof attachments>();
+    for (const a of attachments) {
+      const k = a.ownerId!;
+      if (!attByComment.has(k)) attByComment.set(k, []);
+      attByComment.get(k)!.push(a);
+    }
+
     return {
       items: rows.map((r) => ({
         ...r,
@@ -81,6 +110,13 @@ export class CommentsController {
         // intermediate object shape.
         mentioned_user_ids: r.mentions.map((m) => m.mentionedUserId),
         mentions: undefined,
+        attachments: (attByComment.get(r.id) ?? []).map((a) => ({
+          id: a.id,
+          original_filename: a.originalFilename,
+          content_type: a.contentType,
+          size_bytes: a.sizeBytes.toString(),
+          created_at: a.createdAt,
+        })),
       })),
     };
   }
@@ -129,6 +165,39 @@ export class CommentsController {
       });
     }
 
+    // Claim any uploaded comment_attachment files (Sprint 13.4). Each file
+    // must be the caller's own upload, of the right purpose, not yet
+    // claimed (owner_id is null), and the upload must have completed.
+    // We update each via updateMany so a mismatched row simply doesn't
+    // update — never raises a partial-failure exception that would leave
+    // the comment in an inconsistent state.
+    const attachmentIds = dto.attachment_file_ids ?? [];
+    let claimedCount = 0;
+    if (attachmentIds.length > 0) {
+      const verify = await db.file.findMany({
+        where: {
+          id: { in: attachmentIds },
+          uploaderUserId: tenant.userId,
+          purpose: 'comment_attachment',
+          ownerType: 'comment',
+          ownerId: null,
+          uploadStatus: 'uploaded',
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      if (verify.length !== attachmentIds.length) {
+        throw new BadRequestException(
+          'One or more attachments are not claimable (already attached, not yours, or not yet uploaded)',
+        );
+      }
+      const r = await db.file.updateMany({
+        where: { id: { in: attachmentIds } },
+        data: { ownerId: comment.id },
+      });
+      claimedCount = r.count;
+    }
+
     await this.activity.record({
       db,
       companyId: tenant.companyId,
@@ -136,10 +205,18 @@ export class CommentsController {
       actionType: 'comment_created',
       targetType: 'comment',
       targetId: comment.id,
-      metadata: { taskId, mentionCount: mentionIds.length },
+      metadata: {
+        taskId,
+        mentionCount: mentionIds.length,
+        attachmentCount: claimedCount,
+      },
     });
 
-    return { ...comment, mentioned_user_ids: mentionIds };
+    return {
+      ...comment,
+      mentioned_user_ids: mentionIds,
+      attachment_file_ids: attachmentIds,
+    };
   }
 
   // PATCH /comments/:id

@@ -18,12 +18,14 @@ export enum UploadIntentPurpose {
   cv = 'cv',
   id_card = 'id_card',
   certificate = 'certificate',
+  comment_attachment = 'comment_attachment',
 }
 
 export enum UploadIntentAttachedToType {
   task = 'task',
   user = 'user',
   company = 'company',
+  comment = 'comment',
 }
 
 // 50 MB cap per the spec.
