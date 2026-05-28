@@ -691,5 +691,14 @@
         "error": "Something went wrong."
       }
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "You're all caught up.",
+    "markAllRead": "Mark all as read",
+    "viewAll": "View all",
+    "ariaLabel": "Notifications",
+    "unreadBadge": "{count, plural, one {# unread} other {# unread}}",
+    "untitled": "Notification"
   }
 }

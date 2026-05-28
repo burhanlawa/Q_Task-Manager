@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { CompanyLogo } from '@/components/company-logo';
 import { LocaleSwitcher } from '@/components/locale-switcher';
+import { NotificationBell } from '@/components/notification-bell';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { HeaderAuth } from '@/components/header-auth';
 
@@ -18,6 +19,7 @@ export async function SiteHeader() {
         <div className="flex items-center gap-2">
           <LocaleSwitcher />
           <ThemeToggle />
+          <NotificationBell />
           <HeaderAuth />
         </div>
       </div>

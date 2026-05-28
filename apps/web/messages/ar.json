@@ -691,5 +691,14 @@
         "error": "حدث خطأ ما."
       }
     }
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا توجد إشعارات جديدة.",
+    "markAllRead": "تعليم الكل كمقروء",
+    "viewAll": "عرض الكل",
+    "ariaLabel": "الإشعارات",
+    "unreadBadge": "{count, plural, one {# غير مقروء} other {# غير مقروءة}}",
+    "untitled": "إشعار"
   }
 }
