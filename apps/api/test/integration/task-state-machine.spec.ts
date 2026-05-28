@@ -124,7 +124,14 @@ const calendar = new CalendarService();
 // PusherService reads PUSHER_* env vars; in tests we just want a no-op trigger.
 // new PusherService() with the env vars present would actually attempt to call
 // Pusher's REST API on every notification write, which spams real traffic.
-const notifications = new NotificationsService({ safeTrigger: async () => {} } as never);
+// Stub PusherService + EmailTemplateService + BullMQ Queue. The test asserts
+// notification ROW writes (the contract); the Pusher trigger and email
+// enqueue are fire-and-forget side-effects that don't change those rows.
+const notifications = new NotificationsService(
+  { safeTrigger: async () => {} } as never,
+  { render: () => ({ subject: '', html: '', text: '' }) } as never,
+  { add: async () => ({ id: 'stub' }) } as never,
+);
 
 // Controller instances (recreated per test in case state ever creeps in).
 function makeControllers() {
