@@ -3,10 +3,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Download, FileText } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FileUpload } from '@/components/files/file-upload';
 import { Button } from '@/components/ui/button';
 import { api, type ApiError } from '@/lib/api';
+import { CommentEditor, type CommentEditorHandle } from './comment-editor';
 
 type Attachment = {
   id: string;
@@ -59,24 +60,41 @@ function isImage(ct: string): boolean {
 export function TaskCommentsPanel({ taskId }: { taskId: string }) {
   const t = useTranslations('tasks.comments');
   const queryClient = useQueryClient();
-  const [body, setBody] = useState('');
+  const editorRef = useRef<CommentEditorHandle>(null);
   const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Bump on every editor change so the submit button enables/disables
+  // without us mirroring the editor's HTML in React state.
+  const [, setTick] = useState(0);
 
   const { data, isLoading } = useQuery<ListResponse>({
     queryKey: ['task', taskId, 'comments'],
     queryFn: () => api.get(`tasks/${taskId}/comments`),
   });
 
+  // Task — used to bias the mention dropdown to the task's department and
+  // assignees per the spec's "department + watchers" framing.
+  const { data: task } = useQuery<{
+    departmentId: string;
+    assignees: Array<{ userId: string }>;
+  }>({
+    queryKey: ['task', taskId],
+    queryFn: () => api.get(`tasks/${taskId}`),
+  });
+
   const create = useMutation({
-    mutationFn: () =>
-      api.post(`tasks/${taskId}/comments`, {
+    mutationFn: () => {
+      const body = editorRef.current?.getHTML() ?? '';
+      const mentioned_user_ids = editorRef.current?.getMentionIds() ?? [];
+      return api.post(`tasks/${taskId}/comments`, {
         body,
+        mentioned_user_ids,
         attachment_file_ids: attachmentIds,
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task', taskId, 'comments'] });
-      setBody('');
+      editorRef.current?.clear();
       setAttachmentIds([]);
       setError(null);
     },
@@ -148,12 +166,12 @@ export function TaskCommentsPanel({ taskId }: { taskId: string }) {
 
       <div className="space-y-2 border-t pt-4">
         <h3 className="text-sm font-medium">{t('composer.title')}</h3>
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
+        <CommentEditor
+          ref={editorRef}
+          departmentId={task?.departmentId}
+          assigneeIds={task?.assignees?.map((a) => a.userId)}
           placeholder={t('composer.placeholder')}
-          rows={3}
-          className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          onUpdate={() => setTick((n) => n + 1)}
         />
         <FileUpload
           purpose="comment_attachment"
@@ -174,7 +192,7 @@ export function TaskCommentsPanel({ taskId }: { taskId: string }) {
         )}
         <div className="flex justify-end">
           <Button
-            disabled={!body.trim() || create.isPending}
+            disabled={editorRef.current?.isEmpty() !== false || create.isPending}
             onClick={() => create.mutate()}
           >
             {create.isPending ? t('composer.submitting') : t('composer.submit')}
