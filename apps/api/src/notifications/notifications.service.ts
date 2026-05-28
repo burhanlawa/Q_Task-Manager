@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 // Spec-shaped input. The service maps these onto our column names so the
 // schema stays the canonical reference and callers use the names from the
@@ -80,28 +81,37 @@ export class NotificationsService {
     const metadata: Record<string, unknown> = { ...(input.metadata ?? {}) };
     if (input.priority) metadata.priority = input.priority;
 
-    // 3. Insert. Same RLS gotcha as above — we're writing on behalf of
-    //    a different user. The WITH CHECK on notifications only requires
-    //    company_id to match, so this is allowed; the user can't see
-    //    notifications they didn't make for themselves anyway.
-    const row = await db.notification.create({
-      data: {
-        companyId: input.companyId,
-        userId: input.recipientId,
-        type: input.type,
-        title: input.title ?? null,
-        body: input.message ?? null,
-        link: input.actionUrl ?? null,
-        sourceActorUserId: input.actorUserId ?? null,
-        sourceTargetType: input.relatedEntityType ?? null,
-        sourceTargetId: input.relatedEntityId ?? null,
-        metadata: metadata as Prisma.InputJsonValue,
-        // Only pass when explicit; otherwise let the DB default (+ trigger
-        // fallback) handle it.
-        ...(input.expiresAt ? { expiresAt: input.expiresAt } : {}),
-      },
-      select: { id: true },
-    });
-    return row;
+    // 3. Insert via raw SQL. We use raw INSERT (no RETURNING) because RLS
+    //    on notifications scopes SELECT to "rows whose user_id = me." On
+    //    a typical create.create() call Prisma adds RETURNING * which then
+    //    fails the USING clause when the actor differs from the recipient
+    //    (the dispatch path's whole purpose). Generating the id client-side
+    //    avoids needing to read back, and the row is still visible to its
+    //    actual recipient on subsequent reads.
+    const id = randomUUID();
+    const expiresAtSql = input.expiresAt
+      ? Prisma.sql`${input.expiresAt}::timestamptz`
+      : Prisma.sql`(now() + interval '90 days')`;
+    await db.$executeRaw`
+      INSERT INTO notifications (
+        id, company_id, user_id, type, title, body, link,
+        source_actor_user_id, source_target_type, source_target_id,
+        metadata, expires_at
+      ) VALUES (
+        ${id}::uuid,
+        ${input.companyId}::uuid,
+        ${input.recipientId}::uuid,
+        ${input.type},
+        ${input.title ?? null},
+        ${input.message ?? null},
+        ${input.actionUrl ?? null},
+        ${input.actorUserId ?? null}::uuid,
+        ${input.relatedEntityType ?? null},
+        ${input.relatedEntityId ?? null}::uuid,
+        ${JSON.stringify(metadata)}::jsonb,
+        ${expiresAtSql}
+      )
+    `;
+    return { id };
   }
 }

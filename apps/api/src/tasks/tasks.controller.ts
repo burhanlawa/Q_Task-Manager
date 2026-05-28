@@ -23,6 +23,7 @@ import { PermissionsGuard } from '../auth/permissions.guard';
 import { PermissionsService } from '../auth/permissions.service';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CalendarService, type CalendarHoliday } from '../calendar/calendar.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -42,6 +43,7 @@ export class TasksController {
     private readonly permissions: PermissionsService,
     private readonly activity: ActivityLogService,
     private readonly calendar: CalendarService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   @Post()
@@ -280,6 +282,25 @@ export class TasksController {
         })),
       });
       // The DB trigger from 8.2 maintains tasks.assignee_count automatically.
+
+      // Sprint 14.3 — notify each newly-assigned user. Self-assignment doesn't
+      // notify (you don't need a notification for something you just did).
+      // Runs inside the same tx as the row insert + the task create, so a
+      // partial failure rolls everything back together.
+      for (const userId of assigneeIds) {
+        if (userId === tenant.userId) continue;
+        await this.notifications.create(db, {
+          recipientId: userId,
+          companyId: tenant.companyId,
+          type: 'task_assigned',
+          title: task.title,
+          message: `You were assigned to a task.`,
+          relatedEntityType: 'task',
+          relatedEntityId: task.id,
+          actionUrl: `/tasks/${task.id}`,
+          actorUserId: tenant.userId,
+        });
+      }
     }
 
     // Attach tags. The set was already validated above (existence +

@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import { ActivityLogService } from '../../src/activity-log/activity-log.service';
 import { PermissionsService } from '../../src/auth/permissions.service';
 import { CalendarService } from '../../src/calendar/calendar.service';
+import { NotificationsService } from '../../src/notifications/notifications.service';
 import { TaskReassignmentController } from '../../src/tasks/task-reassignment.controller';
 import { TaskTransitionsController } from '../../src/tasks/task-transitions.controller';
 import { TasksController } from '../../src/tasks/tasks.controller';
@@ -88,9 +89,21 @@ async function teardown(s: Seed): Promise<void> {
 async function asTenant<T>(
   companyId: string,
   fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  userId?: string,
 ): Promise<T> {
   return appDb.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT set_config('app.current_company_id', ${companyId}, true)`;
+    // Sprint 14.1 added per-recipient RLS bound to app.current_user_id.
+    // Bind a placeholder when the caller didn't pass one — the RLS policy
+    // on notifications would otherwise blow up with "" when current_setting
+    // returns the empty default. Real tenant-scoped tables (the only ones
+    // these tests touch outside of notifications) don't read this var, so
+    // any UUID works as the placeholder.
+    if (userId) {
+      await tx.$executeRaw`SELECT set_config('app.current_user_id', ${userId}, true)`;
+    } else {
+      await tx.$executeRaw`SELECT set_config('app.current_user_id', '00000000-0000-0000-0000-000000000000', true)`;
+    }
     return fn(tx);
   });
 }
@@ -108,12 +121,13 @@ function stubPerms(): PermissionsService {
 // Real ActivityLogService — verifying log rows is part of the done check.
 const activity = new ActivityLogService();
 const calendar = new CalendarService();
+const notifications = new NotificationsService();
 
 // Controller instances (recreated per test in case state ever creeps in).
 function makeControllers() {
   const perms = stubPerms();
   return {
-    tasks: new TasksController(perms, activity, calendar),
+    tasks: new TasksController(perms, activity, calendar, notifications),
     transitions: new TaskTransitionsController(perms, activity),
     reassign: new TaskReassignmentController(perms, activity),
   };
