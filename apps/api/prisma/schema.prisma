@@ -517,6 +517,45 @@ model CommentMention {
   @@map("comment_mentions")
 }
 
+model Notification {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId           String    @db.Uuid @map("company_id")
+  userId              String    @db.Uuid @map("user_id")
+  /// Short event token rendered in the active locale on the client.
+  type                String
+  title               String?
+  body                String?
+  /// Deep link (path only) for the click-through.
+  link                String?
+  sourceActorUserId   String?   @db.Uuid @map("source_actor_user_id")
+  sourceTargetType    String?   @map("source_target_type")
+  sourceTargetId      String?   @db.Uuid @map("source_target_id")
+  metadata            Json      @default("{}")
+  readAt              DateTime? @db.Timestamptz(6) @map("read_at")
+  /// 90-day TTL by default (column DEFAULT + trigger fallback for NULLs).
+  expiresAt           DateTime  @default(dbgenerated("(now() + interval '90 days')")) @db.Timestamptz(6) @map("expires_at")
+  createdAt           DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  // The partial indexes WHERE expires_at > now() can't be expressed in
+  // Prisma (it requires immutable predicates), so the SQL migration
+  // defines them and we leave only the basic mapping here.
+  @@index([userId, createdAt(sort: Desc)],          map: "idx_notifications_user_created")
+  @@index([sourceTargetType, sourceTargetId],       map: "idx_notifications_target")
+  @@index([expiresAt],                              map: "idx_notifications_expires")
+  @@map("notifications")
+}
+
+model UserNotificationPreference {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String   @db.Uuid @map("company_id")
+  userId      String   @unique @db.Uuid @map("user_id")
+  preferences Json     @default("{}")
+  createdAt   DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt   DateTime @default(now()) @db.Timestamptz(6) @map("updated_at")
+
+  @@map("user_notification_preferences")
+}
+
 model File {
   id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   companyId        String            @db.Uuid @map("company_id")

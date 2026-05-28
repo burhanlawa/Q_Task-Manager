@@ -61,6 +61,9 @@ export class TenantContextInterceptor implements NestInterceptor {
               // Using a parameter binding (not string concat) avoids any SQL injection
               // risk even though the UUID comes from our own DB.
               await tx.$executeRaw`SELECT set_config('app.current_company_id', ${user.companyId}, true)`;
+              // Also bind the user id so per-recipient RLS (e.g., notifications)
+              // can scope reads to just my row without app-code filtering.
+              await tx.$executeRaw`SELECT set_config('app.current_user_id', ${user.id}, true)`;
               req.tenantDb = tx;
               const value = await new Promise((resolve, reject) => {
                 next
