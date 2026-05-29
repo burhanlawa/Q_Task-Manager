@@ -725,5 +725,34 @@
       "new_employee": "هاوەڵێکی نوێ پەیوەست بوو",
       "leave_reminder": "بیرخستنەوەی مۆڵەتی داهاتوو"
     }
+  },
+  "broadcasts": {
+    "new": {
+      "title": "ناردنی ڕاگەیاندن",
+      "description": "ڕاگەیاندنێک بنێرە بۆ هەموو ئەوانەی لە چوارچێوەی توایەن. لە سندوقی هاتووەکانیان دەبینرێت و لە ڕێی ئیمەیلیش (بەپێی هەڵبژاردنەکانیان).",
+      "titleField": "ناونیشان",
+      "titlePlaceholder": "سەردێڕی کورت (زۆرترین ٢٠٠ پیت)",
+      "bodyField": "پەیام",
+      "bodyPlaceholder": "ڕاگەیاندنەکەت لێرە بنووسە…",
+      "audience": "گەیشتن بۆ",
+      "audiencePicker": {
+        "company": "هەموو کۆمپانیا",
+        "branch": "بەپێی لق",
+        "department": "بەپێی بەش",
+        "team": "بەپێی تیم",
+        "role": "بەپێی ڕۆڵ",
+        "custom": "کەسانی دیاریکراو"
+      },
+      "scopedPicker": {
+        "myDepartment": "بەشی من",
+        "myTeam": "تیمی من",
+        "myTeams": "تیمەکانم ({count})"
+      },
+      "send": "ناردنی ڕاگەیاندن",
+      "sending": "ناردن…",
+      "sentToast": "ڕاگەیاندن نێردرا بۆ {count, plural, one {# کەس} other {# کەس}}.",
+      "errorToast": "نەنێردرا. {message}",
+      "permissionDenied": "ڕۆڵەکەت ڕێگەی ناردنی ڕاگەیاندن نادات."
+    }
   }
 }

@@ -1,4 +1,13 @@
-import { Body, Controller, HttpCode, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  HttpCode,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
@@ -9,6 +18,24 @@ import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-t
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { AudienceResolverService, type AudienceKind } from './audience-resolver.service';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
+
+// Role → allowed audience kinds for THIS sprint (16.4). The web picker
+// mirrors this list; the controller enforces it. Kept in one place so the
+// two layers can never drift.
+//   ceo / hr / admin → full picker
+//   manager          → their department (and teams in it, by id)
+//   supervisor       → their team(s) only
+//   employee         → no broadcast.send permission, so never reaches here
+const ALLOWED_AUDIENCES_BY_ROLE: Record<string, ReadonlySet<AudienceKind>> = {
+  ceo: new Set(['company', 'all_company', 'branch', 'department', 'team', 'role', 'custom']),
+  hr: new Set(['company', 'all_company', 'branch', 'department', 'team', 'role', 'custom']),
+  admin: new Set(['company', 'all_company', 'branch', 'department', 'team', 'role', 'custom']),
+  manager: new Set(['department', 'team', 'custom']),
+  supervisor: new Set(['team', 'custom']),
+  // employee gets the empty set; broadcast.send permission gate stops them
+  // before this anyway, but defense in depth.
+  employee: new Set(),
+};
 
 // POST /broadcasts — create + fan out in one shot.
 //
@@ -38,6 +65,42 @@ export class BroadcastsController {
     private readonly activity: ActivityLogService,
   ) {}
 
+  // GET /broadcasts/audience-options
+  //   Lets the composer UI render only the choices the caller is allowed
+  //   to pick, plus the scoped lists they can target (their own dept, their
+  //   own teams). The picker still POSTs an audience+target_ids; this
+  //   endpoint just describes what the picker should LOOK like.
+  @Get('audience-options')
+  @RequirePermissions('broadcast.send')
+  async audienceOptions(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<{
+    role: string;
+    allowed: AudienceKind[];
+    myDepartmentId: string | null;
+    myBranchId: string | null;
+    myTeamIds: string[];
+  }> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true, departmentId: true, branchId: true },
+    });
+    if (!me) throw new ForbiddenException('User not found');
+    const myTeams = await db.userTeam.findMany({
+      where: { userId: tenant.userId },
+      select: { teamId: true },
+    });
+    const allowed = ALLOWED_AUDIENCES_BY_ROLE[me.orgRole] ?? new Set<AudienceKind>();
+    return {
+      role: me.orgRole,
+      allowed: Array.from(allowed),
+      myDepartmentId: me.departmentId,
+      myBranchId: me.branchId,
+      myTeamIds: myTeams.map((t) => t.teamId),
+    };
+  }
+
   @Post()
   @HttpCode(201)
   @RequirePermissions('broadcast.send')
@@ -52,6 +115,11 @@ export class BroadcastsController {
     notifiedCount: number;
   }> {
     const filter = dto.audience_filter ?? {};
+
+    // 1. Role-scope gate (16.4). Even if the picker is set up right, the
+    //    server is the actual security boundary — a Supervisor can't POST
+    //    audience=company by bypassing the UI.
+    await this.enforceRoleScope(db, tenant, dto, filter);
 
     // Resolve first so a misconfigured audience (e.g. branch with no
     // target_ids) errors BEFORE we write the broadcast row.
@@ -118,5 +186,110 @@ export class BroadcastsController {
       recipientCount: recipientIds.length,
       notifiedCount,
     };
+  }
+
+  // Role-scope enforcement. Two checks:
+  //   a) The audience KIND must be in the role's allow-list (e.g. supervisor
+  //      can't pick 'company').
+  //   b) For scoped roles, the TARGET_IDS must lie within the sender's own
+  //      scope. Manager can pick department but only THEIR department;
+  //      Supervisor can pick team but only THEIR team. Custom is constrained
+  //      to users inside that same scope.
+  private async enforceRoleScope(
+    db: Prisma.TransactionClient,
+    tenant: TenantContext,
+    dto: CreateBroadcastDto,
+    filter: { target_ids?: string[]; branch_id?: string; role_id?: string; user_ids?: string[] },
+  ): Promise<void> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true, departmentId: true, branchId: true },
+    });
+    if (!me) throw new ForbiddenException('User not found');
+
+    const allowed = ALLOWED_AUDIENCES_BY_ROLE[me.orgRole] ?? new Set<AudienceKind>();
+    if (!allowed.has(dto.audience)) {
+      throw new ForbiddenException(
+        `Your role (${me.orgRole}) cannot send to audience '${dto.audience}'`,
+      );
+    }
+
+    // Unbounded roles (CEO/HR/Admin) can target anything in the tenant.
+    if (me.orgRole === 'ceo' || me.orgRole === 'hr' || me.orgRole === 'admin') return;
+
+    // Collect the target_ids from either the new shape or the 16.2 legacy
+    // keys; the resolver does the same.
+    const ids =
+      filter.target_ids ?? (filter.branch_id ? [filter.branch_id] : null) ?? filter.user_ids ?? [];
+
+    if (me.orgRole === 'manager') {
+      // Manager: department restricted to THEIR department; team restricted
+      // to teams inside their department; custom restricted to users in
+      // their department.
+      if (dto.audience === 'department') {
+        if (!me.departmentId || !ids.every((id) => id === me.departmentId)) {
+          throw new ForbiddenException('Managers can only broadcast to their own department');
+        }
+        return;
+      }
+      if (dto.audience === 'team') {
+        if (!me.departmentId) throw new ForbiddenException('Manager has no department');
+        const teams = await db.team.findMany({
+          where: { id: { in: ids }, departmentId: me.departmentId },
+          select: { id: true },
+        });
+        if (teams.length !== ids.length) {
+          throw new ForbiddenException(
+            'Managers can only broadcast to teams inside their own department',
+          );
+        }
+        return;
+      }
+      if (dto.audience === 'custom') {
+        if (!me.departmentId) throw new ForbiddenException('Manager has no department');
+        const users = await db.user.findMany({
+          where: { id: { in: ids }, departmentId: me.departmentId },
+          select: { id: true },
+        });
+        if (users.length !== ids.length) {
+          throw new ForbiddenException(
+            'Managers can only broadcast to users in their own department',
+          );
+        }
+        return;
+      }
+    }
+
+    if (me.orgRole === 'supervisor') {
+      // Supervisor: team restricted to their team(s); custom restricted to
+      // members of their team(s).
+      const myTeams = await db.userTeam.findMany({
+        where: { userId: tenant.userId },
+        select: { teamId: true },
+      });
+      const myTeamIds = new Set(myTeams.map((t) => t.teamId));
+      if (myTeamIds.size === 0) {
+        throw new ForbiddenException('Supervisor has no team assignments');
+      }
+      if (dto.audience === 'team') {
+        if (!ids.every((id) => myTeamIds.has(id))) {
+          throw new ForbiddenException('Supervisors can only broadcast to their own team(s)');
+        }
+        return;
+      }
+      if (dto.audience === 'custom') {
+        const memberships = await db.userTeam.findMany({
+          where: { userId: { in: ids }, teamId: { in: Array.from(myTeamIds) } },
+          select: { userId: true },
+        });
+        const reachable = new Set(memberships.map((m) => m.userId));
+        if (!ids.every((id) => reachable.has(id))) {
+          throw new ForbiddenException(
+            'Supervisors can only broadcast to users in their own team(s)',
+          );
+        }
+        return;
+      }
+    }
   }
 }

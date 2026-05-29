@@ -725,5 +725,34 @@
       "new_employee": "انضم زميل جديد",
       "leave_reminder": "تذكير بإجازة قادمة"
     }
+  },
+  "broadcasts": {
+    "new": {
+      "title": "إرسال إعلان",
+      "description": "أرسل إعلانًا لجميع من في نطاق صلاحيتك. سيظهر في صندوق الوارد وفي البريد الإلكتروني (وفق تفضيلات المستلمين).",
+      "titleField": "العنوان",
+      "titlePlaceholder": "عنوان قصير (200 حرفًا كحد أقصى)",
+      "bodyField": "الرسالة",
+      "bodyPlaceholder": "اكتب إعلانك هنا…",
+      "audience": "الجمهور",
+      "audiencePicker": {
+        "company": "كل الشركة",
+        "branch": "حسب الفرع",
+        "department": "حسب القسم",
+        "team": "حسب الفريق",
+        "role": "حسب الدور",
+        "custom": "أشخاص محددون"
+      },
+      "scopedPicker": {
+        "myDepartment": "قسمي",
+        "myTeam": "فريقي",
+        "myTeams": "فِرَقي ({count})"
+      },
+      "send": "إرسال الإعلان",
+      "sending": "جارٍ الإرسال…",
+      "sentToast": "تم إرسال الإعلان إلى {count, plural, one {# شخص} other {# أشخاص}}.",
+      "errorToast": "تعذّر الإرسال. {message}",
+      "permissionDenied": "دورك لا يسمح بإرسال الإعلانات."
+    }
   }
 }

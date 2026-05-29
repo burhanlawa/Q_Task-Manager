@@ -726,5 +726,34 @@
       "new_employee": "New teammate joined",
       "leave_reminder": "Upcoming leave reminder"
     }
+  },
+  "broadcasts": {
+    "new": {
+      "title": "Send a broadcast",
+      "description": "Send an announcement to everyone in your scope. Recipients see it in their inbox and (when their preferences allow) by email.",
+      "titleField": "Title",
+      "titlePlaceholder": "Short headline (max 200 characters)",
+      "bodyField": "Message",
+      "bodyPlaceholder": "Type your announcement here…",
+      "audience": "Audience",
+      "audiencePicker": {
+        "company": "Whole company",
+        "branch": "By branch",
+        "department": "By department",
+        "team": "By team",
+        "role": "By role",
+        "custom": "Specific people"
+      },
+      "scopedPicker": {
+        "myDepartment": "My department",
+        "myTeam": "My team",
+        "myTeams": "My teams ({count})"
+      },
+      "send": "Send broadcast",
+      "sending": "Sending…",
+      "sentToast": "Broadcast sent to {count, plural, one {# person} other {# people}}.",
+      "errorToast": "Couldn't send. {message}",
+      "permissionDenied": "Your role doesn't allow sending broadcasts."
+    }
   }
 }
