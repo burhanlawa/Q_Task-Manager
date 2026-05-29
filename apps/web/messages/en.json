@@ -273,6 +273,34 @@
       "branch": "Branch",
       "department": "Department",
       "status": "Status"
+    },
+    "invite": {
+      "trigger": "Invite person",
+      "title": "Invite a new teammate",
+      "description": "An invitation email goes to this address; once they accept, they walk through onboarding and the approval chain (if any) for activation.",
+      "fields": {
+        "email": "Email",
+        "emailPlaceholder": "name@example.com",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "orgRole": "Role",
+        "branch": "Branch",
+        "department": "Department",
+        "none": "Not assigned"
+      },
+      "roles": {
+        "manager": "Manager",
+        "supervisor": "Supervisor",
+        "employee": "Employee",
+        "hr": "HR"
+      },
+      "submit": "Send invitation",
+      "submitting": "Sending…",
+      "cancel": "Cancel",
+      "toast": {
+        "success": "Invitation sent to {email}.",
+        "error": "Couldn't send invitation. {message}"
+      }
     }
   },
   "tasks": {

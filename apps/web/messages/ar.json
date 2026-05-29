@@ -273,6 +273,34 @@
       "branch": "الفرع",
       "department": "القسم",
       "status": "الحالة"
+    },
+    "invite": {
+      "trigger": "دعوة شخص",
+      "title": "دعوة زميل جديد",
+      "description": "ستُرسَل دعوة عبر البريد الإلكتروني إلى هذا العنوان؛ بمجرد قبولها، يمر المستخدم خلال خطوات الانضمام وسلسلة الموافقة (إن وُجدت) ليُفعَّل حسابه.",
+      "fields": {
+        "email": "البريد الإلكتروني",
+        "emailPlaceholder": "name@example.com",
+        "firstName": "الاسم الأول",
+        "lastName": "اسم العائلة",
+        "orgRole": "الدور",
+        "branch": "الفرع",
+        "department": "القسم",
+        "none": "غير محدد"
+      },
+      "roles": {
+        "manager": "مدير",
+        "supervisor": "مشرف",
+        "employee": "موظف",
+        "hr": "موارد بشرية"
+      },
+      "submit": "إرسال الدعوة",
+      "submitting": "جارٍ الإرسال…",
+      "cancel": "إلغاء",
+      "toast": {
+        "success": "تم إرسال الدعوة إلى {email}.",
+        "error": "تعذّر إرسال الدعوة. {message}"
+      }
     }
   },
   "tasks": {
