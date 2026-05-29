@@ -365,7 +365,11 @@ model TaskTag {
 }
 
 model ActivityLog {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Sprint 17.1: the underlying table is RANGE-partitioned by created_at,
+  // so the primary key must include the partition key. The id alone is
+  // still unique in practice (UUIDv4); created_at is just along for the
+  // ride to satisfy the Postgres partition-key-in-PK rule.
+  id            String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   companyId     String   @db.Uuid @map("company_id")
   actorUserId   String?  @db.Uuid @map("actor_user_id")
   actionType    String   @map("action_type")
@@ -375,6 +379,7 @@ model ActivityLog {
   metadata      Json?
   createdAt     DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
 
+  @@id([id, createdAt], map: "activity_log_pkey")
   @@index([companyId, createdAt(sort: Desc)],                   map: "idx_activity_log_company_created_at")
   @@index([targetType, targetId, createdAt(sort: Desc)],        map: "idx_activity_log_target")
   @@index([actorUserId, createdAt(sort: Desc)],                 map: "idx_activity_log_actor")
