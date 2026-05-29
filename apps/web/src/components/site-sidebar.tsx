@@ -3,17 +3,20 @@
 import { useAuth } from '@clerk/nextjs';
 import { useQuery } from '@tanstack/react-query';
 import {
+  BarChart3,
   Bell,
   Building2,
   GitBranch,
   Home,
   KeyRound,
   Layers,
+  ListChecks,
   Megaphone,
   Menu,
   ScrollText,
   Settings,
   Shield,
+  TrendingUp,
   Users,
   UserSquare2,
   X,
@@ -54,6 +57,29 @@ const SECTIONS: NavSection[] = [
         labelKey: 'activity',
         icon: ScrollText,
         permission: 'activity_log.read',
+      },
+    ],
+  },
+  {
+    titleKey: 'reports',
+    items: [
+      {
+        href: '/reports/task-completion',
+        labelKey: 'tasksCompletion',
+        icon: BarChart3,
+        permission: 'report.read',
+      },
+      {
+        href: '/reports/employee-performance',
+        labelKey: 'employeePerformance',
+        icon: TrendingUp,
+        permission: 'report.read',
+      },
+      {
+        href: '/reports/workload',
+        labelKey: 'workload',
+        icon: ListChecks,
+        permission: 'report.read',
       },
     ],
   },

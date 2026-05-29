@@ -856,11 +856,50 @@
     },
     "export": "تصدير CSV"
   },
+  "reports": {
+    "common": {
+      "rangeLabel": "النطاق",
+      "ranges": {
+        "7d": "آخر 7 أيام",
+        "30d": "آخر 30 يومًا",
+        "90d": "آخر 90 يومًا"
+      },
+      "exportCsv": "تصدير CSV",
+      "loading": "جارٍ التحميل…",
+      "loadError": "تعذّر تحميل التقرير.",
+      "empty": "لا توجد بيانات لهذا النطاق."
+    },
+    "tasksCompletion": {
+      "title": "إنجاز المهام",
+      "description": "المهام المُنشأة مقابل المهام المعتمدة، يوميًا، خلال النطاق المحدد.",
+      "axisCreated": "مُنشأة",
+      "axisCompleted": "مكتملة"
+    },
+    "employeePerformance": {
+      "title": "أداء الموظفين",
+      "description": "صف لكل مستخدم تم تكليفه بمهمة واحدة على الأقل خلال النطاق.",
+      "cols": {
+        "name": "الاسم",
+        "email": "البريد",
+        "assigned": "مُكلَّفة",
+        "completed": "مكتملة",
+        "onTimePct": "% في الموعد",
+        "avgRevisions": "متوسط التعديلات"
+      },
+      "onTimeNone": "—"
+    },
+    "workload": {
+      "title": "حجم العمل الحالي",
+      "description": "المهام المفتوحة لكل مستخدم، موزونة بالأولوية (منخفضة 1، متوسطة 2، عالية 3، عاجلة 4). مرتبة حسب الحمل.",
+      "axisLoad": "الحمل الموزون"
+    }
+  },
   "nav": {
     "openMenu": "فتح القائمة",
     "closeMenu": "إغلاق القائمة",
     "sections": {
       "workspace": "مساحة العمل",
+      "reports": "التقارير",
       "admin": "الإدارة",
       "personal": "الخاص بي"
     },
@@ -870,6 +909,9 @@
       "people": "الأشخاص",
       "broadcasts": "الإعلانات",
       "activity": "سجل النشاط",
+      "tasksCompletion": "إنجاز المهام",
+      "employeePerformance": "أداء الموظفين",
+      "workload": "حجم العمل",
       "settings": "الإعدادات",
       "myProfile": "ملفي الشخصي",
       "notifications": "الإشعارات",

@@ -857,11 +857,50 @@
     },
     "export": "Export CSV"
   },
+  "reports": {
+    "common": {
+      "rangeLabel": "Range",
+      "ranges": {
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "90d": "Last 90 days"
+      },
+      "exportCsv": "Export CSV",
+      "loading": "Loading…",
+      "loadError": "Couldn't load the report.",
+      "empty": "No data for this range."
+    },
+    "tasksCompletion": {
+      "title": "Task completion",
+      "description": "Tasks created vs. tasks approved, per day, across the selected range.",
+      "axisCreated": "Created",
+      "axisCompleted": "Completed"
+    },
+    "employeePerformance": {
+      "title": "Employee performance",
+      "description": "One row per user with at least one task assigned in the range.",
+      "cols": {
+        "name": "Name",
+        "email": "Email",
+        "assigned": "Assigned",
+        "completed": "Completed",
+        "onTimePct": "On time %",
+        "avgRevisions": "Avg revisions"
+      },
+      "onTimeNone": "—"
+    },
+    "workload": {
+      "title": "Current workload",
+      "description": "Open tasks per user, weighted by priority (low 1, medium 2, high 3, urgent 4). Sorted by load.",
+      "axisLoad": "Weighted load"
+    }
+  },
   "nav": {
     "openMenu": "Open navigation",
     "closeMenu": "Close navigation",
     "sections": {
       "workspace": "Workspace",
+      "reports": "Reports",
       "admin": "Administration",
       "personal": "Personal"
     },
@@ -871,6 +910,9 @@
       "people": "People",
       "broadcasts": "Broadcasts",
       "activity": "Activity log",
+      "tasksCompletion": "Task completion",
+      "employeePerformance": "Employee performance",
+      "workload": "Current workload",
       "settings": "Settings",
       "myProfile": "My profile",
       "notifications": "Notifications",
