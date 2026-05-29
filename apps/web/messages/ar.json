@@ -857,6 +857,64 @@
     "export": "تصدير CSV"
   },
   "dashboard": {
+    "manager": {
+      "title": "لوحة المدير",
+      "description": "نظرة عامة على المهام والمواعيد وحجم العمل.",
+      "scope": {
+        "company": "على مستوى الشركة",
+        "department": "القسم",
+        "teams": "{count, plural, one {فريقك} other {فِرَقك}}",
+        "noScope": "لا فريق أو قسم مُعيَّن."
+      },
+      "cards": {
+        "overview": "نظرة عامة على المهام",
+        "teamComparison": "مقارنة الفِرَق",
+        "upcoming": "مواعيد قادمة",
+        "workload": "أعلى حجم عمل",
+        "approvals": "دعوات بانتظار الموافقة"
+      },
+      "overview": {
+        "total": "{count, plural, one {# مهمة في النطاق} other {# مهام في النطاق}}",
+        "none": "لا توجد مهام في النطاق.",
+        "status": {
+          "draft": "مسودة",
+          "assigned": "مُكلَّفة",
+          "in_progress": "قيد التنفيذ",
+          "submitted": "مُقدَّمة",
+          "reassignment_requested": "إعادة تكليف",
+          "approved": "مُعتمدة",
+          "completed": "مكتملة",
+          "cancelled": "ملغاة",
+          "rejected": "مرفوضة"
+        }
+      },
+      "teamComparison": {
+        "empty": "لا فِرَق في النطاق.",
+        "cols": {
+          "team": "الفريق",
+          "open": "مفتوحة",
+          "completed30": "مكتملة (30 يومًا)"
+        }
+      },
+      "upcoming": {
+        "empty": "لا مواعيد قادمة.",
+        "due": "تستحق في {date}",
+        "assignedTo": "← {name}",
+        "noAssignee": "غير مُكلَّفة"
+      },
+      "workload": {
+        "empty": "لا شيء مفتوح.",
+        "open": "{count, plural, one {# مفتوحة} other {# مفتوحة}}",
+        "load": "الحمل {load}"
+      },
+      "approvals": {
+        "count": "{count, plural, one {# دعوة بانتظار} other {# دعوات بانتظار}}",
+        "none": "لا دعوات بانتظار.",
+        "review": "مراجعة"
+      },
+      "loading": "جارٍ التحميل…",
+      "loadError": "تعذّر تحميل اللوحة."
+    },
     "employee": {
       "title": "اللوحة الرئيسية",
       "description": "نظرة سريعة على عملك.",
@@ -952,6 +1010,7 @@
     },
     "items": {
       "home": "الرئيسية",
+      "managerDashboard": "لوحة المدير",
       "tasks": "المهام",
       "people": "الأشخاص",
       "broadcasts": "الإعلانات",

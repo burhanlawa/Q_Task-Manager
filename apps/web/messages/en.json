@@ -858,6 +858,64 @@
     "export": "Export CSV"
   },
   "dashboard": {
+    "manager": {
+      "title": "Manager dashboard",
+      "description": "Team-wide task overview, deadlines, and workload.",
+      "scope": {
+        "company": "Company-wide",
+        "department": "Department",
+        "teams": "{count, plural, one {Your team} other {Your teams}}",
+        "noScope": "No assigned team or department."
+      },
+      "cards": {
+        "overview": "Task overview",
+        "teamComparison": "Team comparison",
+        "upcoming": "Upcoming deadlines",
+        "workload": "Top workload",
+        "approvals": "Pending invitations"
+      },
+      "overview": {
+        "total": "{count, plural, one {# task in scope} other {# tasks in scope}}",
+        "none": "No tasks in scope.",
+        "status": {
+          "draft": "Draft",
+          "assigned": "Assigned",
+          "in_progress": "In progress",
+          "submitted": "Submitted",
+          "reassignment_requested": "Reassignment",
+          "approved": "Approved",
+          "completed": "Completed",
+          "cancelled": "Cancelled",
+          "rejected": "Rejected"
+        }
+      },
+      "teamComparison": {
+        "empty": "No teams in scope.",
+        "cols": {
+          "team": "Team",
+          "open": "Open",
+          "completed30": "Completed (30d)"
+        }
+      },
+      "upcoming": {
+        "empty": "No upcoming deadlines.",
+        "due": "Due {date}",
+        "assignedTo": "→ {name}",
+        "noAssignee": "Unassigned"
+      },
+      "workload": {
+        "empty": "Nothing open.",
+        "open": "{count, plural, one {# open} other {# open}}",
+        "load": "Load {load}"
+      },
+      "approvals": {
+        "count": "{count, plural, one {# pending invitation} other {# pending invitations}}",
+        "none": "No pending invitations.",
+        "review": "Review"
+      },
+      "loading": "Loading…",
+      "loadError": "Couldn't load the dashboard."
+    },
     "employee": {
       "title": "Dashboard",
       "description": "An at-a-glance view of your work.",
@@ -953,6 +1011,7 @@
     },
     "items": {
       "home": "Home",
+      "managerDashboard": "Manager dashboard",
       "tasks": "Tasks",
       "people": "People",
       "broadcasts": "Broadcasts",

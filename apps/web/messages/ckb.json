@@ -857,6 +857,64 @@
     "export": "هەناردنی CSV"
   },
   "dashboard": {
+    "manager": {
+      "title": "داشبۆردی بەڕێوەبەر",
+      "description": "بینینێکی گشتی لە ئەرک و وادە و باری کاری تیمەکان.",
+      "scope": {
+        "company": "ئاستی کۆمپانیا",
+        "department": "بەش",
+        "teams": "{count, plural, one {تیمەکەت} other {تیمەکانت}}",
+        "noScope": "هیچ تیم یان بەشێکی دیاریکراو نییە."
+      },
+      "cards": {
+        "overview": "بینینی گشتی ئەرکەکان",
+        "teamComparison": "بەراوردی تیمەکان",
+        "upcoming": "وادە داهاتووەکان",
+        "workload": "بەرزترین باری کار",
+        "approvals": "بانگهێشت بەنتیجەی پەسەند"
+      },
+      "overview": {
+        "total": "{count, plural, one {# ئەرک لە چوارچێوەدا} other {# ئەرک لە چوارچێوەدا}}",
+        "none": "هیچ ئەرکێک لە چوارچێوەدا نییە.",
+        "status": {
+          "draft": "ڕەشنووس",
+          "assigned": "سپێردراو",
+          "in_progress": "لە کاردایە",
+          "submitted": "پێشکەشکراو",
+          "reassignment_requested": "گۆڕانی ئەرک",
+          "approved": "پەسەندکراو",
+          "completed": "تەواوبوو",
+          "cancelled": "هەڵوەشاو",
+          "rejected": "ڕەتکراوە"
+        }
+      },
+      "teamComparison": {
+        "empty": "هیچ تیمێک لە چوارچێوەدا نییە.",
+        "cols": {
+          "team": "تیم",
+          "open": "کراوە",
+          "completed30": "تەواوبوو (٣٠ ڕۆژ)"
+        }
+      },
+      "upcoming": {
+        "empty": "هیچ وادەیەکی داهاتوو نییە.",
+        "due": "وادە {date}",
+        "assignedTo": "← {name}",
+        "noAssignee": "نەسپێردراو"
+      },
+      "workload": {
+        "empty": "هیچ کراوەیەک نییە.",
+        "open": "{count, plural, one {# کراوە} other {# کراوە}}",
+        "load": "بار {load}"
+      },
+      "approvals": {
+        "count": "{count, plural, one {# بانگهێشتی چاوەڕوان} other {# بانگهێشتی چاوەڕوان}}",
+        "none": "هیچ بانگهێشتێکی چاوەڕوان نییە.",
+        "review": "پێداچوونەوە"
+      },
+      "loading": "بارکردن…",
+      "loadError": "نەتوانرا داشبۆرد باربکرێت."
+    },
     "employee": {
       "title": "داشبۆرد",
       "description": "بینینێکی خێرا لە کارەکانت.",
@@ -952,6 +1010,7 @@
     },
     "items": {
       "home": "سەرەکی",
+      "managerDashboard": "داشبۆردی بەڕێوەبەر",
       "tasks": "ئەرکەکان",
       "people": "کەسەکان",
       "broadcasts": "ڕاگەیاندنەکان",
