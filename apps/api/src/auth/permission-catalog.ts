@@ -122,6 +122,12 @@ export const PERMISSION_CATALOG: readonly PermissionGroup[] = [
     description: 'Send company-wide and audience-scoped announcements (Sprint 16).',
     permissions: [{ key: 'broadcast.send', label: 'Send broadcasts' }],
   },
+  {
+    category: 'Activity log',
+    description:
+      'Read the immutable audit trail. Visibility is further scoped by org role at query time (Sprint 17).',
+    permissions: [{ key: 'activity_log.read', label: 'View activity log' }],
+  },
 ];
 
 export const ALL_PERMISSION_KEYS: ReadonlySet<string> = new Set(

@@ -59,6 +59,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
       'file.read',
       'file.upload',
       'report.read',
+      'activity_log.read',
     ],
   },
   {
@@ -80,6 +81,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
       'file.upload',
       'comment.create',
       'comment.read',
+      'activity_log.read',
     ],
   },
   {
@@ -93,6 +95,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
       'file.upload',
       'comment.create',
       'comment.read',
+      'activity_log.read',
     ],
   },
   {
@@ -109,6 +112,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
       'user.read.companywide',
       'user.read.sensitive',
       'report.read',
+      'activity_log.read',
     ],
   },
 ];
