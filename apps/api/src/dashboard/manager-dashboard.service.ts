@@ -131,12 +131,18 @@ export class ManagerDashboardService {
   private scopeWhere(scope: ManagerDashboardScope): Prisma.Sql {
     switch (scope.kind) {
       case 'company':
-        return Prisma.sql``;
+        // Prisma.empty is the documented zero-length SQL fragment. An
+        // empty Prisma.sql`` template renders inconsistently across pg
+        // driver versions and is a known cause of parameter-binding bugs
+        // when nested inside another sql template.
+        return Prisma.empty;
       case 'department':
         return Prisma.sql`AND t.department_id = ${scope.id}::uuid`;
       case 'teams':
         if (scope.ids.length === 0) return Prisma.sql`AND FALSE`;
-        return Prisma.sql`AND t.team_id IN (${Prisma.join(scope.ids.map((id) => Prisma.sql`${id}::uuid`))})`;
+        return Prisma.sql`AND t.team_id IN (${Prisma.join(
+          scope.ids.map((id) => Prisma.sql`${id}::uuid`),
+        )})`;
     }
   }
 

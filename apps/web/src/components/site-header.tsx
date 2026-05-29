@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { CompanyLogo } from '@/components/company-logo';
+import { DashboardSwitcher } from '@/components/dashboard-switcher';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { NotificationBell } from '@/components/notification-bell';
 import { SidebarToggle } from '@/components/site-sidebar';
@@ -21,6 +22,7 @@ export async function SiteHeader() {
           </Link>
         </div>
         <div className="flex items-center gap-2">
+          <DashboardSwitcher />
           <LocaleSwitcher />
           <ThemeToggle />
           <NotificationBell />

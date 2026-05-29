@@ -857,6 +857,64 @@
     "export": "هەناردنی CSV"
   },
   "dashboard": {
+    "admin": {
+      "title": "داشبۆردی ئەدمین",
+      "description": "تەندروستی سیستەم، بەشداربوون، و ئاسایش بە یەک نگا.",
+      "loading": "بارکردن…",
+      "loadError": "نەتوانرا داشبۆرد باربکرێت.",
+      "cards": {
+        "health": "تەندروستی سیستەم",
+        "subscription": "بەشداربوون",
+        "security": "ئاگادارکردنەوەی ئاسایش",
+        "permissions": "گۆڕانکارییە دواییەکانی ڕێگەپێدان"
+      },
+      "health": {
+        "totalUsers": "کۆی بەکارهێنەران",
+        "activeUsers": "چالاک",
+        "invitedUsers": "بانگهێشتکراو",
+        "suspendedUsers": "ڕاگیراو",
+        "tasksOpen": "ئەرکی کراوە",
+        "tasksCompleted30": "تەواوبوو (٣٠ ڕۆژ)",
+        "storageUsed": "بەشی بەکارهاتوو"
+      },
+      "subscription": {
+        "plan": "پلان",
+        "status": "دۆخ",
+        "joined": "{days, plural, one {لە # ڕۆژ لەمەوبەر پەیوەست بوو} other {لە # ڕۆژ لەمەوبەر پەیوەست بوو}}",
+        "storage": "بەشی بەکارهاتوو"
+      },
+      "plans": {
+        "starter": "دەستپێک",
+        "growth": "گەشە",
+        "enterprise": "کۆمپانیا"
+      },
+      "statuses": {
+        "trialing": "تاقیکردنەوە",
+        "active": "چالاک",
+        "past_due": "دواکەوتوو",
+        "paused": "ڕاگیراو",
+        "cancelled": "هەڵوەشاو",
+        "expired": "بەسەرچوو"
+      },
+      "security": {
+        "none": "هیچ ڕووداوێکی ئاسایشی نوێ نییە.",
+        "byActor": "لە لایەن {name}",
+        "byUnknown": "لە لایەن نەناسراو",
+        "actions": {
+          "read_sensitive_field": "خانەی هەستیاری بینراوە",
+          "role_permissions_changed": "ڕێگەپێدانی ڕۆڵ گۆڕاوە",
+          "role_granted": "ڕۆڵ دراوە",
+          "role_revoked": "ڕۆڵ سڕاوەتەوە",
+          "invited": "بەکارهێنەر بانگهێشت کراوە",
+          "approval_advanced": "بانگهێشت پەسەند کراوە",
+          "activated": "بەکارهێنەر چالاک کراوە",
+          "fallback": "{actionType}"
+        }
+      },
+      "permissions": {
+        "none": "هیچ گۆڕانکاریەکی نوێ لە ڕێگەپێدان نییە."
+      }
+    },
     "manager": {
       "title": "داشبۆردی بەڕێوەبەر",
       "description": "بینینێکی گشتی لە ئەرک و وادە و باری کاری تیمەکان.",
@@ -914,6 +972,14 @@
       },
       "loading": "بارکردن…",
       "loadError": "نەتوانرا داشبۆرد باربکرێت."
+    },
+    "switcher": {
+      "aria": "گۆڕینی بینینی داشبۆرد",
+      "labels": {
+        "employee": "داشبۆردی من",
+        "manager": "بینینی بەڕێوەبەر",
+        "admin": "بینینی ئەدمین"
+      }
     },
     "employee": {
       "title": "داشبۆرد",
@@ -1011,6 +1077,7 @@
     "items": {
       "home": "سەرەکی",
       "managerDashboard": "داشبۆردی بەڕێوەبەر",
+      "adminDashboard": "داشبۆردی ئەدمین",
       "tasks": "ئەرکەکان",
       "people": "کەسەکان",
       "broadcasts": "ڕاگەیاندنەکان",

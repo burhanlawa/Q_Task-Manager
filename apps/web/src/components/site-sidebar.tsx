@@ -55,6 +55,12 @@ const SECTIONS: NavSection[] = [
         icon: TrendingUp,
         roles: ['ceo', 'admin', 'hr', 'manager', 'supervisor'],
       },
+      {
+        href: '/dashboard/admin',
+        labelKey: 'adminDashboard',
+        icon: Shield,
+        roles: ['ceo', 'admin'],
+      },
       { href: '/tasks', labelKey: 'tasks', icon: Layers, permission: 'task.read' },
       { href: '/people', labelKey: 'people', icon: Users, permission: 'user.read' },
       { href: '/broadcasts', labelKey: 'broadcasts', icon: Megaphone },

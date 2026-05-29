@@ -7,6 +7,7 @@ import { NotificationsSubscription } from '@/components/notifications-subscripti
 import { OnboardingGate } from '@/components/onboarding-gate';
 import { PostHogProvider } from '@/components/posthog-provider';
 import { QueryProvider } from '@/components/query-provider';
+import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { MainArea, SidebarProvider, SiteSidebar } from '@/components/site-sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -56,7 +57,10 @@ export default async function LocaleLayout({
                 <SidebarProvider>
                   <SiteHeader />
                   <SiteSidebar />
-                  <MainArea>{children}</MainArea>
+                  <MainArea>
+                    {children}
+                    <SiteFooter />
+                  </MainArea>
                 </SidebarProvider>
                 <Toaster richColors position="top-center" />
               </QueryProvider>

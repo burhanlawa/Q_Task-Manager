@@ -857,6 +857,64 @@
     "export": "تصدير CSV"
   },
   "dashboard": {
+    "admin": {
+      "title": "لوحة الإدارة",
+      "description": "صحة النظام، الاشتراك، والأمان بنظرة سريعة.",
+      "loading": "جارٍ التحميل…",
+      "loadError": "تعذّر تحميل اللوحة.",
+      "cards": {
+        "health": "صحة النظام",
+        "subscription": "الاشتراك",
+        "security": "تنبيهات أمنية",
+        "permissions": "تغييرات الصلاحيات الأخيرة"
+      },
+      "health": {
+        "totalUsers": "إجمالي المستخدمين",
+        "activeUsers": "نشطون",
+        "invitedUsers": "مدعوون",
+        "suspendedUsers": "موقوفون",
+        "tasksOpen": "مهام مفتوحة",
+        "tasksCompleted30": "مكتملة (30 يومًا)",
+        "storageUsed": "التخزين المستخدم"
+      },
+      "subscription": {
+        "plan": "الخطة",
+        "status": "الحالة",
+        "joined": "{days, plural, one {انضمت قبل يوم} other {انضمت قبل # أيام}}",
+        "storage": "التخزين المستخدم"
+      },
+      "plans": {
+        "starter": "مبتدئة",
+        "growth": "نمو",
+        "enterprise": "مؤسسات"
+      },
+      "statuses": {
+        "trialing": "تجريبي",
+        "active": "نشط",
+        "past_due": "متأخر",
+        "paused": "متوقف",
+        "cancelled": "ملغى",
+        "expired": "منتهي"
+      },
+      "security": {
+        "none": "لا أحداث أمنية حديثة.",
+        "byActor": "بواسطة {name}",
+        "byUnknown": "بواسطة مجهول",
+        "actions": {
+          "read_sensitive_field": "تم عرض حقل حساس",
+          "role_permissions_changed": "تغيير صلاحيات دور",
+          "role_granted": "تم منح دور",
+          "role_revoked": "تم سحب دور",
+          "invited": "دعوة مستخدم",
+          "approval_advanced": "اعتماد دعوة",
+          "activated": "تفعيل مستخدم",
+          "fallback": "{actionType}"
+        }
+      },
+      "permissions": {
+        "none": "لا تغييرات صلاحيات حديثة."
+      }
+    },
     "manager": {
       "title": "لوحة المدير",
       "description": "نظرة عامة على المهام والمواعيد وحجم العمل.",
@@ -914,6 +972,14 @@
       },
       "loading": "جارٍ التحميل…",
       "loadError": "تعذّر تحميل اللوحة."
+    },
+    "switcher": {
+      "aria": "تبديل عرض اللوحة",
+      "labels": {
+        "employee": "لوحتي",
+        "manager": "عرض المدير",
+        "admin": "عرض الإدارة"
+      }
     },
     "employee": {
       "title": "اللوحة الرئيسية",
@@ -1011,6 +1077,7 @@
     "items": {
       "home": "الرئيسية",
       "managerDashboard": "لوحة المدير",
+      "adminDashboard": "لوحة الإدارة",
       "tasks": "المهام",
       "people": "الأشخاص",
       "broadcasts": "الإعلانات",

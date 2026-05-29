@@ -858,6 +858,64 @@
     "export": "Export CSV"
   },
   "dashboard": {
+    "admin": {
+      "title": "Admin dashboard",
+      "description": "System health, subscription, and security at a glance.",
+      "loading": "Loading…",
+      "loadError": "Couldn't load the dashboard.",
+      "cards": {
+        "health": "System health",
+        "subscription": "Subscription",
+        "security": "Security alerts",
+        "permissions": "Recent permission changes"
+      },
+      "health": {
+        "totalUsers": "Total users",
+        "activeUsers": "Active",
+        "invitedUsers": "Invited",
+        "suspendedUsers": "Suspended",
+        "tasksOpen": "Open tasks",
+        "tasksCompleted30": "Completed (30d)",
+        "storageUsed": "Storage used"
+      },
+      "subscription": {
+        "plan": "Plan",
+        "status": "Status",
+        "joined": "{days, plural, one {Joined # day ago} other {Joined # days ago}}",
+        "storage": "Storage used"
+      },
+      "plans": {
+        "starter": "Starter",
+        "growth": "Growth",
+        "enterprise": "Enterprise"
+      },
+      "statuses": {
+        "trialing": "Trial",
+        "active": "Active",
+        "past_due": "Past due",
+        "paused": "Paused",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+      },
+      "security": {
+        "none": "No recent security events.",
+        "byActor": "by {name}",
+        "byUnknown": "by unknown actor",
+        "actions": {
+          "read_sensitive_field": "Sensitive field viewed",
+          "role_permissions_changed": "Role permissions changed",
+          "role_granted": "Role granted",
+          "role_revoked": "Role revoked",
+          "invited": "User invited",
+          "approval_advanced": "Invitation approved",
+          "activated": "User activated",
+          "fallback": "{actionType}"
+        }
+      },
+      "permissions": {
+        "none": "No recent permission changes."
+      }
+    },
     "manager": {
       "title": "Manager dashboard",
       "description": "Team-wide task overview, deadlines, and workload.",
@@ -915,6 +973,14 @@
       },
       "loading": "Loading…",
       "loadError": "Couldn't load the dashboard."
+    },
+    "switcher": {
+      "aria": "Switch dashboard view",
+      "labels": {
+        "employee": "My dashboard",
+        "manager": "Manager view",
+        "admin": "Admin view"
+      }
     },
     "employee": {
       "title": "Dashboard",
@@ -1012,6 +1078,7 @@
     "items": {
       "home": "Home",
       "managerDashboard": "Manager dashboard",
+      "adminDashboard": "Admin dashboard",
       "tasks": "Tasks",
       "people": "People",
       "broadcasts": "Broadcasts",
