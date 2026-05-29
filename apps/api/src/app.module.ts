@@ -6,9 +6,11 @@ import { join } from 'path';
 import { HealthModule } from './health/health.module';
 import { DebugModule } from './debug/debug.module';
 import { AuthModule } from './auth/auth.module';
+import { CacheModule } from './cache/cache.module';
 import { MeModule } from './me/me.module';
 import { ActivityLogModule } from './activity-log/activity-log.module';
 import { CryptoModule } from './crypto/crypto.module';
+import { ReportsModule } from './reports/reports.module';
 import { EmailModule } from './emails/email.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -41,6 +43,7 @@ import { UsersModule } from './users/users.module';
     // is real and we scale beyond one replica (deferred — see commit message).
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     PrismaModule,
+    CacheModule,
     PusherModule,
     QueueModule,
     R2Module,
@@ -66,6 +69,7 @@ import { UsersModule } from './users/users.module';
     RolesModule,
     TagsModule,
     TasksModule,
+    ReportsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
