@@ -728,6 +728,23 @@
     }
   },
   "broadcasts": {
+    "list": {
+      "title": "Broadcasts",
+      "description": "Announcements sent in your company. Switch tabs to see what you sent vs. what you received.",
+      "tabs": {
+        "received": "Received ({count})",
+        "sent": "Sent ({count})"
+      },
+      "empty": {
+        "received": "You haven't received any broadcasts yet.",
+        "sent": "You haven't sent any broadcasts yet."
+      },
+      "loading": "Loading…",
+      "loadError": "Couldn't load broadcasts.",
+      "audienceLabel": "Audience",
+      "audienceSize": "{count, plural, one {# recipient} other {# recipients}}",
+      "newButton": "New broadcast"
+    },
     "new": {
       "title": "Send a broadcast",
       "description": "Send an announcement to everyone in your scope. Recipients see it in their inbox and (when their preferences allow) by email.",

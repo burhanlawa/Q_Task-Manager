@@ -19,6 +19,24 @@ import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { AudienceResolverService, type AudienceKind } from './audience-resolver.service';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 
+// Shape returned by GET /broadcasts list endpoint. Same envelope for both
+// sent + received so the UI can use one row component.
+type BroadcastListItem = {
+  id: string;
+  title: string;
+  body: string;
+  audience: string;
+  audienceSize: number | null;
+  sender: {
+    id: string;
+    displayName: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+  } | null;
+  createdAt: string;
+};
+
 // Role → allowed audience kinds for THIS sprint (16.4). The web picker
 // mirrors this list; the controller enforces it. Kept in one place so the
 // two layers can never drift.
@@ -98,6 +116,103 @@ export class BroadcastsController {
       myDepartmentId: me.departmentId,
       myBranchId: me.branchId,
       myTeamIds: myTeams.map((t) => t.teamId),
+    };
+  }
+
+  // GET /broadcasts
+  //   Two lists in one payload: 'sent' (broadcasts I authored) and
+  //   'received' (broadcasts whose fan-out landed a notification row in
+  //   my inbox). Both newest-first, deleted rows excluded.
+  //
+  //   audienceSize comes from the activity_log metadata we wrote at send
+  //   time — that's the canonical count from when fan-out ran, not a
+  //   re-resolution against today's org structure (which could lie if the
+  //   audience changed since).
+  @Get()
+  async list(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<{
+    sent: BroadcastListItem[];
+    received: BroadcastListItem[];
+  }> {
+    const [sentRows, receivedRows] = await Promise.all([
+      db.broadcast.findMany({
+        where: { senderUserId: tenant.userId, deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+      // 'Received by me' = there's a notification row for me whose
+      // sourceTargetType='broadcast' and sourceTargetId points at the
+      // broadcast. We join through DB rather than re-resolving the
+      // audience because (a) it survives audience changes, and (b) it
+      // honors per-user opt-outs from the prefs (which the resolver
+      // doesn't filter for).
+      db.notification.findMany({
+        where: {
+          userId: tenant.userId,
+          sourceTargetType: 'broadcast',
+        },
+        select: { sourceTargetId: true },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      }),
+    ]);
+
+    const receivedIds = Array.from(
+      new Set(receivedRows.map((r) => r.sourceTargetId).filter((id): id is string => !!id)),
+    );
+    const received = receivedIds.length
+      ? await db.broadcast.findMany({
+          where: { id: { in: receivedIds }, deletedAt: null },
+          orderBy: { createdAt: 'desc' },
+        })
+      : [];
+
+    const broadcastIds = [...sentRows.map((b) => b.id), ...received.map((b) => b.id)];
+    const senderIds = Array.from(
+      new Set(
+        [...sentRows, ...received].map((b) => b.senderUserId).filter((id): id is string => !!id),
+      ),
+    );
+
+    // Two lookups in parallel: audience-size metadata + sender display info.
+    const [activityRows, senders] = await Promise.all([
+      broadcastIds.length
+        ? db.activityLog.findMany({
+            where: { targetType: 'broadcast', targetId: { in: broadcastIds } },
+            select: { targetId: true, metadata: true },
+          })
+        : [],
+      senderIds.length
+        ? db.user.findMany({
+            where: { id: { in: senderIds } },
+            select: { id: true, displayName: true, firstName: true, lastName: true, email: true },
+          })
+        : [],
+    ]);
+    const sizeByBroadcastId = new Map<string, number>();
+    for (const a of activityRows) {
+      const meta = (a.metadata ?? {}) as { recipientCount?: number };
+      if (typeof meta.recipientCount === 'number') {
+        sizeByBroadcastId.set(a.targetId!, meta.recipientCount);
+      }
+    }
+    const senderById = new Map(senders.map((s) => [s.id, s]));
+
+    const shape = (b: (typeof sentRows)[number]): BroadcastListItem => ({
+      id: b.id,
+      title: b.title,
+      body: b.body,
+      audience: b.audience,
+      audienceSize: sizeByBroadcastId.get(b.id) ?? null,
+      sender: b.senderUserId ? (senderById.get(b.senderUserId) ?? null) : null,
+      createdAt: b.createdAt.toISOString(),
+    });
+
+    return {
+      sent: sentRows.map(shape),
+      received: received.map(shape),
     };
   }
 
