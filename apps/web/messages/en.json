@@ -691,6 +691,7 @@
         "error": "Something went wrong."
       }
     }
+
   },
   "notifications": {
     "title": "Notifications",
@@ -700,5 +701,30 @@
     "ariaLabel": "Notifications",
     "unreadBadge": "{count, plural, one {# unread} other {# unread}}",
     "untitled": "Notification"
+  },
+  "notificationSettings": {
+    "heading": "Notifications",
+    "description": "Choose which events notify you in the app and by email.",
+    "inApp": "In-app",
+    "email": "Email",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Preferences saved.",
+    "error": "Couldn't save. Try again.",
+    "types": {
+      "task_assigned": "Task assigned to you",
+      "task_submitted": "A task was submitted for review",
+      "task_approved": "Your submission was approved",
+      "task_revision_requested": "Revisions requested",
+      "task_cancelled": "A task was cancelled",
+      "task_reassignment_requested": "Reassignment requested",
+      "comment_mentioned": "You were mentioned in a comment",
+      "comment_created": "New comment on a task",
+      "deadline_approaching": "Deadline approaching",
+      "overdue": "Task overdue",
+      "onboarding_approval": "Your invite was approved",
+      "new_employee": "New teammate joined",
+      "leave_reminder": "Upcoming leave reminder"
+    }
   }
 }

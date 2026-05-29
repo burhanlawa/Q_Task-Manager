@@ -18,6 +18,7 @@ import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { UpdateMeDto } from './dto/update-me.dto';
+import { UpdateNotificationPreferencesDto } from './dto/update-notification-preferences.dto';
 
 const ME_SELECT = {
   id: true,
@@ -175,5 +176,56 @@ export class MeController {
       SELECT current_setting('app.current_company_id', true) AS v
     `;
     return { companyId: tenant.companyId, rlsCompanyId: rows[0]?.v ?? null };
+  }
+
+  // GET /me/notification-preferences
+  //   Returns the caller's notification preferences as a flat shape:
+  //   { types: { task_assigned: { in_app: true, email: true }, ... } }
+  //   Missing rows in the DB → empty object → UI shows defaults (everything on).
+  @Get('notification-preferences')
+  async getNotificationPreferences(
+    @CurrentTenant() tenant: TenantContext,
+    @TenantDb() db: Prisma.TransactionClient,
+  ): Promise<{ types: Record<string, { in_app?: boolean; email?: boolean }> }> {
+    const row = await db.userNotificationPreference.findUnique({
+      where: { userId: tenant.userId },
+      select: { preferences: true },
+    });
+    return {
+      types: (row?.preferences as Record<string, { in_app?: boolean; email?: boolean }>) ?? {},
+    };
+  }
+
+  // PATCH /me/notification-preferences
+  //   Replaces the whole preferences blob. Callers send the entire current
+  //   set (the UI knows what was on/off; we don't merge partial updates,
+  //   because deciding "absence means default" vs. "absence means false"
+  //   gets ambiguous fast). Upserts the row.
+  @Patch('notification-preferences')
+  async updateNotificationPreferences(
+    @CurrentTenant() tenant: TenantContext,
+    @TenantDb() db: Prisma.TransactionClient,
+    @Body() dto: UpdateNotificationPreferencesDto,
+  ): Promise<{ types: Record<string, { in_app?: boolean; email?: boolean }> }> {
+    // Sanitize: keep only the channel booleans we recognize per type so
+    // the JSONB blob doesn't fill with stray keys clients might send.
+    const sanitized: Record<string, { in_app?: boolean; email?: boolean }> = {};
+    for (const [type, channels] of Object.entries(dto.types ?? {})) {
+      if (!channels || typeof channels !== 'object') continue;
+      const entry: { in_app?: boolean; email?: boolean } = {};
+      if (typeof channels.in_app === 'boolean') entry.in_app = channels.in_app;
+      if (typeof channels.email === 'boolean') entry.email = channels.email;
+      sanitized[type] = entry;
+    }
+    await db.userNotificationPreference.upsert({
+      where: { userId: tenant.userId },
+      create: {
+        userId: tenant.userId,
+        companyId: tenant.companyId,
+        preferences: sanitized as Prisma.InputJsonValue,
+      },
+      update: { preferences: sanitized as Prisma.InputJsonValue },
+    });
+    return { types: sanitized };
   }
 }

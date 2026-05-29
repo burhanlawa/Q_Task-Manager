@@ -700,5 +700,30 @@
     "ariaLabel": "الإشعارات",
     "unreadBadge": "{count, plural, one {# غير مقروء} other {# غير مقروءة}}",
     "untitled": "إشعار"
+  },
+  "notificationSettings": {
+    "heading": "الإشعارات",
+    "description": "اختر الأحداث التي تريد أن تُعلَم بها داخل التطبيق وعبر البريد الإلكتروني.",
+    "inApp": "داخل التطبيق",
+    "email": "البريد الإلكتروني",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ…",
+    "saved": "تم حفظ التفضيلات.",
+    "error": "تعذّر الحفظ. حاول مجددًا.",
+    "types": {
+      "task_assigned": "تم تكليفك بمهمة",
+      "task_submitted": "تم تقديم مهمة للمراجعة",
+      "task_approved": "تمت الموافقة على تسليمك",
+      "task_revision_requested": "طُلبت تعديلات",
+      "task_cancelled": "تم إلغاء مهمة",
+      "task_reassignment_requested": "طلب إعادة تكليف",
+      "comment_mentioned": "تمت الإشارة إليك في تعليق",
+      "comment_created": "تعليق جديد على مهمة",
+      "deadline_approaching": "اقتراب الموعد النهائي",
+      "overdue": "مهمة متأخرة",
+      "onboarding_approval": "تمت الموافقة على دعوتك",
+      "new_employee": "انضم زميل جديد",
+      "leave_reminder": "تذكير بإجازة قادمة"
+    }
   }
 }
