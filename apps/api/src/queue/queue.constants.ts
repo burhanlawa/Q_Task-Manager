@@ -1,5 +1,10 @@
-// Single named queue for the daily TTL sweep of read+expired notification
-// rows (Sprint 14.8). Lives in its own file to avoid the circular import
-// between queue.module (registers + schedules) and the processor (decorated
-// with @Processor(name) at module-load time).
+// Queue names live here (not in queue.module) to dodge the circular import
+// between the module (registers + schedules) and the @Processor-decorated
+// workers it loads.
+
+// Sprint 14.8: daily TTL sweep of read+expired notification rows.
 export const NOTIFICATIONS_CLEANUP_QUEUE = 'notifications-cleanup';
+
+// Sprint 17.2: monthly job to ensure the activity_log partition for
+// (today + 2 months) exists. Idempotent; safe to re-run.
+export const ACTIVITY_LOG_PARTITIONS_QUEUE = 'activity-log-partitions';
