@@ -825,6 +825,31 @@
       "read_sensitive_field": "اطّلع {actor} على حقل حساس",
       "role_permissions_changed": "غيّر {actor} صلاحيات دور",
       "fallback": "نفّذ {actor}: {actionType}"
+    },
+    "export": "تصدير CSV"
+  },
+  "nav": {
+    "openMenu": "فتح القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "sections": {
+      "workspace": "مساحة العمل",
+      "admin": "الإدارة",
+      "personal": "الخاص بي"
+    },
+    "items": {
+      "home": "الرئيسية",
+      "tasks": "المهام",
+      "people": "الأشخاص",
+      "broadcasts": "الإعلانات",
+      "activity": "سجل النشاط",
+      "settings": "الإعدادات",
+      "myProfile": "ملفي الشخصي",
+      "notifications": "الإشعارات",
+      "company": "الشركة",
+      "branches": "الفروع",
+      "departments": "الأقسام",
+      "roles": "الأدوار",
+      "security": "الأمان"
     }
   }
 }

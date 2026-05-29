@@ -826,6 +826,31 @@
       "read_sensitive_field": "{actor} viewed a sensitive field",
       "role_permissions_changed": "{actor} changed a role's permissions",
       "fallback": "{actor} performed: {actionType}"
+    },
+    "export": "Export CSV"
+  },
+  "nav": {
+    "openMenu": "Open navigation",
+    "closeMenu": "Close navigation",
+    "sections": {
+      "workspace": "Workspace",
+      "admin": "Administration",
+      "personal": "Personal"
+    },
+    "items": {
+      "home": "Home",
+      "tasks": "Tasks",
+      "people": "People",
+      "broadcasts": "Broadcasts",
+      "activity": "Activity log",
+      "settings": "Settings",
+      "myProfile": "My profile",
+      "notifications": "Notifications",
+      "company": "Company",
+      "branches": "Branches",
+      "departments": "Departments",
+      "roles": "Roles",
+      "security": "Security"
     }
   }
 }

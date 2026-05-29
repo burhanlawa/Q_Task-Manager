@@ -8,6 +8,7 @@ import { OnboardingGate } from '@/components/onboarding-gate';
 import { PostHogProvider } from '@/components/posthog-provider';
 import { QueryProvider } from '@/components/query-provider';
 import { SiteHeader } from '@/components/site-header';
+import { MainArea, SidebarProvider, SiteSidebar } from '@/components/site-sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { routing, getDirection, type Locale } from '@/i18n/routing';
@@ -52,8 +53,11 @@ export default async function LocaleLayout({
                 <PostHogProvider />
                 <OnboardingGate />
                 <NotificationsSubscription />
-                <SiteHeader />
-                {children}
+                <SidebarProvider>
+                  <SiteHeader />
+                  <SiteSidebar />
+                  <MainArea>{children}</MainArea>
+                </SidebarProvider>
                 <Toaster richColors position="top-center" />
               </QueryProvider>
             </ThemeProvider>

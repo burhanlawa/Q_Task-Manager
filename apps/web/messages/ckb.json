@@ -825,6 +825,31 @@
       "read_sensitive_field": "{actor} خانەیەکی هەستیاری بینی",
       "role_permissions_changed": "{actor} ڕێگاپێدانەکانی ڕۆڵێکی گۆڕی",
       "fallback": "{actor} ئەمانەی ئەنجامدا: {actionType}"
+    },
+    "export": "هەناردنی CSV"
+  },
+  "nav": {
+    "openMenu": "کردنەوەی پەڕە",
+    "closeMenu": "داخستنی پەڕە",
+    "sections": {
+      "workspace": "شوێنی کار",
+      "admin": "بەڕێوەبردن",
+      "personal": "کەسی"
+    },
+    "items": {
+      "home": "سەرەکی",
+      "tasks": "ئەرکەکان",
+      "people": "کەسەکان",
+      "broadcasts": "ڕاگەیاندنەکان",
+      "activity": "تۆماری چالاکی",
+      "settings": "ڕێکخستنەکان",
+      "myProfile": "پرۆفایلی من",
+      "notifications": "ئاگادارکردنەوەکان",
+      "company": "کۆمپانیا",
+      "branches": "لقەکان",
+      "departments": "بەشەکان",
+      "roles": "ڕۆڵەکان",
+      "security": "ئاسایش"
     }
   }
 }

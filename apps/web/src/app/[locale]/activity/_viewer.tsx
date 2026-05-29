@@ -188,7 +188,7 @@ function FilterPanel({
           </SelectContent>
         </Select>
       </div>
-      <div className="md:col-span-4">
+      <div className="flex items-center justify-between md:col-span-4">
         <Button
           variant="ghost"
           size="sm"
@@ -197,9 +197,36 @@ function FilterPanel({
         >
           {t('filters.clear')}
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+        >
+          {/* Use a plain <a> so the browser handles the download
+              naturally — fetch + blob would defeat the streaming.
+              The /api/proxy/* route attaches the Clerk session token. */}
+          <a
+            href={`/api/proxy/activity-log/export${buildQuery(filters)}`}
+            download="activity-log.csv"
+          >
+            {t('export')}
+          </a>
+        </Button>
       </div>
     </div>
   );
+}
+
+// Shared query-string builder so the table fetch and the CSV link agree on
+// how the filter state encodes into URL params.
+function buildQuery(filters: Filters): string {
+  const qs = new URLSearchParams();
+  if (filters.actor_id) qs.set('actor_id', filters.actor_id);
+  if (filters.entity_type) qs.set('entity_type', filters.entity_type);
+  if (filters.entity_id) qs.set('entity_id', filters.entity_id);
+  if (filters.date_preset !== 'all') qs.set('date_preset', filters.date_preset);
+  const q = qs.toString();
+  return q ? `?${q}` : '';
 }
 
 // Renders one row as a human-readable line. Maps action_type to the right
