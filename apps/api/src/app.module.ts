@@ -10,6 +10,7 @@ import { CacheModule } from './cache/cache.module';
 import { MeModule } from './me/me.module';
 import { ActivityLogModule } from './activity-log/activity-log.module';
 import { CryptoModule } from './crypto/crypto.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { ReportsModule } from './reports/reports.module';
 import { EmailModule } from './emails/email.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -70,6 +71,7 @@ import { UsersModule } from './users/users.module';
     TagsModule,
     TasksModule,
     ReportsModule,
+    DashboardModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

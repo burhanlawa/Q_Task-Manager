@@ -857,6 +857,53 @@
     },
     "export": "Export CSV"
   },
+  "dashboard": {
+    "employee": {
+      "title": "Dashboard",
+      "description": "An at-a-glance view of your work.",
+      "loading": "Loading…",
+      "loadError": "Couldn't load the dashboard.",
+      "cards": {
+        "active": "My active tasks",
+        "upcoming": "Upcoming deadlines",
+        "overdue": "Overdue",
+        "notifications": "Recent notifications",
+        "stats": "Last 30 days"
+      },
+      "active": {
+        "draft": "Draft",
+        "assigned": "Assigned",
+        "in_progress": "In progress",
+        "submitted": "Submitted",
+        "reassignment_requested": "Reassignment requested",
+        "total": "{count, plural, one {# open task} other {# open tasks}}",
+        "none": "No open tasks. You're all clear."
+      },
+      "upcoming": {
+        "none": "No deadlines in the next 7 days.",
+        "due": "Due {date}"
+      },
+      "overdue": {
+        "none": "Nothing overdue. Nice.",
+        "days": "{count, plural, one {# day late} other {# days late}}"
+      },
+      "notifications": {
+        "none": "No recent notifications."
+      },
+      "stats": {
+        "assigned": "Assigned",
+        "completed": "Completed",
+        "onTime": "On time",
+        "onTimeNone": "—"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "urgent": "Urgent"
+      }
+    }
+  },
   "reports": {
     "common": {
       "rangeLabel": "Range",

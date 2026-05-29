@@ -15,7 +15,7 @@ export async function SiteHeader() {
       <div className="flex h-14 items-center justify-between gap-2 px-4">
         <div className="flex items-center gap-2">
           <SidebarToggle />
-          <Link href="/" className="flex items-center gap-2 text-sm font-semibold">
+          <Link href="/dashboard" className="flex items-center gap-2 text-sm font-semibold">
             <CompanyLogo />
             <span>{t('app.title')}</span>
           </Link>

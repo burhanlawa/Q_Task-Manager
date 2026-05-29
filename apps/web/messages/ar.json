@@ -856,6 +856,53 @@
     },
     "export": "تصدير CSV"
   },
+  "dashboard": {
+    "employee": {
+      "title": "اللوحة الرئيسية",
+      "description": "نظرة سريعة على عملك.",
+      "loading": "جارٍ التحميل…",
+      "loadError": "تعذّر تحميل اللوحة.",
+      "cards": {
+        "active": "مهامي النشطة",
+        "upcoming": "مواعيد قادمة",
+        "overdue": "متأخرة",
+        "notifications": "أحدث الإشعارات",
+        "stats": "آخر 30 يومًا"
+      },
+      "active": {
+        "draft": "مسودة",
+        "assigned": "مُكلَّفة",
+        "in_progress": "قيد التنفيذ",
+        "submitted": "مُقدَّمة",
+        "reassignment_requested": "طلب إعادة تكليف",
+        "total": "{count, plural, one {# مهمة مفتوحة} other {# مهام مفتوحة}}",
+        "none": "لا توجد مهام مفتوحة."
+      },
+      "upcoming": {
+        "none": "لا مواعيد خلال الأيام السبعة القادمة.",
+        "due": "تستحق في {date}"
+      },
+      "overdue": {
+        "none": "لا شيء متأخر. ممتاز.",
+        "days": "{count, plural, one {متأخرة يومًا} other {متأخرة # أيام}}"
+      },
+      "notifications": {
+        "none": "لا توجد إشعارات حديثة."
+      },
+      "stats": {
+        "assigned": "مُكلَّفة",
+        "completed": "مكتملة",
+        "onTime": "في الموعد",
+        "onTimeNone": "—"
+      },
+      "priority": {
+        "low": "منخفضة",
+        "medium": "متوسطة",
+        "high": "عالية",
+        "urgent": "عاجلة"
+      }
+    }
+  },
   "reports": {
     "common": {
       "rangeLabel": "النطاق",

@@ -48,7 +48,7 @@ const SECTIONS: NavSection[] = [
   {
     titleKey: 'workspace',
     items: [
-      { href: '/', labelKey: 'home', icon: Home },
+      { href: '/dashboard', labelKey: 'home', icon: Home },
       { href: '/tasks', labelKey: 'tasks', icon: Layers, permission: 'task.read' },
       { href: '/people', labelKey: 'people', icon: Users, permission: 'user.read' },
       { href: '/broadcasts', labelKey: 'broadcasts', icon: Megaphone },

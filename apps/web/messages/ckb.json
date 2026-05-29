@@ -856,6 +856,53 @@
     },
     "export": "هەناردنی CSV"
   },
+  "dashboard": {
+    "employee": {
+      "title": "داشبۆرد",
+      "description": "بینینێکی خێرا لە کارەکانت.",
+      "loading": "بارکردن…",
+      "loadError": "نەتوانرا داشبۆرد باربکرێت.",
+      "cards": {
+        "active": "ئەرکە چالاکەکانم",
+        "upcoming": "وادە داهاتووەکان",
+        "overdue": "دواکەوتوو",
+        "notifications": "ئاگادارکردنەوە نوێیەکان",
+        "stats": "٣٠ ڕۆژی ڕابردوو"
+      },
+      "active": {
+        "draft": "ڕەشنووس",
+        "assigned": "سپێردراو",
+        "in_progress": "لە کارکردندایە",
+        "submitted": "پێشکەشکراو",
+        "reassignment_requested": "داواکاری گۆڕانی ئەرک",
+        "total": "{count, plural, one {# ئەرکی کراوە} other {# ئەرکی کراوە}}",
+        "none": "هیچ ئەرکێکی کراوەت نییە."
+      },
+      "upcoming": {
+        "none": "هیچ وادەیەک لە ٧ ڕۆژی داهاتوودا نییە.",
+        "due": "وادە {date}"
+      },
+      "overdue": {
+        "none": "هیچ دواکەوتنێک نییە. باشە.",
+        "days": "{count, plural, one {# ڕۆژ دواکەوتوو} other {# ڕۆژ دواکەوتوو}}"
+      },
+      "notifications": {
+        "none": "هیچ ئاگادارکردنەوەیەکی نوێ نییە."
+      },
+      "stats": {
+        "assigned": "سپێردراو",
+        "completed": "تەواوبوو",
+        "onTime": "لە کاتدا",
+        "onTimeNone": "—"
+      },
+      "priority": {
+        "low": "کەم",
+        "medium": "ناوەند",
+        "high": "بەرز",
+        "urgent": "بەپەلە"
+      }
+    }
+  },
   "reports": {
     "common": {
       "rangeLabel": "ماوەی کات",
