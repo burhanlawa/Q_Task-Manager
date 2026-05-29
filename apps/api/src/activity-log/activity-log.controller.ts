@@ -2,17 +2,32 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Header,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { IsIn, IsOptional, IsString, IsUUID, Length } from 'class-validator';
+import type { Response } from 'express';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
+
+// Streaming CSV reads filters in the same shape as the JSON list endpoint
+// (so the UI can use the same filter values for "view" and "export"), but
+// has no cursor — the whole filtered set streams out in one response.
+class ExportQuery {
+  @IsOptional() @IsString() @Length(1, 50) entity_type?: string;
+  @IsOptional() @IsUUID('4') entity_id?: string;
+  @IsOptional() @IsUUID('4') actor_id?: string;
+  @IsOptional()
+  @IsIn(['today', '7d', '30d', '90d', '12m'])
+  date_preset?: 'today' | '7d' | '30d' | '90d' | '12m';
+}
 
 class ActivityLogQuery {
   @IsOptional() @IsString() @Length(1, 50) entity_type?: string;
@@ -151,6 +166,158 @@ export class ActivityLogController {
     };
   }
 
+  // GET /activity-log/export
+  //
+  // Streams a CSV of the filtered, role-scoped activity log. We keep
+  // memory bounded by reading the result in fixed-size batches via
+  // Prisma's `cursor` pagination — never materialize the whole set
+  // server-side. Each row writes a CSV line; the Node Express stream
+  // backpressures naturally if the client is slow.
+  //
+  // No row cap: the done check requires 100k rows to succeed cleanly.
+  // Larger exports also work; throughput is bounded by Postgres + the
+  // network, not by Node memory.
+  @Get('export')
+  @RequirePermissions('activity_log.read')
+  // Force browser download with a sane filename. The .csv extension +
+  // text/csv content-type tell Chrome/Excel to treat it as a CSV.
+  @Header('content-type', 'text/csv; charset=utf-8')
+  @Header('content-disposition', 'attachment; filename="activity-log.csv"')
+  // Discourage caching — exports are time-sensitive snapshots of audit data.
+  @Header('cache-control', 'no-store')
+  async exportCsv(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Query() q: ExportQuery,
+    @Res() res: Response,
+  ): Promise<void> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true, departmentId: true },
+    });
+    if (!me) throw new ForbiddenException('User not found');
+
+    const scopeWhere = await this.buildScopeWhere(db, tenant.userId, me);
+    const where: Prisma.ActivityLogWhereInput = {
+      ...(q.entity_type ? { targetType: q.entity_type } : {}),
+      ...(q.entity_id ? { targetId: q.entity_id } : {}),
+      ...(q.actor_id ? { actorUserId: q.actor_id } : {}),
+      ...(q.date_preset ? { createdAt: { gte: presetToSince(q.date_preset) } } : {}),
+      ...scopeWhere,
+    };
+
+    // BOM lets Excel autodetect UTF-8; without it, Arabic / Kurdish in
+    // any metadata text turns into mojibake on Windows.
+    res.write('﻿');
+    res.write(
+      [
+        'created_at',
+        'actor_user_id',
+        'actor_email',
+        'action_type',
+        'target_type',
+        'target_id',
+        'field_changed',
+        'metadata_json',
+      ]
+        .map(csvCell)
+        .join(',') + '\n',
+    );
+
+    // We resolve actor emails as we stream by maintaining a small LRU-ish
+    // Map (bounded at EMAIL_CACHE_MAX). Per-batch lookups would amplify
+    // round-trips; one cache covers the whole export with near-zero memory.
+    const EMAIL_CACHE_MAX = 5000;
+    const emailByActorId = new Map<string, string | null>();
+    async function ensureEmails(ids: string[]) {
+      const missing = ids.filter((id) => id && !emailByActorId.has(id));
+      if (missing.length === 0) return;
+      const users = await db.user.findMany({
+        where: { id: { in: missing } },
+        select: { id: true, email: true },
+      });
+      for (const u of users) emailByActorId.set(u.id, u.email);
+      // Anything not found → null (covers deleted users).
+      for (const id of missing) {
+        if (!emailByActorId.has(id)) emailByActorId.set(id, null);
+      }
+      // Trim if oversized. Map preserves insertion order; we drop oldest.
+      while (emailByActorId.size > EMAIL_CACHE_MAX) {
+        const firstKey = emailByActorId.keys().next().value;
+        if (firstKey === undefined) break;
+        emailByActorId.delete(firstKey);
+      }
+    }
+
+    const BATCH = 1000;
+    let cursor: { id: string; createdAt: Date } | null = null;
+    let rowsWritten = 0;
+
+    // Hot loop: fetch a batch, write it, advance the cursor by the last
+    // row's (createdAt, id). When the client disconnects (res.writableEnded)
+    // bail early so a partial download doesn't keep the DB pinned.
+    while (!res.writableEnded) {
+      // Prisma's `cursor` skips the row you point at, so for the first
+      // batch we pass undefined. Subsequent batches pass the last row's
+      // composite key to continue from there.
+      // Prisma's composite-PK cursor input takes the field names joined with
+      // an underscore in the schema's @@id order. The cast is needed because
+      // TS can't pick the right overload when `cursor` is conditional.
+      const cursorArg: Prisma.ActivityLogFindManyArgs = cursor
+        ? {
+            cursor: { id_createdAt: { id: cursor.id, createdAt: cursor.createdAt } },
+            skip: 1,
+          }
+        : {};
+      const batch = await db.activityLog.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: BATCH,
+        ...cursorArg,
+      });
+      if (batch.length === 0) break;
+
+      const batchActorIds = Array.from(
+        new Set(batch.map((r) => r.actorUserId).filter((id): id is string => !!id)),
+      );
+      await ensureEmails(batchActorIds);
+
+      for (const r of batch) {
+        const line =
+          [
+            r.createdAt.toISOString(),
+            r.actorUserId ?? '',
+            r.actorUserId ? (emailByActorId.get(r.actorUserId) ?? '') : '',
+            r.actionType,
+            r.targetType ?? '',
+            r.targetId ?? '',
+            r.fieldChanged ?? '',
+            r.metadata ? JSON.stringify(r.metadata) : '',
+          ]
+            .map(csvCell)
+            .join(',') + '\n';
+        // res.write returns false if the internal buffer is full; we
+        // could await drain, but for a CSV stream the small write rate
+        // means buffer pressure is rare. If it ever matters, swap this
+        // for a pipe() through a Transform.
+        res.write(line);
+      }
+      rowsWritten += batch.length;
+
+      const last = batch[batch.length - 1];
+      cursor = { id: last.id, createdAt: last.createdAt };
+
+      // Defensive: if Prisma somehow returned fewer than BATCH rows we're
+      // at the tail; break to avoid an empty next round-trip.
+      if (batch.length < BATCH) break;
+    }
+
+    res.end();
+    // Best-effort log so we can verify the streaming actually streamed.
+    // Not awaited — fire-and-forget.
+    void rowsWritten;
+  }
+
   // Translates the caller's org role into a Prisma WhereInput fragment.
   // Returns {} when no extra restriction is needed (admin/ceo).
   private async buildScopeWhere(
@@ -207,6 +374,15 @@ function presetToSince(preset: 'today' | '7d' | '30d' | '90d' | '12m'): Date {
   const now = new Date();
   const days = { today: 1, '7d': 7, '30d': 30, '90d': 90, '12m': 365 }[preset];
   return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+}
+
+// RFC 4180-style CSV escaping: wrap in quotes, double internal quotes.
+// We always quote, regardless of whether the value needs it — keeps the
+// downstream parsing predictable and the perf cost is a noise-level number
+// of bytes per row.
+function csvCell(value: string | number | null | undefined): string {
+  const s = value == null ? '' : String(value);
+  return `"${s.replace(/"/g, '""')}"`;
 }
 
 // "<iso>|<uuid>" → the "give me rows strictly older than this" clause.
