@@ -54,8 +54,12 @@ export class BroadcastsController {
     const filter = dto.audience_filter ?? {};
 
     // Resolve first so a misconfigured audience (e.g. branch with no
-    // branch_id) errors BEFORE we write the broadcast row.
+    // target_ids) errors BEFORE we write the broadcast row.
     const recipientIds = await this.resolver.resolve(db, tenant.companyId, dto.audience, filter);
+
+    // 'company' is the new spec name; the underlying enum value is still
+    // 'all_company' (preserved so existing rows keep their meaning).
+    const audienceEnum = dto.audience === 'company' ? 'all_company' : dto.audience;
 
     const broadcast = await db.broadcast.create({
       data: {
@@ -63,7 +67,7 @@ export class BroadcastsController {
         senderUserId: tenant.userId,
         title: dto.title,
         body: dto.body,
-        audience: dto.audience,
+        audience: audienceEnum,
         audienceFilter: filter as Prisma.InputJsonValue,
       },
     });

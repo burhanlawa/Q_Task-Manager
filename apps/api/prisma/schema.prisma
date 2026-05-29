@@ -629,6 +629,8 @@ enum broadcast_audience {
   branch
   role
   custom
+  team
+  department
 }
 
 enum employment_status {
