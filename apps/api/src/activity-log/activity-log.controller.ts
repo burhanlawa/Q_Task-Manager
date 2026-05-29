@@ -24,18 +24,40 @@ class ActivityLogQuery {
   @IsOptional()
   @IsIn(['today', '7d', '30d', '90d', '12m'])
   date_preset?: 'today' | '7d' | '30d' | '90d' | '12m';
+
+  // Cursor for infinite scroll. Encoded as "<iso>|<uuid>" so the order
+  // (createdAt DESC, id DESC) breaks ties deterministically. The client
+  // round-trips whatever the server returned in the previous page's
+  // nextCursor field.
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  cursor?: string;
 }
 
 type Row = {
   id: string;
   created_at: Date;
   actor_user_id: string | null;
+  // Inlined so the UI can render "Burhan submitted a task" without a
+  // follow-up users call. NULL when the actor is a deleted user or the
+  // event is system-generated (e.g. Clerk webhook before the user row
+  // exists).
+  actor: {
+    id: string;
+    displayName: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+  } | null;
   action_type: string;
   target_type: string | null;
   target_id: string | null;
   field_changed: string | null;
   metadata: unknown;
 };
+
+const PAGE_SIZE = 50;
 
 // GET /activity-log
 //
@@ -73,34 +95,59 @@ export class ActivityLogController {
     // 1. Build the role-scoped extra WHERE clause.
     const scopeWhere = await this.buildScopeWhere(db, tenant.userId, me);
 
-    // 2. Combine filters into a Prisma where + the scope.
+    // 2. Decode cursor if provided. Shape: "<iso>|<uuid>".
+    const cursorWhere = decodeCursor(q.cursor);
+
+    // 3. Combine filters into a Prisma where + the scope.
     const where: Prisma.ActivityLogWhereInput = {
       ...(q.entity_type ? { targetType: q.entity_type } : {}),
       ...(q.entity_id ? { targetId: q.entity_id } : {}),
       ...(q.actor_id ? { actorUserId: q.actor_id } : {}),
       ...(q.date_preset ? { createdAt: { gte: presetToSince(q.date_preset) } } : {}),
       ...scopeWhere,
+      ...cursorWhere,
     };
 
-    const items = await db.activityLog.findMany({
+    // Take PAGE_SIZE+1 so we can tell whether another page exists without
+    // a separate count query.
+    const rows = await db.activityLog.findMany({
       where,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      take: 100,
+      take: PAGE_SIZE + 1,
     });
+    const hasMore = rows.length > PAGE_SIZE;
+    const items = hasMore ? rows.slice(0, PAGE_SIZE) : rows;
+    const nextCursor =
+      hasMore && items.length > 0
+        ? `${items[items.length - 1].createdAt.toISOString()}|${items[items.length - 1].id}`
+        : null;
+
+    // Hydrate actor profiles in one batched lookup. Filter out null
+    // actor_user_id (system-generated events).
+    const actorIds = Array.from(
+      new Set(items.map((r) => r.actorUserId).filter((id): id is string => !!id)),
+    );
+    const actors = actorIds.length
+      ? await db.user.findMany({
+          where: { id: { in: actorIds } },
+          select: { id: true, displayName: true, firstName: true, lastName: true, email: true },
+        })
+      : [];
+    const actorById = new Map(actors.map((a) => [a.id, a]));
 
     return {
       items: items.map((r) => ({
         id: r.id,
         created_at: r.createdAt,
         actor_user_id: r.actorUserId,
+        actor: r.actorUserId ? (actorById.get(r.actorUserId) ?? null) : null,
         action_type: r.actionType,
         target_type: r.targetType,
         target_id: r.targetId,
         field_changed: r.fieldChanged,
         metadata: r.metadata,
       })),
-      // Pagination cursor lands in 17.x polish; today returns null.
-      nextCursor: null,
+      nextCursor,
     };
   }
 
@@ -160,4 +207,21 @@ function presetToSince(preset: 'today' | '7d' | '30d' | '90d' | '12m'): Date {
   const now = new Date();
   const days = { today: 1, '7d': 7, '30d': 30, '90d': 90, '12m': 365 }[preset];
   return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+}
+
+// "<iso>|<uuid>" → the "give me rows strictly older than this" clause.
+// Returns {} on bad input so a corrupted cursor degrades to "page 1" rather
+// than 500. Mirrors the orderBy (createdAt DESC, id DESC) — the row with
+// the same createdAt but smaller id should appear AFTER the cursor row.
+function decodeCursor(raw: string | undefined): Prisma.ActivityLogWhereInput {
+  if (!raw) return {};
+  const sep = raw.indexOf('|');
+  if (sep === -1) return {};
+  const iso = raw.slice(0, sep);
+  const id = raw.slice(sep + 1);
+  const ts = new Date(iso);
+  if (Number.isNaN(ts.getTime())) return {};
+  return {
+    OR: [{ createdAt: { lt: ts } }, { AND: [{ createdAt: ts }, { id: { lt: id } }] }],
+  };
 }

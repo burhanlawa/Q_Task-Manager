@@ -771,5 +771,60 @@
       "errorToast": "تعذّر الإرسال. {message}",
       "permissionDenied": "دورك لا يسمح بإرسال الإعلانات."
     }
+  },
+  "activity": {
+    "title": "سجل النشاط",
+    "description": "سجل غير قابل للتعديل لما يحدث في شركتك. تعتمد ما تراه على دورك.",
+    "filters": {
+      "actor": "الفاعل",
+      "actorPlaceholder": "تصفية حسب المُعرّف",
+      "entityType": "نوع الكيان",
+      "entityTypePlaceholder": "task، comment، user، broadcast، …",
+      "entityId": "معرّف الكيان",
+      "entityIdPlaceholder": "تصفية حسب UUID",
+      "datePreset": "الفترة",
+      "presets": {
+        "all": "كل الفترات",
+        "today": "اليوم",
+        "7d": "آخر 7 أيام",
+        "30d": "آخر 30 يومًا",
+        "90d": "آخر 90 يومًا",
+        "12m": "آخر 12 شهرًا"
+      },
+      "clear": "مسح الفلاتر"
+    },
+    "loading": "جارٍ التحميل…",
+    "loadingMore": "جارٍ تحميل المزيد…",
+    "loadError": "تعذّر تحميل سجل النشاط.",
+    "empty": "لا توجد سجلات مطابقة.",
+    "endReached": "نهاية السجل.",
+    "systemActor": "النظام",
+    "anUnknownUser": "شخص ما",
+    "actions": {
+      "task_created": "أنشأ {actor} مهمة",
+      "task_accepted": "قَبِل {actor} مهمة",
+      "task_started": "بدأ {actor} العمل على مهمة",
+      "task_submitted": "قدّم {actor} مهمة للمراجعة",
+      "task_approved": "اعتمد {actor} تسليمًا",
+      "task_revision_requested": "طلب {actor} تعديلات",
+      "task_cancelled": "ألغى {actor} مهمة",
+      "task_due_date_adjusted": "عدّل {actor} موعد استحقاق مهمة",
+      "task_reassignment_requested": "طلب {actor} إعادة تكليف",
+      "task_reassignment_decided": "بتّ {actor} في طلب إعادة تكليف",
+      "comment_created": "أضاف {actor} تعليقًا",
+      "comment_updated": "عدّل {actor} تعليقًا",
+      "comment_deleted": "حذف {actor} تعليقًا",
+      "broadcast_sent": "أرسل {actor} إعلانًا",
+      "file_uploaded": "رفع {actor} ملفًا",
+      "file_downloaded": "نزّل {actor} ملفًا",
+      "invited": "دعا {actor} مستخدمًا",
+      "approval_requested": "تم طلب موافِق على دعوة",
+      "approval_advanced": "وافق {actor} على دعوة وتقدّمت",
+      "activated": "فعّل مستخدم مدعو حسابه",
+      "self_completed": "أكمل {actor} الانضمام",
+      "read_sensitive_field": "اطّلع {actor} على حقل حساس",
+      "role_permissions_changed": "غيّر {actor} صلاحيات دور",
+      "fallback": "نفّذ {actor}: {actionType}"
+    }
   }
 }

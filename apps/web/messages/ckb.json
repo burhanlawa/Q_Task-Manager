@@ -771,5 +771,60 @@
       "errorToast": "نەنێردرا. {message}",
       "permissionDenied": "ڕۆڵەکەت ڕێگەی ناردنی ڕاگەیاندن نادات."
     }
+  },
+  "activity": {
+    "title": "ڕاپۆرتی چالاکی",
+    "description": "تۆماری گۆڕان‌نەکراوی ئەوەی لە کۆمپانیاکەتدا ڕوویداوە. ئەوەی دەیبینیت بەپێی ڕۆڵتە.",
+    "filters": {
+      "actor": "کردار",
+      "actorPlaceholder": "فلتەر بەپێی ناسنامەی بەکارهێنەر",
+      "entityType": "جۆری بەشە",
+      "entityTypePlaceholder": "task، comment، user، broadcast، …",
+      "entityId": "ناسنامەی بەشە",
+      "entityIdPlaceholder": "فلتەر بەپێی UUID",
+      "datePreset": "کاتژمێر",
+      "presets": {
+        "all": "هەموو کاتێک",
+        "today": "ئەمڕۆ",
+        "7d": "٧ ڕۆژی ڕابردوو",
+        "30d": "٣٠ ڕۆژی ڕابردوو",
+        "90d": "٩٠ ڕۆژی ڕابردوو",
+        "12m": "١٢ مانگی ڕابردوو"
+      },
+      "clear": "سڕینەوەی فلتەرەکان"
+    },
+    "loading": "بارکردن…",
+    "loadingMore": "بارکردنی زیاتر…",
+    "loadError": "نەتوانرا تۆماری چالاکی باربکرێت.",
+    "empty": "هیچ تۆمارێکی هاوبەش نیە.",
+    "endReached": "کۆتایی تۆمار.",
+    "systemActor": "سیستەم",
+    "anUnknownUser": "کەسێک",
+    "actions": {
+      "task_created": "{actor} ئەرکێکی دروستکرد",
+      "task_accepted": "{actor} ئەرکێکی وەرگرت",
+      "task_started": "{actor} دەستی بە ئەرکێک کرد",
+      "task_submitted": "{actor} ئەرکێکی بۆ پێداچوونەوە پێشکەش کرد",
+      "task_approved": "{actor} پێشکەشکراوێکی پەسەند کرد",
+      "task_revision_requested": "{actor} داوای گۆڕانکاری کرد",
+      "task_cancelled": "{actor} ئەرکێکی هەڵوەشاندەوە",
+      "task_due_date_adjusted": "{actor} وادەی کۆتایی ئەرکێکی گۆڕی",
+      "task_reassignment_requested": "{actor} داوای گۆڕانی ئەرکی کرد",
+      "task_reassignment_decided": "{actor} بڕیاری دا لەسەر داواکاری گۆڕانی ئەرک",
+      "comment_created": "{actor} لێدوانێکی زیاد کرد",
+      "comment_updated": "{actor} لێدوانێکی دەستکاری کرد",
+      "comment_deleted": "{actor} لێدوانێکی سڕیەوە",
+      "broadcast_sent": "{actor} ڕاگەیاندنێکی نارد",
+      "file_uploaded": "{actor} فایلێکی بەرز کردەوە",
+      "file_downloaded": "{actor} فایلێکی دابەزاند",
+      "invited": "{actor} بانگهێشتی بەکارهێنەرێکی کرد",
+      "approval_requested": "داوای پەسەندکار بۆ بانگهێشت کرا",
+      "approval_advanced": "{actor} بانگهێشتێکی پەسەند کرد و بەرەوپێش بردی",
+      "activated": "بەکارهێنەری بانگهێشتکراو هەژمارەکەی چالاککردووە",
+      "self_completed": "{actor} پەیوەستبوونی تەواو کرد",
+      "read_sensitive_field": "{actor} خانەیەکی هەستیاری بینی",
+      "role_permissions_changed": "{actor} ڕێگاپێدانەکانی ڕۆڵێکی گۆڕی",
+      "fallback": "{actor} ئەمانەی ئەنجامدا: {actionType}"
+    }
   }
 }

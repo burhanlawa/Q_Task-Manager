@@ -772,5 +772,60 @@
       "errorToast": "Couldn't send. {message}",
       "permissionDenied": "Your role doesn't allow sending broadcasts."
     }
+  },
+  "activity": {
+    "title": "Activity log",
+    "description": "An immutable record of what happened in your tenant. Visibility depends on your role.",
+    "filters": {
+      "actor": "Actor",
+      "actorPlaceholder": "Filter by actor (user UUID)",
+      "entityType": "Entity type",
+      "entityTypePlaceholder": "task, comment, user, broadcast, …",
+      "entityId": "Entity ID",
+      "entityIdPlaceholder": "Filter by entity UUID",
+      "datePreset": "When",
+      "presets": {
+        "all": "All time",
+        "today": "Today",
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "90d": "Last 90 days",
+        "12m": "Last 12 months"
+      },
+      "clear": "Clear filters"
+    },
+    "loading": "Loading…",
+    "loadingMore": "Loading more…",
+    "loadError": "Couldn't load the activity log.",
+    "empty": "No matching activity.",
+    "endReached": "End of log.",
+    "systemActor": "System",
+    "anUnknownUser": "Someone",
+    "actions": {
+      "task_created": "{actor} created a task",
+      "task_accepted": "{actor} accepted a task",
+      "task_started": "{actor} started working on a task",
+      "task_submitted": "{actor} submitted a task for review",
+      "task_approved": "{actor} approved a submission",
+      "task_revision_requested": "{actor} requested revisions",
+      "task_cancelled": "{actor} cancelled a task",
+      "task_due_date_adjusted": "{actor} adjusted a task's due date",
+      "task_reassignment_requested": "{actor} requested reassignment",
+      "task_reassignment_decided": "{actor} decided a reassignment request",
+      "comment_created": "{actor} added a comment",
+      "comment_updated": "{actor} edited a comment",
+      "comment_deleted": "{actor} deleted a comment",
+      "broadcast_sent": "{actor} sent a broadcast",
+      "file_uploaded": "{actor} uploaded a file",
+      "file_downloaded": "{actor} downloaded a file",
+      "invited": "{actor} invited a user",
+      "approval_requested": "An approver was requested for an invitation",
+      "approval_advanced": "{actor} approved an invitation, advancing it",
+      "activated": "An invited user activated their account",
+      "self_completed": "{actor} completed onboarding",
+      "read_sensitive_field": "{actor} viewed a sensitive field",
+      "role_permissions_changed": "{actor} changed a role's permissions",
+      "fallback": "{actor} performed: {actionType}"
+    }
   }
 }
