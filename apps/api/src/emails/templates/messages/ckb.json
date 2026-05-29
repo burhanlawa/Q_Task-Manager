@@ -34,6 +34,11 @@
     "preheader": "{actorName} لە گفتوگۆیەکدا ئاماژەی بە تۆ کرد.",
     "body": "سڵاو {recipientName}،\n\n{actorName} لە لێدوانێکدا لەسەر «{taskTitle}» ئاماژەی بە تۆ کرد. ئەرکەکە بکەرەوە بۆ خوێندنەوە و وەڵامدانەوە."
   },
+  "broadcast": {
+    "subject": "{title}",
+    "preheader": "ڕاگەیاندن لە لایەن {actorName}.",
+    "body": "سڵاو {recipientName}،\n\n{actorName} ئەم ڕاگەیاندنەی ناردووە:\n\n{messageBody}"
+  },
   "comment_created": {
     "subject": "لێدوانێکی نوێ لەسەر: {taskTitle}",
     "preheader": "{actorName} لێدوانێکی زیاد کرد.",

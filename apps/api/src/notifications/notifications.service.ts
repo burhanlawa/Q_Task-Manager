@@ -19,6 +19,7 @@ const EMAILABLE_TYPES: ReadonlySet<string> = new Set<EmailableType>([
   'task_cancelled',
   'task_reassignment_requested',
   'comment_mentioned',
+  'broadcast',
   'comment_created',
   'deadline_approaching',
   'overdue',
@@ -225,6 +226,11 @@ export class NotificationsService {
       companyName: stringOr(meta.companyName, ''),
       newUserName: stringOr(meta.newUserName, ''),
       leaveDate: stringOr(meta.leaveDate, ''),
+      // Broadcast templates use {title} (the sender's headline) and
+      // {messageBody} (the sender's free-form text). Falls back to the
+      // notification's title + body so older callers still render cleanly.
+      title: stringOr(meta.title, input.title ?? ''),
+      messageBody: stringOr(meta.messageBody, input.message ?? ''),
     };
 
     const locale: Locale = SUPPORTED_LOCALES.has(recipient.locale ?? '')

@@ -13,6 +13,10 @@ export type EmailableType =
   | 'task_cancelled'
   | 'task_reassignment_requested'
   | 'comment_mentioned'
+  // Live (Sprint 16): company-wide / audience-scoped broadcasts. The body
+  // is whatever the sender typed; only the layout shell + sender label
+  // get translated.
+  | 'broadcast'
   // Stubs (events to be wired in later sprints):
   | 'comment_created'
   | 'deadline_approaching'

@@ -34,6 +34,11 @@
     "preheader": "{actorName} أشار إليك في نقاش.",
     "body": "مرحبًا {recipientName}،\n\nأشار إليك {actorName} في تعليق على «{taskTitle}». افتح المهمة للقراءة والرد."
   },
+  "broadcast": {
+    "subject": "{title}",
+    "preheader": "إعلان من {actorName}.",
+    "body": "مرحبًا {recipientName}،\n\nأرسل {actorName} الإعلان التالي:\n\n{messageBody}"
+  },
   "comment_created": {
     "subject": "تعليق جديد على: {taskTitle}",
     "preheader": "{actorName} أضاف تعليقًا.",

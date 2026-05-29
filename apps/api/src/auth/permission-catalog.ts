@@ -117,6 +117,11 @@ export const PERMISSION_CATALOG: readonly PermissionGroup[] = [
     description: 'Access cross-tenant reports.',
     permissions: [{ key: 'report.read', label: 'View reports' }],
   },
+  {
+    category: 'Broadcasts',
+    description: 'Send company-wide and audience-scoped announcements (Sprint 16).',
+    permissions: [{ key: 'broadcast.send', label: 'Send broadcasts' }],
+  },
 ];
 
 export const ALL_PERMISSION_KEYS: ReadonlySet<string> = new Set(

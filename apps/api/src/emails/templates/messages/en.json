@@ -34,6 +34,11 @@
     "preheader": "{actorName} tagged you in a discussion.",
     "body": "Hi {recipientName},\n\n{actorName} mentioned you in a comment on \"{taskTitle}\". Open the task to read and reply."
   },
+  "broadcast": {
+    "subject": "{title}",
+    "preheader": "Announcement from {actorName}.",
+    "body": "Hi {recipientName},\n\n{actorName} sent the following announcement:\n\n{messageBody}"
+  },
   "comment_created": {
     "subject": "New comment on: {taskTitle}",
     "preheader": "{actorName} added a comment.",

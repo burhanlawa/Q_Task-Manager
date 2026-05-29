@@ -18,6 +18,7 @@ import { R2Module } from './r2/r2.module';
 import { TenantModule } from './tenant/tenant.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { BranchesModule } from './branches/branches.module';
+import { BroadcastsModule } from './broadcasts/broadcasts.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { CommentsModule } from './comments/comments.module';
 import { CompanySettingsModule } from './company-settings/company-settings.module';
@@ -54,6 +55,7 @@ import { UsersModule } from './users/users.module';
     MeModule,
     WebhooksModule,
     BranchesModule,
+    BroadcastsModule,
     CalendarModule,
     CommentsModule,
     CompanySettingsModule,
