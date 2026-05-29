@@ -556,6 +556,32 @@ model UserNotificationPreference {
   @@map("user_notification_preferences")
 }
 
+model Broadcast {
+  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String              @db.Uuid @map("company_id")
+  /// SET NULL on sender delete so the broadcast row survives a sender
+  /// departure (history matters for audit). NULL = "user was deleted".
+  senderUserId    String?             @db.Uuid @map("sender_user_id")
+  title           String
+  body            String
+  audience        broadcast_audience
+  /// Per-kind filter (branch_id / role_id / user_ids). Schema-validated in
+  /// the application layer; the column just stores the JSON it gets.
+  audienceFilter  Json                @default("{}") @map("audience_filter")
+  /// Phase-2 fields. Kept now so receipt tracking can be added without
+  /// migrating a populated table.
+  ackRequired     Boolean             @default(false) @map("ack_required")
+  ackCount        Int                 @default(0)     @map("ack_count")
+  createdAt       DateTime            @default(now()) @db.Timestamptz(6) @map("created_at")
+  deletedAt       DateTime?           @db.Timestamptz(6) @map("deleted_at")
+
+  // Partial WHERE-NULL indexes can't be expressed in Prisma; the SQL
+  // migration owns those — we leave only the basic mapping here.
+  @@index([companyId, createdAt(sort: Desc)], map: "idx_broadcasts_company_created")
+  @@index([senderUserId, createdAt(sort: Desc)], map: "idx_broadcasts_sender_created")
+  @@map("broadcasts")
+}
+
 model File {
   id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   companyId        String            @db.Uuid @map("company_id")
