@@ -7,6 +7,11 @@ import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import {
+  EmployeePerformanceService,
+  type EmployeePerformanceRange,
+  type EmployeePerformanceResult,
+} from './employee-performance.service';
+import {
   TasksCompletionService,
   type RangePreset,
   type TasksCompletionResult,
@@ -25,11 +30,23 @@ class TasksCompletionQuery {
   assignee_user_id?: string;
 }
 
+class EmployeePerformanceQuery {
+  @IsIn(['7d', '30d', '90d'])
+  range!: EmployeePerformanceRange;
+
+  @IsOptional()
+  @IsUUID('4')
+  department_id?: string;
+}
+
 @Controller('reports')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class ReportsController {
-  constructor(private readonly tasksCompletionSvc: TasksCompletionService) {}
+  constructor(
+    private readonly tasksCompletionSvc: TasksCompletionService,
+    private readonly employeePerformanceSvc: EmployeePerformanceService,
+  ) {}
 
   // GET /reports/tasks-completion?range=7d&department_id=&assignee_user_id=
   //
@@ -48,6 +65,27 @@ export class ReportsController {
       range: q.range,
       departmentId: q.department_id ?? null,
       assigneeUserId: q.assignee_user_id ?? null,
+    });
+  }
+
+  // GET /reports/employee-performance?range=30d&department_id=
+  //
+  // Returns { range, from, to, rows: [{userId, displayName, email,
+  // assigned, completed, onTimePct, avgRevisions}] }, one row per user
+  // who had at least one assigned task in the range. Ordered by
+  // assigned-count desc. Result cached for 5 minutes per
+  // (company, range, dept) tuple. Permission gate: report.read.
+  @Get('employee-performance')
+  @RequirePermissions('report.read')
+  async employeePerformance(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Query() q: EmployeePerformanceQuery,
+  ): Promise<EmployeePerformanceResult> {
+    return this.employeePerformanceSvc.compute(db, {
+      companyId: tenant.companyId,
+      range: q.range,
+      departmentId: q.department_id ?? null,
     });
   }
 }
