@@ -14,6 +14,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { SkipBillingGate } from '../auth/billing-status.guard';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
@@ -38,6 +39,11 @@ const ADMIN_TIER_ROLES = new Set(['ceo', 'admin']);
 @Controller('billing')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
+// Every endpoint on this controller is part of the recovery flow —
+// a tenant in read-only state must still be able to create a checkout
+// session, submit a transfer reference, and download their invoice.
+// Sprint 20.7's BillingStatusGuard would otherwise 402 these.
+@SkipBillingGate()
 export class BillingController {
   constructor(
     private readonly stripeCheckout: StripeCheckoutService,

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { BillingStatusGuard } from './auth/billing-status.guard';
 import { join } from 'path';
 import { HealthModule } from './health/health.module';
 import { DebugModule } from './debug/debug.module';
@@ -75,6 +76,13 @@ import { UsersModule } from './users/users.module';
     ReportsModule,
     DashboardModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Sprint 20.7 — 402 on writes when the tenant is read-only /
+    // suspended / cancelled. Runs after Clerk auth (which only sets
+    // req.auth on signed-in routes); webhooks fall through because
+    // they have no Clerk session.
+    { provide: APP_GUARD, useClass: BillingStatusGuard },
+  ],
 })
 export class AppModule {}
