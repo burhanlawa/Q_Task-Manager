@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { PrismaClient, type Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { ActivityLogService } from '../../src/activity-log/activity-log.service';
+import { PlanLimitsService } from '../../src/billing/plan-limits.service';
 import { FilesController } from '../../src/files/files.controller';
 import { R2Service } from '../../src/r2/r2.service';
 
@@ -123,6 +124,16 @@ function stubR2(): R2Service {
   } as unknown as R2Service;
 }
 
+// Plan-limit stub — these test cases call download/complete, neither of
+// which exercises the gate. A no-op satisfies the constructor signature
+// without dragging the billing module's DB lookups into the test path.
+function stubPlanLimits(): PlanLimitsService {
+  return {
+    assertCanAddUser: async () => undefined,
+    assertCanUpload: async () => undefined,
+  } as unknown as PlanLimitsService;
+}
+
 const activity = new ActivityLogService();
 
 describe('file isolation (Sprint 11 non-negotiable)', () => {
@@ -151,7 +162,7 @@ describe('file isolation (Sprint 11 non-negotiable)', () => {
     });
 
     it('controller.download for B.fileId throws NotFoundException', async () => {
-      const ctrl = new FilesController(stubR2(), activity);
+      const ctrl = new FilesController(stubR2(), activity, stubPlanLimits());
       await expect(
         asTenant(A.companyId, (tx) =>
           ctrl.download(tx, { companyId: A.companyId, userId: A.userId }, B.fileId),
@@ -160,7 +171,7 @@ describe('file isolation (Sprint 11 non-negotiable)', () => {
     });
 
     it('controller.complete on B.fileId throws NotFoundException (cannot flip another tenant’s row)', async () => {
-      const ctrl = new FilesController(stubR2(), activity);
+      const ctrl = new FilesController(stubR2(), activity, stubPlanLimits());
       await expect(
         asTenant(A.companyId, (tx) =>
           ctrl.complete(tx, { companyId: A.companyId, userId: A.userId }, B.fileId),
