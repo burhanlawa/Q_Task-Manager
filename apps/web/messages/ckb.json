@@ -1092,7 +1092,53 @@
       "branches": "لقەکان",
       "departments": "بەشەکان",
       "roles": "ڕۆڵەکان",
+      "billing": "پارەدان",
       "security": "ئاسایش"
+    }
+  },
+  "billing": {
+    "current": {
+      "title": "پارەدان",
+      "description": "بەشداریکردنت، خولی پارەدان، و هەڵبژاردنی بەرزکردنەوە.",
+      "loading": "بارکردن…",
+      "error": "نەتوانرا پارەدان باربکرێت.",
+      "currentPlan": "پلانی ئێستا",
+      "billingCycle": "خولی پارەدان",
+      "trialEnds": "تاقیکردنەوە کۆتایی دێت",
+      "renewsOn": "نوێ دەکرێتەوە لە",
+      "cancellation": "هەڵوەشاندنەوە",
+      "cancelsAtPeriodEnd": "لە کۆتایی خوولدا کۆتایی دێت",
+      "upgradeCta": "بەرزکردنەوە بۆ Pro",
+      "successToast": "بەشداری چالاککرا. بەخێرهاتن بۆ Pro!"
+    },
+    "upgrade": {
+      "title": "بەرزکردنەوە بۆ Pro",
+      "description": "بەکارهێنەری بێسنوور، هەڵگرتنی زیاتر، و هەموو ڕاپۆرتەکان.",
+      "plan": {
+        "pro": "Pro",
+        "priceMonthly": "5 $ / بەکارهێنەر / مانگ",
+        "priceMonthlySuffix": "پارەدانی مانگانە. ساڵانە ٢٠٪ پاشەکەوت دەکات."
+      },
+      "features": {
+        "unlimitedUsers": "بەکارهێنەری بێسنوور",
+        "storage": "١٠ گیگابایت + ١ گیگابایت بۆ هەر بەکارهێنەرێکی چالاک",
+        "allReports": "هەموو ڕاپۆرتەکان و دەرهێنانی CSV",
+        "priority": "پشتیوانی ئیمەیڵی پێشینە"
+      },
+      "cycle": {
+        "monthly": "مانگانە",
+        "annual": "ساڵانە",
+        "annualDiscount": "(٢٠٪ پاشەکەوت)"
+      },
+      "openCheckout": "کردنەوەی پارەدان",
+      "loading": "بارکردنی پارەدان…",
+      "notConfigured": {
+        "title": "پارەدان هێشتا ڕێکنەخراوە",
+        "body": "Paddle.js ڕێکخراوە بەڵام گۆڕاوەکانی ژینگەی هەژماری تاقیکردنەوە ڕێکنەخراون. کاتێک هەژماری Paddle دروست کرا، NEXT_PUBLIC_PADDLE_ENV و NEXT_PUBLIC_PADDLE_CLIENT_TOKEN و NEXT_PUBLIC_PADDLE_PRICE_MONTHLY و NEXT_PUBLIC_PADDLE_PRICE_ANNUAL ڕێکبخە — لاپەڕەکە لە دواین جار بارکردنەوەدا هەڵیدەگرێت."
+      },
+      "errors": {
+        "scriptFailed": "نەتوانرا سکریپتی پارەدان باربکرێت. تۆڕەکەت تاقی بکەرەوە و دووبارە هەوڵبدە."
+      }
     }
   }
 }

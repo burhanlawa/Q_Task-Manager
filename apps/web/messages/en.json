@@ -1093,7 +1093,53 @@
       "branches": "Branches",
       "departments": "Departments",
       "roles": "Roles",
+      "billing": "Billing",
       "security": "Security"
+    }
+  },
+  "billing": {
+    "current": {
+      "title": "Billing",
+      "description": "Your subscription, billing cycle, and upgrade options.",
+      "loading": "Loading…",
+      "error": "Could not load billing.",
+      "currentPlan": "Current plan",
+      "billingCycle": "Billing cycle",
+      "trialEnds": "Trial ends",
+      "renewsOn": "Renews on",
+      "cancellation": "Cancellation",
+      "cancelsAtPeriodEnd": "Cancels at period end",
+      "upgradeCta": "Upgrade to Pro",
+      "successToast": "Subscription activated. Welcome to Pro!"
+    },
+    "upgrade": {
+      "title": "Upgrade to Pro",
+      "description": "Unlimited users, more storage, and all reports.",
+      "plan": {
+        "pro": "Pro",
+        "priceMonthly": "$5 / user / month",
+        "priceMonthlySuffix": "Billed monthly. Annual saves 20%."
+      },
+      "features": {
+        "unlimitedUsers": "Unlimited users",
+        "storage": "10 GB + 1 GB per active user",
+        "allReports": "All reports + CSV export",
+        "priority": "Priority email support"
+      },
+      "cycle": {
+        "monthly": "Monthly",
+        "annual": "Annual",
+        "annualDiscount": "(save 20%)"
+      },
+      "openCheckout": "Open checkout",
+      "loading": "Loading checkout…",
+      "notConfigured": {
+        "title": "Checkout is not configured yet",
+        "body": "Paddle.js is wired but the env vars for the sandbox account aren't set. Once a Paddle merchant account is created, set NEXT_PUBLIC_PADDLE_ENV, NEXT_PUBLIC_PADDLE_CLIENT_TOKEN, NEXT_PUBLIC_PADDLE_PRICE_MONTHLY, and NEXT_PUBLIC_PADDLE_PRICE_ANNUAL — the page will pick them up on the next reload."
+      },
+      "errors": {
+        "scriptFailed": "Could not load the checkout script. Check your network and try again."
+      }
     }
   }
 }

@@ -1092,7 +1092,53 @@
       "branches": "الفروع",
       "departments": "الأقسام",
       "roles": "الأدوار",
+      "billing": "الفوترة",
       "security": "الأمان"
+    }
+  },
+  "billing": {
+    "current": {
+      "title": "الفوترة",
+      "description": "اشتراكك، ودورة الفوترة، وخيارات الترقية.",
+      "loading": "جارٍ التحميل…",
+      "error": "تعذّر تحميل الفوترة.",
+      "currentPlan": "الخطة الحالية",
+      "billingCycle": "دورة الفوترة",
+      "trialEnds": "تنتهي التجربة",
+      "renewsOn": "تجديد في",
+      "cancellation": "الإلغاء",
+      "cancelsAtPeriodEnd": "ينتهي في نهاية الدورة",
+      "upgradeCta": "الترقية إلى Pro",
+      "successToast": "تم تفعيل الاشتراك. مرحباً بك في Pro!"
+    },
+    "upgrade": {
+      "title": "الترقية إلى Pro",
+      "description": "مستخدمون غير محدودين، مساحة تخزين أكبر، وجميع التقارير.",
+      "plan": {
+        "pro": "Pro",
+        "priceMonthly": "5 $ / مستخدم / شهر",
+        "priceMonthlySuffix": "فوترة شهرية. التوفير السنوي 20%."
+      },
+      "features": {
+        "unlimitedUsers": "مستخدمون غير محدودين",
+        "storage": "10 جيجابايت + 1 جيجابايت لكل مستخدم نشط",
+        "allReports": "كل التقارير وتصدير CSV",
+        "priority": "دعم بالبريد الإلكتروني ذو أولوية"
+      },
+      "cycle": {
+        "monthly": "شهري",
+        "annual": "سنوي",
+        "annualDiscount": "(وفّر 20%)"
+      },
+      "openCheckout": "فتح الدفع",
+      "loading": "جارٍ تحميل الدفع…",
+      "notConfigured": {
+        "title": "نظام الدفع غير مُهيأ بعد",
+        "body": "Paddle.js مُهيأ ولكن متغيرات بيئة الحساب التجريبي غير مضبوطة. بمجرد إنشاء حساب Paddle، اضبط NEXT_PUBLIC_PADDLE_ENV و NEXT_PUBLIC_PADDLE_CLIENT_TOKEN و NEXT_PUBLIC_PADDLE_PRICE_MONTHLY و NEXT_PUBLIC_PADDLE_PRICE_ANNUAL — وستلتقطها الصفحة عند إعادة التحميل."
+      },
+      "errors": {
+        "scriptFailed": "تعذّر تحميل نص الدفع. تحقّق من الشبكة وحاول مجدداً."
+      }
     }
   }
 }

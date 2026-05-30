@@ -6,6 +6,7 @@ import {
   BarChart3,
   Bell,
   Building2,
+  CreditCard,
   GitBranch,
   Home,
   KeyRound,
@@ -118,6 +119,12 @@ const SECTIONS: NavSection[] = [
         icon: KeyRound,
         roles: ['ceo', 'admin'],
       },
+      {
+        href: '/billing',
+        labelKey: 'billing',
+        icon: CreditCard,
+        roles: ['ceo', 'admin'],
+      },
     ],
   },
   {
@@ -222,16 +229,29 @@ export function SiteSidebar() {
     retry: false,
   });
 
-  if (!isLoaded || !isSignedIn) return null;
+  // Don't render at all on unauthenticated routes — the header/footer
+  // also know to hide there. But while Clerk is still loading, keep the
+  // aside present (empty) so MainArea's md:ps-60 shift doesn't cause a
+  // layout flash where the page renders full-width and then jumps right
+  // when the sidebar pops in.
+  if (isLoaded && !isSignedIn) return null;
+  const authReady = isLoaded && isSignedIn;
 
-  const visibleSections = SECTIONS.map((section) => ({
-    ...section,
-    items: section.items.filter((item) => {
-      if (item.permission && !hasPerm(perms?.permissions ?? [], item.permission)) return false;
-      if (item.roles && me?.orgRole && !item.roles.includes(me.orgRole)) return false;
-      return true;
-    }),
-  })).filter((s) => s.items.length > 0);
+  // Only render items once we know who the user is and what they can do.
+  // Without this check, role-gated items briefly render for everyone
+  // (because me?.orgRole is undefined → role filter short-circuits true)
+  // and then disappear once /me resolves — that's the popping-in flash.
+  const dataReady = authReady && !!me && !!perms;
+  const visibleSections = !dataReady
+    ? []
+    : SECTIONS.map((section) => ({
+        ...section,
+        items: section.items.filter((item) => {
+          if (item.permission && !hasPerm(perms.permissions, item.permission)) return false;
+          if (item.roles && !item.roles.includes(me.orgRole)) return false;
+          return true;
+        }),
+      })).filter((s) => s.items.length > 0);
 
   function isActive(href: string): boolean {
     if (href === '/') return pathname === '/';
