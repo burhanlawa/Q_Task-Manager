@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { BillingController } from './billing.controller';
 import { PlanLimitsService } from './plan-limits.service';
+import { StripeCheckoutService } from './stripe-checkout.service';
 
 // Global so users/, files/, and any future module can inject
 // PlanLimitsService without re-importing — same pattern as
@@ -8,7 +9,7 @@ import { PlanLimitsService } from './plan-limits.service';
 @Global()
 @Module({
   controllers: [BillingController],
-  providers: [PlanLimitsService],
-  exports: [PlanLimitsService],
+  providers: [PlanLimitsService, StripeCheckoutService],
+  exports: [PlanLimitsService, StripeCheckoutService],
 })
 export class BillingModule {}

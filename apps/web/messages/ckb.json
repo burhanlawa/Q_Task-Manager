@@ -1146,7 +1146,13 @@
         "body": "Paddle.js ڕێکخراوە بەڵام گۆڕاوەکانی ژینگەی هەژماری تاقیکردنەوە ڕێکنەخراون. کاتێک هەژماری Paddle دروست کرا، NEXT_PUBLIC_PADDLE_ENV و NEXT_PUBLIC_PADDLE_CLIENT_TOKEN و NEXT_PUBLIC_PADDLE_PRICE_MONTHLY و NEXT_PUBLIC_PADDLE_PRICE_ANNUAL ڕێکبخە — لاپەڕەکە لە دواین جار بارکردنەوەدا هەڵیدەگرێت."
       },
       "errors": {
-        "scriptFailed": "نەتوانرا سکریپتی پارەدان باربکرێت. تۆڕەکەت تاقی بکەرەوە و دووبارە هەوڵبدە."
+        "scriptFailed": "نەتوانرا سکریپتی پارەدان باربکرێت. تۆڕەکەت تاقی بکەرەوە و دووبارە هەوڵبدە.",
+        "checkoutFailed": "نەتوانرا پارەدان دەستپێبکرێت. دووبارە هەوڵبدە یان پەیوەندی بە پشتیوانی بکە."
+      },
+      "stripe": {
+        "intro": "ئێمە دەتنێرینەوە بۆ لاپەڕەی پارەدانی پارێزراوی Stripe بۆ تەواوکردنی بەشداریت.",
+        "openCheckout": "بەردەوامبە بۆ Stripe",
+        "notConfiguredBody": "Stripe ڕێکخراوە بەڵام بەڵگەنامەکانی بازرگانی بۆ ئەم دانانە ڕێکنەخراون. کاتێک هەژماری Stripe دروست کرا، STRIPE_SECRET_KEY و STRIPE_PRO_PRICE_MONTHLY و STRIPE_PRO_PRICE_ANNUAL ڕێکبخە — لاپەڕەکە لە دواین جار بارکردنەوەدا هەڵیدەگرێت."
       }
     }
   }

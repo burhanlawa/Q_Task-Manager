@@ -1,10 +1,21 @@
-import { Controller, ForbiddenException, Get, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { isUnlimitedUsers, limitsFor } from './plan-limits';
+import { pickCheckoutProvider, type CheckoutProvider } from './provider-routing';
+import { StripeCheckoutService } from './stripe-checkout.service';
 
 // Sprint 19.5 — /billing/me feeds the /billing and /billing/upgrade pages.
 // CEO/Admin only because the page exposes plan + trial state + cancel
@@ -20,6 +31,8 @@ const ADMIN_TIER_ROLES = new Set(['ceo', 'admin']);
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class BillingController {
+  constructor(private readonly stripeCheckout: StripeCheckoutService) {}
+
   @Get('me')
   async me(
     @TenantDb() db: Prisma.TransactionClient,
@@ -33,6 +46,7 @@ export class BillingController {
     cancelAtPeriodEnd: boolean;
     seats: { used: number; limit: number; unlimited: boolean };
     storage: { usedBytes: string; limitBytes: string; unlimited: boolean };
+    checkoutProvider: CheckoutProvider;
   }> {
     const me = await db.user.findUnique({
       where: { id: tenant.userId },
@@ -59,7 +73,7 @@ export class BillingController {
       }),
       db.company.findUnique({
         where: { id: tenant.companyId },
-        select: { plan: true, storageUsedBytes: true },
+        select: { plan: true, storageUsedBytes: true, country: true },
       }),
       // Paid-user count for the seat gauge. "active or invited" matches
       // the rule PlanLimitsService.assertCanAddUser enforces — an invited
@@ -114,6 +128,49 @@ export class BillingController {
         // "Unlimited." Same convention as the seats limit.
         unlimited: storageLimit >= BigInt(Number.MAX_SAFE_INTEGER),
       },
+      // Sprint 20.2 — which checkout component the upgrade page should
+      // mount for this tenant. Paddle (primary) for most countries;
+      // Stripe (fallback) when Paddle doesn't onboard the geo. Lives
+      // in /billing/me so the web side doesn't have to embed the
+      // routing rules — they stay server-authoritative.
+      checkoutProvider: pickCheckoutProvider(company?.country),
     };
+  }
+
+  // POST /billing/checkout/stripe
+  //   Creates a Stripe Checkout Session and returns its hosted URL so
+  //   the browser can window.location to it. Session metadata carries
+  //   companyId so the Sprint 20.3 webhook can resolve the tenant.
+  //   CEO/Admin only — same gate as /billing/me.
+  @Post('checkout/stripe')
+  async createStripeCheckout(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Body() body: { cycle?: 'monthly' | 'annual'; returnOrigin?: string },
+  ): Promise<{ url: string; sessionId: string }> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true, email: true },
+    });
+    if (!me || !ADMIN_TIER_ROLES.has(me.orgRole)) {
+      throw new ForbiddenException('Only CEO/Admin can start a checkout');
+    }
+    const cycle: 'monthly' | 'annual' = body?.cycle === 'annual' ? 'annual' : 'monthly';
+    // returnOrigin comes from the browser (window.location.origin). We
+    // could derive from a server-side env var, but in dev the API may
+    // run under a different host than the web app, and a wrong origin
+    // sends the user to a 404 after payment. We trust this only to
+    // build success/cancel URLs — Stripe re-validates redirects.
+    const origin = typeof body?.returnOrigin === 'string' ? body.returnOrigin : '';
+    if (!/^https?:\/\//.test(origin)) {
+      throw new BadRequestException('returnOrigin must be an http(s) URL');
+    }
+    return this.stripeCheckout.createCheckoutSession({
+      companyId: tenant.companyId,
+      cycle,
+      successUrl: `${origin}/billing?success=1`,
+      cancelUrl: `${origin}/billing/upgrade?canceled=1`,
+      customerEmail: me.email,
+    });
   }
 }

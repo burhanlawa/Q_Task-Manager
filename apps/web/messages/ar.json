@@ -1146,7 +1146,13 @@
         "body": "Paddle.js مُهيأ ولكن متغيرات بيئة الحساب التجريبي غير مضبوطة. بمجرد إنشاء حساب Paddle، اضبط NEXT_PUBLIC_PADDLE_ENV و NEXT_PUBLIC_PADDLE_CLIENT_TOKEN و NEXT_PUBLIC_PADDLE_PRICE_MONTHLY و NEXT_PUBLIC_PADDLE_PRICE_ANNUAL — وستلتقطها الصفحة عند إعادة التحميل."
       },
       "errors": {
-        "scriptFailed": "تعذّر تحميل نص الدفع. تحقّق من الشبكة وحاول مجدداً."
+        "scriptFailed": "تعذّر تحميل نص الدفع. تحقّق من الشبكة وحاول مجدداً.",
+        "checkoutFailed": "تعذّر بدء عملية الدفع. حاول مجدداً أو تواصل مع الدعم."
+      },
+      "stripe": {
+        "intro": "سنحوّلك إلى صفحة الدفع الآمنة على Stripe لإكمال اشتراكك.",
+        "openCheckout": "المتابعة إلى Stripe",
+        "notConfiguredBody": "Stripe مُهيأ ولكن بيانات اعتماد التاجر غير مضبوطة. بعد إنشاء حساب Stripe، اضبط STRIPE_SECRET_KEY و STRIPE_PRO_PRICE_MONTHLY و STRIPE_PRO_PRICE_ANNUAL — وستلتقطها الصفحة عند إعادة التحميل."
       }
     }
   }

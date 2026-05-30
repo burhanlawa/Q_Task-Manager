@@ -53,6 +53,8 @@ model Subscription {
   paymentProvider       payment_provider    @default(paddle)  @map("payment_provider")
   paddleSubscriptionId  String?             @unique @map("paddle_subscription_id")
   paddleCustomerId      String?             @map("paddle_customer_id")
+  stripeSubscriptionId  String?             @unique(map: "idx_subscriptions_stripe_subscription_id") @map("stripe_subscription_id")
+  stripeCustomerId      String?             @map("stripe_customer_id")
   currentPeriodStart    DateTime?           @db.Timestamptz(6) @map("current_period_start")
   currentPeriodEnd      DateTime?           @db.Timestamptz(6) @map("current_period_end")
   trialEndAt            DateTime?           @db.Timestamptz(6) @map("trial_end_at")
@@ -106,6 +108,14 @@ model PaddleWebhookEvent {
   receivedAt DateTime @default(now()) @db.Timestamptz(6) @map("received_at")
 
   @@map("paddle_webhook_events")
+}
+
+model StripeWebhookEvent {
+  eventId    String   @id @map("event_id")
+  eventType  String   @map("event_type")
+  receivedAt DateTime @default(now()) @db.Timestamptz(6) @map("received_at")
+
+  @@map("stripe_webhook_events")
 }
 
 model UserInvitationApproval {

@@ -1147,7 +1147,13 @@
         "body": "Paddle.js is wired but the env vars for the sandbox account aren't set. Once a Paddle merchant account is created, set NEXT_PUBLIC_PADDLE_ENV, NEXT_PUBLIC_PADDLE_CLIENT_TOKEN, NEXT_PUBLIC_PADDLE_PRICE_MONTHLY, and NEXT_PUBLIC_PADDLE_PRICE_ANNUAL — the page will pick them up on the next reload."
       },
       "errors": {
-        "scriptFailed": "Could not load the checkout script. Check your network and try again."
+        "scriptFailed": "Could not load the checkout script. Check your network and try again.",
+        "checkoutFailed": "Could not start checkout. Try again or contact support."
+      },
+      "stripe": {
+        "intro": "We'll redirect you to Stripe's secure checkout to complete your subscription.",
+        "openCheckout": "Continue to Stripe Checkout",
+        "notConfiguredBody": "Stripe is wired but the merchant credentials for this deploy aren't set. Once a Stripe account is created for your region, set STRIPE_SECRET_KEY, STRIPE_PRO_PRICE_MONTHLY, and STRIPE_PRO_PRICE_ANNUAL — the page will pick them up on the next reload."
       }
     }
   }
