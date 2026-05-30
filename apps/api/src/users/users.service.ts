@@ -11,6 +11,7 @@ import type { ClerkClient } from '@clerk/backend';
 import { Prisma } from '@prisma/client';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { CLERK_CLIENT } from '../auth/clerk-client.provider';
+import { PlanLimitsService } from '../billing/plan-limits.service';
 import type { CreateUserDto } from './dto/create-user.dto';
 
 // Org roles whose invites skip the approval chain entirely. Founders &
@@ -34,6 +35,7 @@ export class UsersService {
   constructor(
     @Inject(CLERK_CLIENT) private readonly clerk: ClerkClient,
     private readonly activity: ActivityLogService,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   /**
@@ -52,6 +54,11 @@ export class UsersService {
     inviterOrgRole: string,
     dto: CreateUserDto,
   ): Promise<InviteResult> {
+    // Sprint 19.3 — plan seat cap. Throws 422 with an upgrade payload
+    // BEFORE we touch the DB or Clerk, so a blocked invite leaves no
+    // partial state. Active + invited both count as occupied seats.
+    await this.planLimits.assertCanAddUser(db, companyId);
+
     const displayName =
       [dto.firstName, dto.lastName].filter(Boolean).join(' ').trim() || dto.email.split('@')[0];
 

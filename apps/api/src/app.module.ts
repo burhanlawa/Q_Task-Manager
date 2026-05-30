@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { CacheModule } from './cache/cache.module';
 import { MeModule } from './me/me.module';
 import { ActivityLogModule } from './activity-log/activity-log.module';
+import { BillingModule } from './billing/billing.module';
 import { CryptoModule } from './crypto/crypto.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ReportsModule } from './reports/reports.module';
@@ -50,6 +51,7 @@ import { UsersModule } from './users/users.module';
     R2Module,
     TenantModule,
     ActivityLogModule,
+    BillingModule,
     CryptoModule,
     EmailModule,
     NotificationsModule,

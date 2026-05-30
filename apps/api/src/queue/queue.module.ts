@@ -107,8 +107,6 @@ export class QueueModule implements OnModuleInit {
         removeOnFail: { count: 50 },
       },
     );
-    this.log.log(
-      `Scheduled trial lifecycle: '${TRIAL_LIFECYCLE_CRON}' UTC (daily at 09:00 UTC).`,
-    );
+    this.log.log(`Scheduled trial lifecycle: '${TRIAL_LIFECYCLE_CRON}' UTC (daily at 09:00 UTC).`);
   }
 }

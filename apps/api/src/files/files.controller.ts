@@ -30,7 +30,7 @@ import {
   UploadIntentDto,
   UploadIntentPurpose,
 } from './dto/upload-intent.dto';
-import { storageLimitBytes } from './plan-storage-limit';
+import { PlanLimitsService } from '../billing/plan-limits.service';
 
 // Mime allowlists by purpose. Avatars/logos are visual — JPG/PNG only.
 // Task attachments + submissions are working files — common office formats
@@ -99,6 +99,7 @@ export class FilesController {
   constructor(
     private readonly r2: R2Service,
     private readonly activity: ActivityLogService,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   // GET /files?owner_type=task&owner_id=<uuid>
@@ -263,29 +264,12 @@ export class FilesController {
       versionNumber = prev.versionNumber + 1;
     }
 
-    // 5. Plan storage limit (Sprint 11.8). Reject up-front if the new file
-    //    would push the tenant past its plan's cap. growth's "+1 GB/user"
-    //    component scales with the current active-user count (RLS-scoped
-    //    so we see only this tenant's users).
-    const [company, activeUserCount] = await Promise.all([
-      db.company.findUnique({
-        where: { id: tenant.companyId },
-        select: { plan: true, storageUsedBytes: true },
-      }),
-      db.user.count({ where: { status: 'active', deletedAt: null } }),
-    ]);
-    if (!company) throw new NotFoundException('Company not found');
-    const limit = storageLimitBytes(company.plan, activeUserCount);
-    const prospective = company.storageUsedBytes + BigInt(dto.size_bytes);
-    if (prospective > limit) {
-      throw new UnprocessableEntityException({
-        message: `Upload would exceed your plan's storage limit (${limit} bytes; in use ${company.storageUsedBytes}; this file ${dto.size_bytes}).`,
-        plan: company.plan,
-        limit_bytes: limit.toString(),
-        used_bytes: company.storageUsedBytes.toString(),
-        attempted_bytes: dto.size_bytes,
-      });
-    }
+    // Plan storage limit (Sprint 11.8, centralized in 19.3). Reject
+    // up-front if the new file would push the tenant past its plan's
+    // cap. Service throws UnprocessableEntityException with the same
+    // shape as the user-seat gate, so the web side can use one handler
+    // for both upgrade prompts.
+    await this.planLimits.assertCanUpload(db, tenant.companyId, dto.size_bytes);
 
     // 5. Generate the row + R2 key. The key embeds company_id so the bucket
     //    layout is structurally tenant-isolated even if RLS were bypassed.
