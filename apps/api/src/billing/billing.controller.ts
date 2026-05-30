@@ -4,10 +4,12 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
+  StreamableFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,6 +20,7 @@ import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { BankTransferService } from './bank-transfer.service';
+import { InvoicePdfService } from './invoice-pdf.service';
 import { isUnlimitedUsers, limitsFor } from './plan-limits';
 import { pickCheckoutProvider, type CheckoutProvider } from './provider-routing';
 import { StripeCheckoutService } from './stripe-checkout.service';
@@ -39,6 +42,7 @@ export class BillingController {
   constructor(
     private readonly stripeCheckout: StripeCheckoutService,
     private readonly bankTransfer: BankTransferService,
+    private readonly invoicePdf: InvoicePdfService,
   ) {}
 
   @Get('me')
@@ -308,6 +312,34 @@ export class BillingController {
     return this.bankTransfer.markPaid({
       invoiceId,
       markerUserId: tenant.userId,
+    });
+  }
+
+  // GET /billing/invoices/:id/pdf
+  //   Downloads the invoice as PDF. Lazy-generates on first hit (sets
+  //   pdf_r2_key on the row), then re-uses the R2 object for every
+  //   subsequent request. CEO/Admin only — same gate as the rest of
+  //   /billing. The RLS-scoped Prisma client makes sure a tenant can
+  //   only fetch their own invoices; ensurePdf double-checks via the
+  //   companyId filter.
+  @Get('invoices/:id/pdf')
+  @Header('Content-Type', 'application/pdf')
+  async downloadInvoice(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', new ParseUUIDPipe()) invoiceId: string,
+  ): Promise<StreamableFile> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true },
+    });
+    if (!me || !ADMIN_TIER_ROLES.has(me.orgRole)) {
+      throw new ForbiddenException('Only CEO/Admin can download invoices');
+    }
+    const key = await this.invoicePdf.ensurePdf(db, invoiceId, tenant.companyId);
+    const bytes = await this.invoicePdf.getPdfBytes(key);
+    return new StreamableFile(bytes, {
+      disposition: `attachment; filename="invoice-${invoiceId.slice(0, 8)}.pdf"`,
     });
   }
 }

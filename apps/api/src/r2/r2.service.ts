@@ -105,4 +105,40 @@ export class R2Service {
   isConfigured(): boolean {
     return this.client !== null && !!this.bucket;
   }
+
+  /**
+   * Server-side upload (Sprint 20.5). Used by code paths that generate
+   * artefacts on the server — e.g. PDFs we render then store — rather
+   * than handing the browser a presigned URL. Authorization is on the
+   * caller; this method just writes bytes.
+   */
+  async putObject(args: { key: string; body: Buffer; contentType: string }): Promise<void> {
+    const { client, bucket } = this.requireClient();
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: args.key,
+        Body: args.body,
+        ContentType: args.contentType,
+      }),
+    );
+  }
+
+  /**
+   * Server-side fetch (Sprint 20.5). Returns the object body as a
+   * Buffer for code paths that need to re-serve a private artefact
+   * (e.g. PDF download endpoint that proxies through the API so the R2
+   * key never leaks). Throws 503 if R2 isn't configured.
+   */
+  async getObject(args: { key: string }): Promise<Buffer> {
+    const { client, bucket } = this.requireClient();
+    const res = await client.send(new GetObjectCommand({ Bucket: bucket, Key: args.key }));
+    if (!res.Body) throw new Error(`R2 object ${args.key} returned no body`);
+    // The Body is a Readable stream in Node; collect it.
+    const chunks: Buffer[] = [];
+    for await (const chunk of res.Body as AsyncIterable<Uint8Array>) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  }
 }
