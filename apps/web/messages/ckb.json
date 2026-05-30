@@ -1109,7 +1109,16 @@
       "cancellation": "هەڵوەشاندنەوە",
       "cancelsAtPeriodEnd": "لە کۆتایی خوولدا کۆتایی دێت",
       "upgradeCta": "بەرزکردنەوە بۆ Pro",
-      "successToast": "بەشداری چالاککرا. بەخێرهاتن بۆ Pro!"
+      "successToast": "بەشداری چالاککرا. بەخێرهاتن بۆ Pro!",
+      "usage": {
+        "title": "بەکارهێنان",
+        "seats": "بەکارهێنەرە پارەدراوەکان",
+        "seatsValue": "{used} لە {limit}",
+        "seatsValueUnlimited": "{used} (بێسنوور)",
+        "storage": "هەڵگرتن",
+        "storageValue": "{used} لە {limit}",
+        "storageValueUnlimited": "{used} (بێسنوور)"
+      }
     },
     "upgrade": {
       "title": "بەرزکردنەوە بۆ Pro",

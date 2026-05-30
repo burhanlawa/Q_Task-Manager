@@ -1109,7 +1109,16 @@
       "cancellation": "الإلغاء",
       "cancelsAtPeriodEnd": "ينتهي في نهاية الدورة",
       "upgradeCta": "الترقية إلى Pro",
-      "successToast": "تم تفعيل الاشتراك. مرحباً بك في Pro!"
+      "successToast": "تم تفعيل الاشتراك. مرحباً بك في Pro!",
+      "usage": {
+        "title": "الاستخدام",
+        "seats": "المستخدمون المدفوعون",
+        "seatsValue": "{used} من {limit}",
+        "seatsValueUnlimited": "{used} (غير محدود)",
+        "storage": "التخزين",
+        "storageValue": "{used} من {limit}",
+        "storageValueUnlimited": "{used} (غير محدود)"
+      }
     },
     "upgrade": {
       "title": "الترقية إلى Pro",

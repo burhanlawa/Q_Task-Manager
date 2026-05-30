@@ -1110,7 +1110,16 @@
       "cancellation": "Cancellation",
       "cancelsAtPeriodEnd": "Cancels at period end",
       "upgradeCta": "Upgrade to Pro",
-      "successToast": "Subscription activated. Welcome to Pro!"
+      "successToast": "Subscription activated. Welcome to Pro!",
+      "usage": {
+        "title": "Usage",
+        "seats": "Paid users",
+        "seatsValue": "{used} of {limit}",
+        "seatsValueUnlimited": "{used} (unlimited)",
+        "storage": "Storage",
+        "storageValue": "{used} of {limit}",
+        "storageValueUnlimited": "{used} (unlimited)"
+      }
     },
     "upgrade": {
       "title": "Upgrade to Pro",

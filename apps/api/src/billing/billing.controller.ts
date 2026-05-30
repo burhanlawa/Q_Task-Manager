@@ -4,6 +4,7 @@ import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
+import { isUnlimitedUsers, limitsFor } from './plan-limits';
 
 // Sprint 19.5 — /billing/me feeds the /billing and /billing/upgrade pages.
 // CEO/Admin only because the page exposes plan + trial state + cancel
@@ -30,6 +31,8 @@ export class BillingController {
     trialEndAt: string | null;
     currentPeriodEnd: string | null;
     cancelAtPeriodEnd: boolean;
+    seats: { used: number; limit: number; unlimited: boolean };
+    storage: { usedBytes: string; limitBytes: string; unlimited: boolean };
   }> {
     const me = await db.user.findUnique({
       where: { id: tenant.userId },
@@ -38,37 +41,79 @@ export class BillingController {
     if (!me || !ADMIN_TIER_ROLES.has(me.orgRole)) {
       throw new ForbiddenException('Only CEO/Admin can view billing');
     }
-    const sub = await db.subscription.findUnique({
-      where: { companyId: tenant.companyId },
-      select: {
-        plan: true,
-        status: true,
-        billingCycle: true,
-        trialEndAt: true,
-        currentPeriodEnd: true,
-        cancelAtPeriodEnd: true,
-      },
-    });
-    // Defensive default. The 19.1 backfill seeded every existing tenant
-    // with a row, but if something somehow deletes it we don't want the
-    // page to crash — fall back to "trialing starter, no Paddle yet."
-    if (!sub) {
-      return {
-        plan: 'starter',
-        status: 'trialing',
-        billingCycle: 'monthly',
-        trialEndAt: null,
-        currentPeriodEnd: null,
-        cancelAtPeriodEnd: false,
-      };
-    }
+
+    // Run the three reads in parallel — subscription state + the two
+    // usage signals the page renders alongside it (seat count and
+    // storage). All three are RLS-scoped to this tenant.
+    const [sub, company, seatCount, activeUserCount] = await Promise.all([
+      db.subscription.findUnique({
+        where: { companyId: tenant.companyId },
+        select: {
+          plan: true,
+          status: true,
+          billingCycle: true,
+          trialEndAt: true,
+          currentPeriodEnd: true,
+          cancelAtPeriodEnd: true,
+        },
+      }),
+      db.company.findUnique({
+        where: { id: tenant.companyId },
+        select: { plan: true, storageUsedBytes: true },
+      }),
+      // Paid-user count for the seat gauge. "active or invited" matches
+      // the rule PlanLimitsService.assertCanAddUser enforces — an invited
+      // user occupies a seat from the moment the invite goes out.
+      db.user.count({
+        where: {
+          companyId: tenant.companyId,
+          deletedAt: null,
+          status: { in: ['active', 'invited'] },
+        },
+      }),
+      // Active-only count drives the growth tier's "+1 GB / active user"
+      // storage limit. PlanLimitsService uses the same query shape.
+      db.user.count({
+        where: { companyId: tenant.companyId, status: 'active', deletedAt: null },
+      }),
+    ]);
+
+    // Defensive default for the subscription row. The 19.1 backfill
+    // seeded every existing tenant, but if something somehow deletes
+    // it we don't want the page to crash — fall back to a starter trial.
+    const subResolved = sub ?? {
+      plan: 'starter' as const,
+      status: 'trialing' as const,
+      billingCycle: 'monthly' as const,
+      trialEndAt: null as Date | null,
+      currentPeriodEnd: null as Date | null,
+      cancelAtPeriodEnd: false,
+    };
+    const planForLimits = company?.plan ?? subResolved.plan;
+    const limits = limitsFor(planForLimits);
+    const storageLimit = limits.storageBytes(activeUserCount);
+    const storageUsed = company?.storageUsedBytes ?? BigInt(0);
+
     return {
-      plan: sub.plan,
-      status: sub.status,
-      billingCycle: sub.billingCycle,
-      trialEndAt: sub.trialEndAt?.toISOString() ?? null,
-      currentPeriodEnd: sub.currentPeriodEnd?.toISOString() ?? null,
-      cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+      plan: subResolved.plan,
+      status: subResolved.status,
+      billingCycle: subResolved.billingCycle,
+      trialEndAt: subResolved.trialEndAt?.toISOString() ?? null,
+      currentPeriodEnd: subResolved.currentPeriodEnd?.toISOString() ?? null,
+      cancelAtPeriodEnd: subResolved.cancelAtPeriodEnd,
+      seats: {
+        used: seatCount,
+        limit: limits.maxUsers,
+        unlimited: isUnlimitedUsers(limits.maxUsers),
+      },
+      storage: {
+        usedBytes: storageUsed.toString(),
+        limitBytes: storageLimit.toString(),
+        // Enterprise uses MAX_SAFE_INTEGER as the sentinel; the web side
+        // shouldn't render a literal "8.99 petabytes" — it should say
+        // "Unlimited." Same convention as the seats limit.
+        unlimited: storageLimit >= BigInt(Number.MAX_SAFE_INTEGER),
+      },
     };
   }
 }
