@@ -1154,6 +1154,30 @@
         "intro": "We'll redirect you to Stripe's secure checkout to complete your subscription.",
         "openCheckout": "Continue to Stripe Checkout",
         "notConfiguredBody": "Stripe is wired but the merchant credentials for this deploy aren't set. Once a Stripe account is created for your region, set STRIPE_SECRET_KEY, STRIPE_PRO_PRICE_MONTHLY, and STRIPE_PRO_PRICE_ANNUAL — the page will pick them up on the next reload."
+      },
+      "methods": {
+        "card": "Pay by card",
+        "bank": "Bank transfer"
+      },
+      "bank": {
+        "intro": "Generate an invoice with our bank details. Once you've made the transfer, submit your reference and our team will activate your subscription within one business day.",
+        "generateInvoice": "Generate invoice",
+        "invoice": "Invoice",
+        "invoiceId": "Invoice #{id}",
+        "invoiceCreated": "Invoice created. See bank details below.",
+        "details": "Bank details",
+        "accountName": "Account name",
+        "bankName": "Bank",
+        "iban": "IBAN",
+        "swift": "SWIFT / BIC",
+        "referenceLabel": "Transfer reference",
+        "referencePlaceholder": "e.g. WIRE-2026-12345 or your bank's reference",
+        "referenceHint": "Paste the reference number from your bank's transfer confirmation. We use it to match your payment.",
+        "submitReference": "Submit reference",
+        "referenceSubmitted": "Reference saved. We'll mark your subscription active once the payment clears.",
+        "pendingReview": "Reference \"{ref}\" submitted. Awaiting payment confirmation.",
+        "notConfiguredTitle": "Bank transfer is not available yet",
+        "notConfiguredBody": "Bank transfer requires the deploy to have BANK_TRANSFER_* env vars set. Contact support if you need to pay this way."
       }
     }
   }

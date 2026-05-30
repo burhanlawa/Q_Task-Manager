@@ -4,6 +4,9 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
   UseGuards,
   UseInterceptors,
@@ -11,8 +14,10 @@ import {
 import type { Prisma } from '@prisma/client';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
+import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
+import { BankTransferService } from './bank-transfer.service';
 import { isUnlimitedUsers, limitsFor } from './plan-limits';
 import { pickCheckoutProvider, type CheckoutProvider } from './provider-routing';
 import { StripeCheckoutService } from './stripe-checkout.service';
@@ -31,7 +36,10 @@ const ADMIN_TIER_ROLES = new Set(['ceo', 'admin']);
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 @UseInterceptors(TenantContextInterceptor)
 export class BillingController {
-  constructor(private readonly stripeCheckout: StripeCheckoutService) {}
+  constructor(
+    private readonly stripeCheckout: StripeCheckoutService,
+    private readonly bankTransfer: BankTransferService,
+  ) {}
 
   @Get('me')
   async me(
@@ -171,6 +179,135 @@ export class BillingController {
       successUrl: `${origin}/billing?success=1`,
       cancelUrl: `${origin}/billing/upgrade?canceled=1`,
       customerEmail: me.email,
+    });
+  }
+
+  // GET /billing/bank-details
+  //   Returns the bank coordinates the customer should wire to. Driven
+  //   by BANK_TRANSFER_* env vars so the operator can swap accounts
+  //   without a deploy. configured=false means the upgrade page should
+  //   hide the bank-transfer option entirely. Any signed-in user can
+  //   read this (CEO/Admin gate is on /checkout/bank-transfer below).
+  @Get('bank-details')
+  async bankDetails(): Promise<ReturnType<BankTransferService['getBankDetails']>> {
+    return this.bankTransfer.getBankDetails();
+  }
+
+  // GET /billing/pending-invoice
+  //   Returns the tenant's outstanding manual bank-transfer invoice if
+  //   any, so the /billing and /billing/upgrade pages can show the
+  //   "submit your reference" form. Returns null if there isn't one.
+  @Get('pending-invoice')
+  async pendingInvoice(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<{
+    id: string;
+    amountCents: number;
+    currency: string;
+    paymentReference: string | null;
+    issuedAt: string;
+  } | null> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true },
+    });
+    if (!me || !ADMIN_TIER_ROLES.has(me.orgRole)) {
+      throw new ForbiddenException('Only CEO/Admin can view pending invoices');
+    }
+    const invoice = await db.invoice.findFirst({
+      where: {
+        companyId: tenant.companyId,
+        paymentMethod: 'bank_transfer',
+        status: 'open',
+      },
+      select: {
+        id: true,
+        amountCents: true,
+        currency: true,
+        paymentReference: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!invoice) return null;
+    return {
+      id: invoice.id,
+      amountCents: invoice.amountCents,
+      currency: invoice.currency,
+      paymentReference: invoice.paymentReference,
+      issuedAt: invoice.createdAt.toISOString(),
+    };
+  }
+
+  // POST /billing/checkout/bank-transfer
+  //   CEO/Admin requests a bank-transfer invoice. Creates a single
+  //   status='open' row; the customer then wires the money and posts
+  //   the reference via PATCH /billing/invoices/:id/reference.
+  @Post('checkout/bank-transfer')
+  async createBankTransferInvoice(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<{ id: string; amountCents: number; currency: string }> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true },
+    });
+    if (!me || !ADMIN_TIER_ROLES.has(me.orgRole)) {
+      throw new ForbiddenException('Only CEO/Admin can start a checkout');
+    }
+    return this.bankTransfer.createPendingInvoice(db, {
+      companyId: tenant.companyId,
+      userId: tenant.userId,
+    });
+  }
+
+  // PATCH /billing/invoices/:id/reference
+  //   Customer posts their wire transfer reference (or FastPay txn,
+  //   etc). Idempotent — re-posting overwrites. CEO/Admin only because
+  //   /billing is admin-only anyway.
+  @Patch('invoices/:id/reference')
+  async submitTransferReference(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', new ParseUUIDPipe()) invoiceId: string,
+    @Body() body: { reference?: string },
+  ): Promise<{ ok: true }> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true },
+    });
+    if (!me || !ADMIN_TIER_ROLES.has(me.orgRole)) {
+      throw new ForbiddenException('Only CEO/Admin can submit a payment reference');
+    }
+    if (typeof body?.reference !== 'string') {
+      throw new BadRequestException('reference must be a string');
+    }
+    await this.bankTransfer.submitReference(db, {
+      companyId: tenant.companyId,
+      invoiceId,
+      reference: body.reference,
+    });
+    return { ok: true };
+  }
+
+  // POST /billing/invoices/:id/mark-paid
+  //   PLATFORM operator endpoint. Gated by 'platform.billing.review',
+  //   which no built-in role has — manually grant it to QTM staff via
+  //   /admin/roles or a direct user-permission grant. The endpoint
+  //   does NOT use the tenant interceptor's RLS-scoped Prisma client
+  //   on purpose: the operator needs to update invoices and
+  //   subscriptions across tenant boundaries, so we rely entirely on
+  //   the permission gate. Records actor on the invoice row.
+  @Post('invoices/:id/mark-paid')
+  @RequirePermissions('platform.billing.review')
+  async markInvoicePaid(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', new ParseUUIDPipe()) invoiceId: string,
+  ): Promise<{ id: string; status: 'paid' }> {
+    return this.bankTransfer.markPaid({
+      invoiceId,
+      markerUserId: tenant.userId,
     });
   }
 }

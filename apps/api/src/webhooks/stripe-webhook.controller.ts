@@ -10,12 +10,22 @@ import {
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Request } from 'express';
-// The 'stripe' default export is the constructor proxy; TypeScript
-// loses the static `webhooks` member through that path. Import the
-// class itself from stripe.core so .webhooks.constructEvent() is
-// callable, and the namespace from the same path for the Event type.
-import { Stripe, type Stripe as StripeNS } from 'stripe/esm/stripe.core';
+import Stripe from 'stripe';
+// Type-only import for the namespace (Stripe.Event etc). `stripe`'s
+// CJS `export =` shape doesn't surface the namespace through the
+// default import, so we pull it from the .d.ts path for types only.
+// The runtime value lives on the default export (`Stripe.webhooks`).
+import type { Stripe as StripeNS } from 'stripe/esm/stripe.core';
 import { StripeWebhookService } from './stripe-webhook.service';
+
+// TS can see Stripe.webhooks as a static but only through the inner
+// class type. The default import is callable + has the statics, but
+// the typeof shape narrows them away. Cast to the runtime class type.
+const StripeStatics = Stripe as unknown as {
+  webhooks: {
+    constructEvent: (body: string | Buffer, sig: string, secret: string) => StripeNS.Event;
+  };
+};
 
 // Sprint 20.3 — Stripe webhook receiver.
 //
@@ -56,7 +66,7 @@ export class StripeWebhookController {
 
     let event: StripeNS.Event;
     try {
-      event = Stripe.webhooks.constructEvent(req.rawBody, signature, secret);
+      event = StripeStatics.webhooks.constructEvent(req.rawBody, signature, secret);
     } catch (err) {
       this.log.warn(`Stripe signature verification failed: ${(err as Error).message}`);
       throw new UnauthorizedException('Invalid stripe signature');

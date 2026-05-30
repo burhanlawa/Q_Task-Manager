@@ -70,9 +70,12 @@ model Subscription {
 }
 
 model Invoice {
-  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  companyId        String            @db.Uuid @map("company_id")
-  subscriptionId   String            @db.Uuid @map("subscription_id")
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId            String            @db.Uuid @map("company_id")
+  subscriptionId       String            @db.Uuid @map("subscription_id")
+  paidAt               DateTime?         @db.Timestamptz(6) @map("paid_at")
+  paidMarkedByUserId   String?           @db.Uuid @map("paid_marked_by_user_id")
+  issuedByUserId       String?           @db.Uuid @map("issued_by_user_id")
   // Provider object ids. Each is independently unique (partial index)
   // and nullable, so a Stripe row has stripe_invoice_id set + paddle
   // null, and a manual bank-transfer row has neither.

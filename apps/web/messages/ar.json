@@ -1153,6 +1153,30 @@
         "intro": "سنحوّلك إلى صفحة الدفع الآمنة على Stripe لإكمال اشتراكك.",
         "openCheckout": "المتابعة إلى Stripe",
         "notConfiguredBody": "Stripe مُهيأ ولكن بيانات اعتماد التاجر غير مضبوطة. بعد إنشاء حساب Stripe، اضبط STRIPE_SECRET_KEY و STRIPE_PRO_PRICE_MONTHLY و STRIPE_PRO_PRICE_ANNUAL — وستلتقطها الصفحة عند إعادة التحميل."
+      },
+      "methods": {
+        "card": "الدفع بالبطاقة",
+        "bank": "تحويل بنكي"
+      },
+      "bank": {
+        "intro": "أنشئ فاتورة تتضمن تفاصيلنا البنكية. بعد إجراء التحويل، أرسل رقم المرجع وسيقوم فريقنا بتفعيل اشتراكك خلال يوم عمل.",
+        "generateInvoice": "إنشاء فاتورة",
+        "invoice": "الفاتورة",
+        "invoiceId": "فاتورة رقم {id}",
+        "invoiceCreated": "تم إنشاء الفاتورة. التفاصيل البنكية أدناه.",
+        "details": "التفاصيل البنكية",
+        "accountName": "اسم الحساب",
+        "bankName": "البنك",
+        "iban": "IBAN",
+        "swift": "SWIFT / BIC",
+        "referenceLabel": "رقم مرجع التحويل",
+        "referencePlaceholder": "مثلاً WIRE-2026-12345 أو الرقم من البنك",
+        "referenceHint": "الصق رقم المرجع من تأكيد التحويل من بنكك. نستخدمه لمطابقة دفعتك.",
+        "submitReference": "إرسال المرجع",
+        "referenceSubmitted": "تم حفظ المرجع. سنقوم بتفعيل اشتراكك بعد تأكيد الدفعة.",
+        "pendingReview": "تم إرسال المرجع \"{ref}\". بانتظار تأكيد الدفعة.",
+        "notConfiguredTitle": "التحويل البنكي غير متاح",
+        "notConfiguredBody": "التحويل البنكي يتطلب ضبط متغيرات BANK_TRANSFER_*. تواصل مع الدعم إذا كنت بحاجة للدفع بهذه الطريقة."
       }
     }
   }

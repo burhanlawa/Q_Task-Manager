@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { BankTransferService } from './bank-transfer.service';
 import { BillingController } from './billing.controller';
 import { PlanLimitsService } from './plan-limits.service';
 import { StripeCheckoutService } from './stripe-checkout.service';
@@ -9,7 +10,7 @@ import { StripeCheckoutService } from './stripe-checkout.service';
 @Global()
 @Module({
   controllers: [BillingController],
-  providers: [PlanLimitsService, StripeCheckoutService],
-  exports: [PlanLimitsService, StripeCheckoutService],
+  providers: [PlanLimitsService, StripeCheckoutService, BankTransferService],
+  exports: [PlanLimitsService, StripeCheckoutService, BankTransferService],
 })
 export class BillingModule {}

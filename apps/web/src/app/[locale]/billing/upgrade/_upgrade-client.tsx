@@ -3,7 +3,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { api } from '@/lib/api';
+import { BankTransferCheckout } from './_bank-transfer';
 import { PaddleCheckout } from './_paddle-checkout';
 import { StripeCheckout } from './_stripe-checkout';
 
@@ -39,8 +41,11 @@ function ProFeatures({
   );
 }
 
+type PayMethod = 'card' | 'bank';
+
 export function UpgradeClient() {
   const t = useTranslations('billing.upgrade');
+  const [method, setMethod] = useState<PayMethod>('card');
 
   // Fetch /me so we can pass companyId into Paddle's customData. The
   // webhook handler (19.6) reads it to resolve which tenant the
@@ -78,10 +83,35 @@ export function UpgradeClient() {
       </section>
 
       <section className="rounded-lg border bg-card p-6 shadow-sm">
-        {provider === 'stripe' ? (
-          <StripeCheckout />
+        <div className="mb-5 inline-flex rounded-md border p-1">
+          <button
+            type="button"
+            onClick={() => setMethod('card')}
+            className={`rounded px-4 py-1.5 text-sm font-medium ${
+              method === 'card' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            {t('methods.card')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMethod('bank')}
+            className={`rounded px-4 py-1.5 text-sm font-medium ${
+              method === 'bank' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            {t('methods.bank')}
+          </button>
+        </div>
+
+        {method === 'card' ? (
+          provider === 'stripe' ? (
+            <StripeCheckout />
+          ) : (
+            <PaddleCheckout companyId={me?.companyId ?? null} />
+          )
         ) : (
-          <PaddleCheckout companyId={me?.companyId ?? null} />
+          <BankTransferCheckout />
         )}
       </section>
     </div>

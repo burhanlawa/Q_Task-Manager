@@ -128,6 +128,22 @@ export const PERMISSION_CATALOG: readonly PermissionGroup[] = [
       'Read the immutable audit trail. Visibility is further scoped by org role at query time (Sprint 17).',
     permissions: [{ key: 'activity_log.read', label: 'View activity log' }],
   },
+  {
+    // Platform-level (cross-tenant) operations. These keys are not in any
+    // built-in role and the customer-facing roles UI shouldn't expose them
+    // — they're for Q Task Manager staff via direct grants (or a future
+    // platform-admin system role). Kept in the catalog so the strings
+    // exist in one place and grants are discoverable in audit log.
+    category: 'Platform operations',
+    description:
+      'Cross-tenant operator actions. Not granted to any built-in role. Manually assign to QTM staff for billing review (Sprint 20.4).',
+    permissions: [
+      {
+        key: 'platform.billing.review',
+        label: 'Review and mark manual bank-transfer invoices as paid',
+      },
+    ],
+  },
 ];
 
 export const ALL_PERMISSION_KEYS: ReadonlySet<string> = new Set(
