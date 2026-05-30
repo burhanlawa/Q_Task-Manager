@@ -31,15 +31,37 @@ model Company {
   updatedAt       DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt       DateTime? @db.Timestamptz(6)        @map("deleted_at")
 
-  branches    Branch[]
-  departments Department[]
-  teams       Team[]
-  users       User[]
-  roles       Role[]
-  settings    CompanySetting?
+  branches     Branch[]
+  departments  Department[]
+  teams        Team[]
+  users        User[]
+  roles        Role[]
+  settings     CompanySetting?
+  subscription Subscription?
 
   @@index([country], map: "idx_companies_country")
   @@map("companies")
+}
+
+model Subscription {
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId             String              @unique @db.Uuid @map("company_id")
+  plan                  subscription_plan   @default(starter)
+  status                subscription_status @default(trialing)
+  billingCycle          billing_cycle       @default(monthly) @map("billing_cycle")
+  paymentProvider       payment_provider    @default(paddle)  @map("payment_provider")
+  paddleSubscriptionId  String?             @unique @map("paddle_subscription_id")
+  paddleCustomerId      String?             @map("paddle_customer_id")
+  currentPeriodStart    DateTime?           @db.Timestamptz(6) @map("current_period_start")
+  currentPeriodEnd      DateTime?           @db.Timestamptz(6) @map("current_period_end")
+  trialEndAt            DateTime?           @db.Timestamptz(6) @map("trial_end_at")
+  cancelAtPeriodEnd     Boolean             @default(false)    @map("cancel_at_period_end")
+  createdAt             DateTime            @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt             DateTime            @default(now()) @db.Timestamptz(6) @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
 }
 
 model UserInvitationApproval {
