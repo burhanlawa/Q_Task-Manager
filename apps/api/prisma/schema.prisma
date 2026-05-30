@@ -27,6 +27,9 @@ model Company {
   logoFileId      String?   @db.Uuid                  @map("logo_file_id")
   contactEmail    String?                             @map("contact_email")
   contactPhone    String?                             @map("contact_phone")
+  /// Set by Sprint 20.6 past-due lifecycle at day 7. Drives the
+  /// read-only write gate (Sprint 20.7). Cleared on recovery.
+  readOnlyAt      DateTime? @db.Timestamptz(6)        @map("read_only_at")
   createdAt       DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt       DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt       DateTime? @db.Timestamptz(6)        @map("deleted_at")
@@ -59,6 +62,9 @@ model Subscription {
   currentPeriodEnd      DateTime?           @db.Timestamptz(6) @map("current_period_end")
   trialEndAt            DateTime?           @db.Timestamptz(6) @map("trial_end_at")
   trialReminderSentAt   DateTime?           @db.Timestamptz(6) @map("trial_reminder_sent_at")
+  pastDueAt             DateTime?           @db.Timestamptz(6) @map("past_due_at")
+  pastDueWarningSentAt  DateTime?           @db.Timestamptz(6) @map("past_due_warning_sent_at")
+  deletionEnqueuedAt    DateTime?           @db.Timestamptz(6) @map("deletion_enqueued_at")
   cancelAtPeriodEnd     Boolean             @default(false)    @map("cancel_at_period_end")
   createdAt             DateTime            @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt             DateTime            @default(now()) @db.Timestamptz(6) @map("updated_at")

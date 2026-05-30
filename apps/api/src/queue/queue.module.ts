@@ -3,14 +3,24 @@ import { Global, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { ActivityLogPartitionsProcessor } from './activity-log-partitions.processor';
 import { NotificationsCleanupProcessor } from './notifications-cleanup.processor';
+import { PastDueLifecycleProcessor } from './past-due-lifecycle.processor';
 import {
   ACTIVITY_LOG_PARTITIONS_QUEUE,
   NOTIFICATIONS_CLEANUP_QUEUE,
+  PAST_DUE_LIFECYCLE_QUEUE,
+  TENANT_DELETION_QUEUE,
   TRIAL_LIFECYCLE_QUEUE,
 } from './queue.constants';
+import { TenantDeletionProcessor } from './tenant-deletion.processor';
 import { TrialLifecycleProcessor } from './trial-lifecycle.processor';
 
-export { NOTIFICATIONS_CLEANUP_QUEUE, ACTIVITY_LOG_PARTITIONS_QUEUE, TRIAL_LIFECYCLE_QUEUE };
+export {
+  NOTIFICATIONS_CLEANUP_QUEUE,
+  ACTIVITY_LOG_PARTITIONS_QUEUE,
+  TRIAL_LIFECYCLE_QUEUE,
+  PAST_DUE_LIFECYCLE_QUEUE,
+  TENANT_DELETION_QUEUE,
+};
 
 // 03:00 UTC daily — TTL sweep of expired-and-read notification rows.
 const CLEANUP_CRON = '0 3 * * *';
@@ -29,6 +39,13 @@ const PARTITION_REPEAT_KEY = 'activity-log-partitions-monthly';
 const TRIAL_LIFECYCLE_CRON = '0 9 * * *';
 const TRIAL_LIFECYCLE_REPEAT_KEY = 'trial-lifecycle-daily';
 
+// 09:30 UTC daily — past-due lifecycle ladder (Sprint 20.6). Staggered
+// 30 minutes after the trial cron so recovery-from-trial doesn't race
+// with the past-due evaluator on the same row. See
+// past-due-lifecycle.processor.ts.
+const PAST_DUE_LIFECYCLE_CRON = '30 9 * * *';
+const PAST_DUE_LIFECYCLE_REPEAT_KEY = 'past-due-lifecycle-daily';
+
 // Global so any feature module can @InjectQueue(...) without re-importing.
 @Global()
 @Module({
@@ -45,11 +62,15 @@ const TRIAL_LIFECYCLE_REPEAT_KEY = 'trial-lifecycle-daily';
     BullModule.registerQueue({ name: NOTIFICATIONS_CLEANUP_QUEUE }),
     BullModule.registerQueue({ name: ACTIVITY_LOG_PARTITIONS_QUEUE }),
     BullModule.registerQueue({ name: TRIAL_LIFECYCLE_QUEUE }),
+    BullModule.registerQueue({ name: PAST_DUE_LIFECYCLE_QUEUE }),
+    BullModule.registerQueue({ name: TENANT_DELETION_QUEUE }),
   ],
   providers: [
     NotificationsCleanupProcessor,
     ActivityLogPartitionsProcessor,
     TrialLifecycleProcessor,
+    PastDueLifecycleProcessor,
+    TenantDeletionProcessor,
   ],
   exports: [BullModule],
 })
@@ -63,6 +84,8 @@ export class QueueModule implements OnModuleInit {
     private readonly partitionsQueue: Queue,
     @InjectQueue(TRIAL_LIFECYCLE_QUEUE)
     private readonly trialLifecycleQueue: Queue,
+    @InjectQueue(PAST_DUE_LIFECYCLE_QUEUE)
+    private readonly pastDueLifecycleQueue: Queue,
   ) {}
 
   async onModuleInit() {
@@ -108,5 +131,22 @@ export class QueueModule implements OnModuleInit {
       },
     );
     this.log.log(`Scheduled trial lifecycle: '${TRIAL_LIFECYCLE_CRON}' UTC (daily at 09:00 UTC).`);
+
+    await this.pastDueLifecycleQueue.add(
+      'run',
+      {},
+      {
+        repeat: {
+          pattern: PAST_DUE_LIFECYCLE_CRON,
+          tz: 'UTC',
+          key: PAST_DUE_LIFECYCLE_REPEAT_KEY,
+        },
+        removeOnComplete: { count: 14 },
+        removeOnFail: { count: 50 },
+      },
+    );
+    this.log.log(
+      `Scheduled past-due lifecycle: '${PAST_DUE_LIFECYCLE_CRON}' UTC (daily at 09:30 UTC).`,
+    );
   }
 }

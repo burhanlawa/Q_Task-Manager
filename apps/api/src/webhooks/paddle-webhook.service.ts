@@ -99,11 +99,16 @@ export class PaddleWebhookService {
           currentPeriodStart: sub.currentPeriodStart,
           currentPeriodEnd: sub.currentPeriodEnd,
           cancelAtPeriodEnd: false,
+          // Recovery — clear all past-due state so the Sprint 20.6
+          // lifecycle scheduler doesn't keep advancing the ladder.
+          pastDueAt: null,
+          pastDueWarningSentAt: null,
+          deletionEnqueuedAt: null,
         },
       }),
       this.db.company.update({
         where: { id: target.companyId },
-        data: { status: 'active', plan },
+        data: { status: 'active', plan, readOnlyAt: null },
       }),
     ]);
     this.log.log(
@@ -177,13 +182,17 @@ export class PaddleWebhookService {
     if (!txn) return;
     const target = await this.findSubscription(txn.paddleSubscriptionId, txn.companyId);
     if (!target) return;
-    // Past-due flow (blueprint §3.2 dunning ladder lives in Sprint 20).
-    // For 19.6 we flip the status; 20 will layer email reminders, the
-    // 7/14/30/120 day cascade, and final deletion on top.
+    // Past-due flow (blueprint §3.2 dunning ladder). Sprint 20.6's
+    // scheduler reads past_due_at to drive the 7/14/30/120 day cascade;
+    // we stamp it here on entry. We use setOnce semantics — if past_due_at
+    // is already set (subsequent payment_failed events during the same
+    // dunning cycle), we leave the anchor alone so the ladder doesn't
+    // reset every time a retry fails.
+    const stampPastDueAt = target.pastDueAt ?? new Date();
     await this.db.$transaction([
       this.db.subscription.update({
         where: { id: target.id },
-        data: { status: 'past_due' },
+        data: { status: 'past_due', pastDueAt: stampPastDueAt },
       }),
       this.db.company.update({
         where: { id: target.companyId },
@@ -273,18 +282,26 @@ export class PaddleWebhookService {
     companyId: string;
     plan: string;
     paddleCustomerId: string | null;
+    pastDueAt: Date | null;
   } | null> {
+    const selectShape = {
+      id: true,
+      companyId: true,
+      plan: true,
+      paddleCustomerId: true,
+      pastDueAt: true,
+    } as const;
     if (paddleSubscriptionId) {
       const byPaddleId = await this.db.subscription.findUnique({
         where: { paddleSubscriptionId },
-        select: { id: true, companyId: true, plan: true, paddleCustomerId: true },
+        select: selectShape,
       });
       if (byPaddleId) return byPaddleId;
     }
     if (companyId) {
       const byCompany = await this.db.subscription.findUnique({
         where: { companyId },
-        select: { id: true, companyId: true, plan: true, paddleCustomerId: true },
+        select: selectShape,
       });
       if (byCompany) return byCompany;
     }

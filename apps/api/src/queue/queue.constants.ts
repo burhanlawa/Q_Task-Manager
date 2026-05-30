@@ -14,3 +14,16 @@ export const ACTIVITY_LOG_PARTITIONS_QUEUE = 'activity-log-partitions';
 // 'expired' once trial_end_at has passed. Idempotent per-subscription
 // via metadata flags on the trialing row.
 export const TRIAL_LIFECYCLE_QUEUE = 'trial-lifecycle';
+
+// Sprint 20.6: daily 09:30 UTC sweep that drives the past-due dunning
+// ladder (warning → read-only → suspended → locked → deletion-enqueued)
+// for subscriptions stuck in past_due. Day-count anchors on
+// subscriptions.past_due_at, stamped by the webhook handlers.
+export const PAST_DUE_LIFECYCLE_QUEUE = 'past-due-lifecycle';
+
+// Sprint 20.6: one-shot jobs enqueued by the past-due processor when a
+// tenant crosses day 120. The processor itself is gated by
+// ALLOW_HARD_DELETE=true — by default it logs intent and stops short of
+// the real delete, so a misconfigured prod deploy can't accidentally
+// wipe a customer.
+export const TENANT_DELETION_QUEUE = 'tenant-deletion';

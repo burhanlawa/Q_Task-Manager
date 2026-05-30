@@ -103,6 +103,21 @@ export class StripeWebhookService {
     const periodStart = secondsToDate(firstItem?.current_period_start);
     const periodEnd = secondsToDate(firstItem?.current_period_end);
 
+    // Past-due lifecycle bookkeeping (Sprint 20.6):
+    //   - transitioning TO past_due: stamp past_due_at (setOnce so the
+    //     ladder doesn't reset on subsequent retries).
+    //   - transitioning OUT (anything not past_due): clear all the
+    //     ladder fields + companies.read_only_at so recovery is clean.
+    const pastDueFields =
+      localStatus === 'past_due'
+        ? { pastDueAt: target.pastDueAt ?? new Date() }
+        : {
+            pastDueAt: null,
+            pastDueWarningSentAt: null,
+            deletionEnqueuedAt: null,
+          };
+    const companyExtras = localStatus === 'past_due' ? {} : { readOnlyAt: null };
+
     await this.db.$transaction([
       this.db.subscription.update({
         where: { id: target.id },
@@ -116,11 +131,12 @@ export class StripeWebhookService {
           currentPeriodStart: periodStart,
           currentPeriodEnd: periodEnd,
           cancelAtPeriodEnd: sub.cancel_at_period_end === true,
+          ...pastDueFields,
         },
       }),
       this.db.company.update({
         where: { id: target.companyId },
-        data: { status: localStatus, plan },
+        data: { status: localStatus, plan, ...companyExtras },
       }),
     ]);
     this.log.log(
@@ -196,10 +212,13 @@ export class StripeWebhookService {
     const { subscriptionId, companyId } = extractInvoiceParent(invoice);
     const target = await this.findSubscription(subscriptionId, companyId);
     if (!target) return;
+    // setOnce semantics — leave past_due_at alone if it's already set
+    // so the Sprint 20.6 ladder doesn't reset on each retry.
+    const stampPastDueAt = target.pastDueAt ?? new Date();
     await this.db.$transaction([
       this.db.subscription.update({
         where: { id: target.id },
-        data: { status: 'past_due' },
+        data: { status: 'past_due', pastDueAt: stampPastDueAt },
       }),
       this.db.company.update({
         where: { id: target.companyId },
@@ -256,30 +275,27 @@ export class StripeWebhookService {
     plan: 'starter' | 'growth' | 'enterprise';
     paddleCustomerId: string | null;
     stripeCustomerId: string | null;
+    pastDueAt: Date | null;
   } | null> {
+    const selectShape = {
+      id: true,
+      companyId: true,
+      plan: true,
+      paddleCustomerId: true,
+      stripeCustomerId: true,
+      pastDueAt: true,
+    } as const;
     if (stripeSubscriptionId) {
       const byStripeId = await this.db.subscription.findUnique({
         where: { stripeSubscriptionId },
-        select: {
-          id: true,
-          companyId: true,
-          plan: true,
-          paddleCustomerId: true,
-          stripeCustomerId: true,
-        },
+        select: selectShape,
       });
       if (byStripeId) return byStripeId;
     }
     if (companyId) {
       const byCompany = await this.db.subscription.findUnique({
         where: { companyId },
-        select: {
-          id: true,
-          companyId: true,
-          plan: true,
-          paddleCustomerId: true,
-          stripeCustomerId: true,
-        },
+        select: selectShape,
       });
       if (byCompany) return byCompany;
     }
