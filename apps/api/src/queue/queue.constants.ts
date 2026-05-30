@@ -27,3 +27,10 @@ export const PAST_DUE_LIFECYCLE_QUEUE = 'past-due-lifecycle';
 // the real delete, so a misconfigured prod deploy can't accidentally
 // wipe a customer.
 export const TENANT_DELETION_QUEUE = 'tenant-deletion';
+
+// Sprint 20.9: one-shot jobs enqueued when an Admin requests a data
+// export from /billing/export. The processor builds a ZIP, uploads to
+// R2, and updates the data_exports row to status='ready' with a 7-day
+// expiry. Run async because big tenants can have lots of rows; the HTTP
+// request returns immediately with the export id for status polling.
+export const DATA_EXPORT_QUEUE = 'data-export';

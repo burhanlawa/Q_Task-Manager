@@ -21,7 +21,11 @@ import { PermissionsGuard } from '../auth/permissions.guard';
 import { RequirePermissions } from '../auth/require-permissions.decorator';
 import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-tenant.decorator';
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { DATA_EXPORT_QUEUE } from '../queue/queue.constants';
 import { BankTransferService } from './bank-transfer.service';
+import { DataExportService } from './data-export.service';
 import { InvoicePdfService } from './invoice-pdf.service';
 import { isUnlimitedUsers, limitsFor, type PlanKey } from './plan-limits';
 import { PlanLimitsService } from './plan-limits.service';
@@ -52,6 +56,8 @@ export class BillingController {
     private readonly bankTransfer: BankTransferService,
     private readonly invoicePdf: InvoicePdfService,
     private readonly planLimits: PlanLimitsService,
+    private readonly dataExport: DataExportService,
+    @InjectQueue(DATA_EXPORT_QUEUE) private readonly exportQueue: Queue,
   ) {}
 
   @Get('me')
@@ -423,5 +429,113 @@ export class BillingController {
     await db.subscription.update({ where: { id: sub.id }, data: { plan: targetPlan } });
     await db.company.update({ where: { id: tenant.companyId }, data: { plan: targetPlan } });
     return { plan: targetPlan };
+  }
+
+  // POST /billing/export
+  //   Queue a tenant data export job (Sprint 20.9). Returns immediately
+  //   with the new data_exports row id; the worker builds the ZIP,
+  //   uploads to R2, and flips status to 'ready'. Client polls
+  //   /billing/exports to see when it's downloadable.
+  //   CEO/Admin only — this dump includes PII and operational data.
+  @Post('export')
+  async createDataExport(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<{ id: string; status: 'pending' }> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true },
+    });
+    if (!me || !ADMIN_TIER_ROLES.has(me.orgRole)) {
+      throw new ForbiddenException('Only CEO/Admin can export company data');
+    }
+    const row = await db.dataExport.create({
+      data: {
+        companyId: tenant.companyId,
+        requestedByUserId: tenant.userId,
+        status: 'pending',
+      },
+      select: { id: true },
+    });
+    // The worker reads the row by id; companyId stays the source of
+    // truth. If Redis is down, the row stays 'pending' and the customer
+    // can re-request after we recover — no double-billing risk because
+    // exports are zero-cost.
+    await this.exportQueue.add('build', { exportId: row.id }, { attempts: 1 });
+    return { id: row.id, status: 'pending' };
+  }
+
+  // GET /billing/exports
+  //   Returns the tenant's last 20 export rows (any status). Used by
+  //   the UI to render a "Recent exports" list with download buttons.
+  @Get('exports')
+  async listDataExports(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<
+    Array<{
+      id: string;
+      status: string;
+      sizeBytes: string | null;
+      createdAt: string;
+      completedAt: string | null;
+      expiresAt: string | null;
+      failureReason: string | null;
+    }>
+  > {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true },
+    });
+    if (!me || !ADMIN_TIER_ROLES.has(me.orgRole)) {
+      throw new ForbiddenException('Only CEO/Admin can view exports');
+    }
+    const rows = await db.dataExport.findMany({
+      where: { companyId: tenant.companyId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: {
+        id: true,
+        status: true,
+        sizeBytes: true,
+        createdAt: true,
+        completedAt: true,
+        expiresAt: true,
+        failureReason: true,
+      },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      status: r.status,
+      sizeBytes: r.sizeBytes?.toString() ?? null,
+      createdAt: r.createdAt.toISOString(),
+      completedAt: r.completedAt?.toISOString() ?? null,
+      expiresAt: r.expiresAt?.toISOString() ?? null,
+      failureReason: r.failureReason,
+    }));
+  }
+
+  // GET /billing/exports/:id/download
+  //   Returns a fresh signed R2 URL for a ready export. URL TTL is
+  //   capped at 1 hour even though the R2 object stays for 7 days —
+  //   a leaked URL has a small blast radius. CEO/Admin only.
+  @Get('exports/:id/download')
+  async downloadDataExport(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', new ParseUUIDPipe()) exportId: string,
+  ): Promise<{ url: string; expiresInSeconds: number }> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true },
+    });
+    if (!me || !ADMIN_TIER_ROLES.has(me.orgRole)) {
+      throw new ForbiddenException('Only CEO/Admin can download exports');
+    }
+    const url = await this.dataExport.getDownloadUrl(exportId, tenant.companyId);
+    if (!url) {
+      throw new BadRequestException('Export is not ready or has expired');
+    }
+    return url;
   }
 }

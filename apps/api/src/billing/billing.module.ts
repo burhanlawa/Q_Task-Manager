@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { R2Module } from '../r2/r2.module';
 import { BankTransferService } from './bank-transfer.service';
 import { BillingController } from './billing.controller';
+import { DataExportService } from './data-export.service';
 import { InvoicePdfService } from './invoice-pdf.service';
 import { PlanLimitsService } from './plan-limits.service';
 import { StripeCheckoutService } from './stripe-checkout.service';
@@ -13,7 +14,19 @@ import { StripeCheckoutService } from './stripe-checkout.service';
 @Module({
   imports: [R2Module],
   controllers: [BillingController],
-  providers: [PlanLimitsService, StripeCheckoutService, BankTransferService, InvoicePdfService],
-  exports: [PlanLimitsService, StripeCheckoutService, BankTransferService, InvoicePdfService],
+  providers: [
+    PlanLimitsService,
+    StripeCheckoutService,
+    BankTransferService,
+    InvoicePdfService,
+    DataExportService,
+  ],
+  exports: [
+    PlanLimitsService,
+    StripeCheckoutService,
+    BankTransferService,
+    InvoicePdfService,
+    DataExportService,
+  ],
 })
 export class BillingModule {}

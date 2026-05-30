@@ -2,10 +2,12 @@ import { BullModule, InjectQueue } from '@nestjs/bullmq';
 import { Global, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { ActivityLogPartitionsProcessor } from './activity-log-partitions.processor';
+import { DataExportProcessor } from './data-export.processor';
 import { NotificationsCleanupProcessor } from './notifications-cleanup.processor';
 import { PastDueLifecycleProcessor } from './past-due-lifecycle.processor';
 import {
   ACTIVITY_LOG_PARTITIONS_QUEUE,
+  DATA_EXPORT_QUEUE,
   NOTIFICATIONS_CLEANUP_QUEUE,
   PAST_DUE_LIFECYCLE_QUEUE,
   TENANT_DELETION_QUEUE,
@@ -20,6 +22,7 @@ export {
   TRIAL_LIFECYCLE_QUEUE,
   PAST_DUE_LIFECYCLE_QUEUE,
   TENANT_DELETION_QUEUE,
+  DATA_EXPORT_QUEUE,
 };
 
 // 03:00 UTC daily — TTL sweep of expired-and-read notification rows.
@@ -64,6 +67,7 @@ const PAST_DUE_LIFECYCLE_REPEAT_KEY = 'past-due-lifecycle-daily';
     BullModule.registerQueue({ name: TRIAL_LIFECYCLE_QUEUE }),
     BullModule.registerQueue({ name: PAST_DUE_LIFECYCLE_QUEUE }),
     BullModule.registerQueue({ name: TENANT_DELETION_QUEUE }),
+    BullModule.registerQueue({ name: DATA_EXPORT_QUEUE }),
   ],
   providers: [
     NotificationsCleanupProcessor,
@@ -71,6 +75,7 @@ const PAST_DUE_LIFECYCLE_REPEAT_KEY = 'past-due-lifecycle-daily';
     TrialLifecycleProcessor,
     PastDueLifecycleProcessor,
     TenantDeletionProcessor,
+    DataExportProcessor,
   ],
   exports: [BullModule],
 })
