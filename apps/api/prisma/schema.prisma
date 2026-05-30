@@ -38,6 +38,7 @@ model Company {
   roles        Role[]
   settings     CompanySetting?
   subscription Subscription?
+  invoices     Invoice[]
 
   @@index([country], map: "idx_companies_country")
   @@map("companies")
@@ -60,9 +61,39 @@ model Subscription {
   createdAt             DateTime            @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt             DateTime            @default(now()) @db.Timestamptz(6) @map("updated_at")
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
 
   @@map("subscriptions")
+}
+
+model Invoice {
+  id                   String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId            String         @db.Uuid @map("company_id")
+  subscriptionId       String         @db.Uuid @map("subscription_id")
+  paddleTransactionId  String         @unique @map("paddle_transaction_id")
+  amountCents          Int            @map("amount_cents")
+  currency             String
+  status               invoice_status @default(paid)
+  billedAt             DateTime?      @db.Timestamptz(6) @map("billed_at")
+  periodStart          DateTime?      @db.Timestamptz(6) @map("period_start")
+  periodEnd            DateTime?      @db.Timestamptz(6) @map("period_end")
+  createdAt            DateTime       @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt            DateTime       @default(now()) @db.Timestamptz(6) @map("updated_at")
+
+  company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt(sort: Desc)], map: "idx_invoices_company_created")
+  @@map("invoices")
+}
+
+model PaddleWebhookEvent {
+  eventId    String   @id @map("event_id")
+  eventType  String   @map("event_type")
+  receivedAt DateTime @default(now()) @db.Timestamptz(6) @map("received_at")
+
+  @@map("paddle_webhook_events")
 }
 
 model UserInvitationApproval {
