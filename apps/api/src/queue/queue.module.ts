@@ -3,9 +3,14 @@ import { Global, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { ActivityLogPartitionsProcessor } from './activity-log-partitions.processor';
 import { NotificationsCleanupProcessor } from './notifications-cleanup.processor';
-import { ACTIVITY_LOG_PARTITIONS_QUEUE, NOTIFICATIONS_CLEANUP_QUEUE } from './queue.constants';
+import {
+  ACTIVITY_LOG_PARTITIONS_QUEUE,
+  NOTIFICATIONS_CLEANUP_QUEUE,
+  TRIAL_LIFECYCLE_QUEUE,
+} from './queue.constants';
+import { TrialLifecycleProcessor } from './trial-lifecycle.processor';
 
-export { NOTIFICATIONS_CLEANUP_QUEUE, ACTIVITY_LOG_PARTITIONS_QUEUE };
+export { NOTIFICATIONS_CLEANUP_QUEUE, ACTIVITY_LOG_PARTITIONS_QUEUE, TRIAL_LIFECYCLE_QUEUE };
 
 // 03:00 UTC daily — TTL sweep of expired-and-read notification rows.
 const CLEANUP_CRON = '0 3 * * *';
@@ -17,6 +22,12 @@ const CLEANUP_REPEAT_KEY = 'notifications-cleanup-daily';
 // any INSERT could land outside an existing partition.
 const PARTITION_CRON = '0 2 1 * *';
 const PARTITION_REPEAT_KEY = 'activity-log-partitions-monthly';
+
+// 09:00 UTC daily — trial lifecycle. Sends a 'trial_ending_soon' reminder
+// at trial_end - 3 days and converts expired trials to status='expired'
+// once trial_end_at has passed. See trial-lifecycle.processor.ts.
+const TRIAL_LIFECYCLE_CRON = '0 9 * * *';
+const TRIAL_LIFECYCLE_REPEAT_KEY = 'trial-lifecycle-daily';
 
 // Global so any feature module can @InjectQueue(...) without re-importing.
 @Global()
@@ -33,8 +44,13 @@ const PARTITION_REPEAT_KEY = 'activity-log-partitions-monthly';
     }),
     BullModule.registerQueue({ name: NOTIFICATIONS_CLEANUP_QUEUE }),
     BullModule.registerQueue({ name: ACTIVITY_LOG_PARTITIONS_QUEUE }),
+    BullModule.registerQueue({ name: TRIAL_LIFECYCLE_QUEUE }),
   ],
-  providers: [NotificationsCleanupProcessor, ActivityLogPartitionsProcessor],
+  providers: [
+    NotificationsCleanupProcessor,
+    ActivityLogPartitionsProcessor,
+    TrialLifecycleProcessor,
+  ],
   exports: [BullModule],
 })
 export class QueueModule implements OnModuleInit {
@@ -45,6 +61,8 @@ export class QueueModule implements OnModuleInit {
     private readonly cleanupQueue: Queue,
     @InjectQueue(ACTIVITY_LOG_PARTITIONS_QUEUE)
     private readonly partitionsQueue: Queue,
+    @InjectQueue(TRIAL_LIFECYCLE_QUEUE)
+    private readonly trialLifecycleQueue: Queue,
   ) {}
 
   async onModuleInit() {
@@ -78,6 +96,19 @@ export class QueueModule implements OnModuleInit {
     );
     this.log.log(
       `Scheduled activity-log partition rollover: '${PARTITION_CRON}' UTC (1st of month, 02:00 UTC).`,
+    );
+
+    await this.trialLifecycleQueue.add(
+      'run',
+      {},
+      {
+        repeat: { pattern: TRIAL_LIFECYCLE_CRON, tz: 'UTC', key: TRIAL_LIFECYCLE_REPEAT_KEY },
+        removeOnComplete: { count: 14 },
+        removeOnFail: { count: 50 },
+      },
+    );
+    this.log.log(
+      `Scheduled trial lifecycle: '${TRIAL_LIFECYCLE_CRON}' UTC (daily at 09:00 UTC).`,
     );
   }
 }

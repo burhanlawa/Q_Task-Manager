@@ -55,6 +55,7 @@ model Subscription {
   currentPeriodStart    DateTime?           @db.Timestamptz(6) @map("current_period_start")
   currentPeriodEnd      DateTime?           @db.Timestamptz(6) @map("current_period_end")
   trialEndAt            DateTime?           @db.Timestamptz(6) @map("trial_end_at")
+  trialReminderSentAt   DateTime?           @db.Timestamptz(6) @map("trial_reminder_sent_at")
   cancelAtPeriodEnd     Boolean             @default(false)    @map("cancel_at_period_end")
   createdAt             DateTime            @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt             DateTime            @default(now()) @db.Timestamptz(6) @map("updated_at")

@@ -165,6 +165,22 @@ export class ClerkWebhookService {
       // DB level so we don't have to specify it here unless we want to override.
       await tx.companySetting.create({ data: { companyId: company.id } });
 
+      // Sprint 19.2 — every new tenant starts on a 14-day trial. The
+      // lifecycle scheduler (queue/trial-lifecycle.processor) reads this
+      // column daily: reminder fires at trial_end_at - 3 days, conversion
+      // (status → expired) fires once trial_end_at < now().
+      const trialEndAt = new Date(Date.now() + 14 * 86_400_000);
+      await tx.subscription.create({
+        data: {
+          companyId: company.id,
+          plan: 'starter',
+          status: 'trialing',
+          billingCycle: 'monthly',
+          paymentProvider: 'paddle',
+          trialEndAt,
+        },
+      });
+
       // Seed 4 default tag categories (Sprint 6 task 6.2). Just the category
       // names — tags inside each are user-populated.
       await tx.tagCategory.createMany({
