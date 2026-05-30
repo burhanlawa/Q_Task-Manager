@@ -1,6 +1,6 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { isUnlimitedUsers, limitsFor } from './plan-limits';
+import { isUnlimitedUsers, limitsFor, type PlanKey } from './plan-limits';
 
 // Sprint 19.3 — Plan limit enforcement.
 //
@@ -94,4 +94,99 @@ export class PlanLimitsService {
       });
     }
   }
+
+  /**
+   * Sprint 20.8 — gate for plan downgrade. Throws 422 with a structured
+   * `blockers` list if current usage exceeds the target plan's limits.
+   * Each blocker says exactly what to reduce (seats, storage) so the
+   * web side can render a "remove N users / N GB" list rather than a
+   * generic "too much usage" message.
+   *
+   * Storage uses growth tier's per-active-user math when relevant; seats
+   * use the same "active or invited" rule the invite gate uses.
+   */
+  async assertCanDowngrade(
+    db: Prisma.TransactionClient,
+    companyId: string,
+    targetPlan: PlanKey,
+  ): Promise<void> {
+    const [company, seatCount, activeUserCount] = await Promise.all([
+      db.company.findUnique({
+        where: { id: companyId },
+        select: { plan: true, storageUsedBytes: true },
+      }),
+      db.user.count({
+        where: {
+          companyId,
+          deletedAt: null,
+          status: { in: ['active', 'invited'] },
+        },
+      }),
+      db.user.count({
+        where: { companyId, status: 'active', deletedAt: null },
+      }),
+    ]);
+    if (!company) return;
+
+    const targetLimits = limitsFor(targetPlan);
+    const targetStorage = targetLimits.storageBytes(activeUserCount);
+    const blockers: Array<{
+      kind: 'seats' | 'storage';
+      limit: number | string;
+      current: number | string;
+      reduceBy: number | string;
+      message: string;
+    }> = [];
+
+    if (!isUnlimitedUsers(targetLimits.maxUsers) && seatCount > targetLimits.maxUsers) {
+      const excess = seatCount - targetLimits.maxUsers;
+      blockers.push({
+        kind: 'seats',
+        limit: targetLimits.maxUsers,
+        current: seatCount,
+        reduceBy: excess,
+        message: `The ${targetPlan} plan is limited to ${targetLimits.maxUsers} user${
+          targetLimits.maxUsers === 1 ? '' : 's'
+        }. Remove ${excess} user${excess === 1 ? '' : 's'} (active or invited) before downgrading.`,
+      });
+    }
+
+    if (company.storageUsedBytes > targetStorage) {
+      const excessBytes = company.storageUsedBytes - targetStorage;
+      blockers.push({
+        kind: 'storage',
+        limit: targetStorage.toString(),
+        current: company.storageUsedBytes.toString(),
+        reduceBy: excessBytes.toString(),
+        message: `Storage usage (${formatBytes(company.storageUsedBytes)}) exceeds the ${targetPlan} plan's limit (${formatBytes(targetStorage)}). Delete ${formatBytes(excessBytes)} of files before downgrading.`,
+      });
+    }
+
+    if (blockers.length > 0) {
+      throw new UnprocessableEntityException({
+        message: `Cannot downgrade to ${targetPlan}: ${blockers.length} limit${
+          blockers.length === 1 ? '' : 's'
+        } exceeded. ${blockers.map((b) => b.message).join(' ')}`,
+        code: 'plan_downgrade_blocked',
+        currentPlan: company.plan,
+        targetPlan,
+        blockers,
+      });
+    }
+  }
+}
+
+// Human-readable byte size used in the downgrade error messages. We
+// only format up to GB — anything more is enterprise-tier and the
+// downgrade path doesn't hit those limits anyway.
+function formatBytes(bytes: bigint): string {
+  const GB = 1024n * 1024n * 1024n;
+  const MB = 1024n * 1024n;
+  if (bytes >= GB) {
+    const whole = bytes / GB;
+    const frac = ((bytes % GB) * 10n) / GB; // single-digit decimal
+    return frac === 0n ? `${whole} GB` : `${whole}.${frac} GB`;
+  }
+  if (bytes >= MB) return `${bytes / MB} MB`;
+  return `${bytes} bytes`;
 }

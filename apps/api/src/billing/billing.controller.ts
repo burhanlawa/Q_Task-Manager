@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   StreamableFile,
+  UnprocessableEntityException,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -22,7 +23,8 @@ import { CurrentTenant, TenantDb, type TenantContext } from '../tenant/current-t
 import { TenantContextInterceptor } from '../tenant/tenant-context.interceptor';
 import { BankTransferService } from './bank-transfer.service';
 import { InvoicePdfService } from './invoice-pdf.service';
-import { isUnlimitedUsers, limitsFor } from './plan-limits';
+import { isUnlimitedUsers, limitsFor, type PlanKey } from './plan-limits';
+import { PlanLimitsService } from './plan-limits.service';
 import { pickCheckoutProvider, type CheckoutProvider } from './provider-routing';
 import { StripeCheckoutService } from './stripe-checkout.service';
 
@@ -49,6 +51,7 @@ export class BillingController {
     private readonly stripeCheckout: StripeCheckoutService,
     private readonly bankTransfer: BankTransferService,
     private readonly invoicePdf: InvoicePdfService,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   @Get('me')
@@ -347,5 +350,78 @@ export class BillingController {
     return new StreamableFile(bytes, {
       disposition: `attachment; filename="invoice-${invoiceId.slice(0, 8)}.pdf"`,
     });
+  }
+
+  // POST /billing/downgrade { targetPlan: 'starter' | 'growth' | 'enterprise' }
+  //   Local plan downgrade gate. Validates that current usage fits the
+  //   target plan's seat + storage limits; if not, throws 422 with a
+  //   structured `blockers` list so the web can render a "remove N
+  //   users / N GB" list. If validation passes, flips the local plan
+  //   and syncs the companies cache.
+  //
+  //   NOTE: this does NOT cancel a paid Paddle/Stripe subscription. If
+  //   the tenant has paddleSubscriptionId or stripeSubscriptionId set,
+  //   we refuse — the cancellation has to go through the provider
+  //   first so we don't leave them paying for a tier we've downgraded
+  //   them off of locally. Once the webhook fires
+  //   subscription.canceled / customer.subscription.deleted, the plan
+  //   becomes downgradeable through this endpoint.
+  @Post('downgrade')
+  async downgrade(
+    @TenantDb() db: Prisma.TransactionClient,
+    @CurrentTenant() tenant: TenantContext,
+    @Body() body: { targetPlan?: string },
+  ): Promise<{ plan: PlanKey }> {
+    const me = await db.user.findUnique({
+      where: { id: tenant.userId },
+      select: { orgRole: true },
+    });
+    if (!me || !ADMIN_TIER_ROLES.has(me.orgRole)) {
+      throw new ForbiddenException('Only CEO/Admin can change the plan');
+    }
+
+    const targetPlan = body?.targetPlan;
+    if (targetPlan !== 'starter' && targetPlan !== 'growth' && targetPlan !== 'enterprise') {
+      throw new BadRequestException('targetPlan must be one of: starter, growth, enterprise');
+    }
+
+    const sub = await db.subscription.findUnique({
+      where: { companyId: tenant.companyId },
+      select: {
+        id: true,
+        plan: true,
+        paddleSubscriptionId: true,
+        stripeSubscriptionId: true,
+      },
+    });
+    if (!sub) throw new ForbiddenException('Subscription row missing for this tenant');
+
+    if (sub.plan === targetPlan) {
+      // No-op; already on this plan. Treat as success so a double-click
+      // doesn't surface as a 4xx.
+      return { plan: targetPlan };
+    }
+
+    // Refuse local downgrade while an external provider subscription is
+    // still active — the provider has to cancel first or the customer
+    // ends up paying for a plan they don't have.
+    if (sub.paddleSubscriptionId || sub.stripeSubscriptionId) {
+      throw new UnprocessableEntityException({
+        message:
+          'Cancel your subscription with the payment provider first. Once the cancellation webhook arrives we can downgrade the local plan.',
+        code: 'provider_subscription_active',
+        provider: sub.paddleSubscriptionId ? 'paddle' : 'stripe',
+      });
+    }
+
+    // The actual gate. Throws 422 with the blockers list if usage
+    // exceeds the target plan's limits.
+    await this.planLimits.assertCanDowngrade(db, tenant.companyId, targetPlan);
+
+    // Already inside the TenantContextInterceptor's transaction, so
+    // these two writes commit atomically with the rest of the request.
+    await db.subscription.update({ where: { id: sub.id }, data: { plan: targetPlan } });
+    await db.company.update({ where: { id: tenant.companyId }, data: { plan: targetPlan } });
+    return { plan: targetPlan };
   }
 }
