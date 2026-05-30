@@ -68,18 +68,30 @@ model Subscription {
 }
 
 model Invoice {
-  id                   String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  companyId            String         @db.Uuid @map("company_id")
-  subscriptionId       String         @db.Uuid @map("subscription_id")
-  paddleTransactionId  String         @unique @map("paddle_transaction_id")
-  amountCents          Int            @map("amount_cents")
-  currency             String
-  status               invoice_status @default(paid)
-  billedAt             DateTime?      @db.Timestamptz(6) @map("billed_at")
-  periodStart          DateTime?      @db.Timestamptz(6) @map("period_start")
-  periodEnd            DateTime?      @db.Timestamptz(6) @map("period_end")
-  createdAt            DateTime       @default(now()) @db.Timestamptz(6) @map("created_at")
-  updatedAt            DateTime       @default(now()) @db.Timestamptz(6) @map("updated_at")
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String            @db.Uuid @map("company_id")
+  subscriptionId   String            @db.Uuid @map("subscription_id")
+  // Provider object ids. Each is independently unique (partial index)
+  // and nullable, so a Stripe row has stripe_invoice_id set + paddle
+  // null, and a manual bank-transfer row has neither.
+  paddleInvoiceId  String?           @unique(map: "idx_invoices_paddle_invoice_id") @map("paddle_invoice_id")
+  stripeInvoiceId  String?           @unique(map: "idx_invoices_stripe_invoice_id") @map("stripe_invoice_id")
+  paymentProvider  payment_provider? @map("payment_provider")
+  paymentMethod    payment_method    @default(card) @map("payment_method")
+  // Free-form reference for manual bank transfers (wire ref, FastPay
+  // transaction id, etc.). Nullable for card payments.
+  paymentReference String?           @map("payment_reference")
+  amountCents      Int               @map("amount_cents")
+  currency         String
+  status           invoice_status    @default(paid)
+  // Populated by the PDF generator (Sprint 20.5) once the file lands
+  // in R2 under {companyId}/invoices/{id}.pdf. Nullable until then.
+  pdfR2Key         String?           @map("pdf_r2_key")
+  billedAt         DateTime?         @db.Timestamptz(6) @map("billed_at")
+  periodStart      DateTime?         @db.Timestamptz(6) @map("period_start")
+  periodEnd        DateTime?         @db.Timestamptz(6) @map("period_end")
+  createdAt        DateTime          @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt        DateTime          @default(now()) @db.Timestamptz(6) @map("updated_at")
 
   company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)

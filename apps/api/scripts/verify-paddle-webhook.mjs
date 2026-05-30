@@ -151,7 +151,7 @@ const txnPayload = {
 assertVerify('transaction.completed', txnPayload);
 await svc.handle(txnPayload);
 
-const invoice = await db.invoice.findUnique({ where: { paddleTransactionId: txnId } });
+const invoice = await db.invoice.findUnique({ where: { paddleInvoiceId: txnId } });
 ok('txn.completed → invoice row created', invoice !== null);
 ok('txn.completed → invoice amount = 500 USD paid', invoice?.amountCents === 500 && invoice?.currency === 'USD' && invoice?.status === 'paid');
 

@@ -146,7 +146,9 @@ export class PaddleWebhookService {
         data: {
           companyId: target.companyId,
           subscriptionId: target.id,
-          paddleTransactionId: txn.paddleTransactionId,
+          paddleInvoiceId: txn.paddleTransactionId,
+          paymentProvider: 'paddle',
+          paymentMethod: 'card',
           amountCents: txn.amountCents,
           currency: txn.currency,
           status: 'paid',
