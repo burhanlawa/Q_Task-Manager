@@ -8,6 +8,7 @@ import {
   Building2,
   CreditCard,
   GitBranch,
+  HelpCircle,
   Home,
   KeyRound,
   Layers,
@@ -134,6 +135,7 @@ const SECTIONS: NavSection[] = [
       { href: '/settings/notifications', labelKey: 'notifications', icon: Bell },
       { href: '/settings/company', labelKey: 'company', icon: Settings, roles: ['ceo', 'admin'] },
       { href: '/settings/security', labelKey: 'security', icon: Shield },
+      { href: '/help', labelKey: 'help', icon: HelpCircle },
     ],
   },
 ];

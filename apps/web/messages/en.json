@@ -1094,7 +1094,8 @@
       "departments": "Departments",
       "roles": "Roles",
       "billing": "Billing",
-      "security": "Security"
+      "security": "Security",
+      "help": "Help"
     }
   },
   "billing": {
@@ -1178,6 +1179,167 @@
         "pendingReview": "Reference \"{ref}\" submitted. Awaiting payment confirmation.",
         "notConfiguredTitle": "Bank transfer is not available yet",
         "notConfiguredBody": "Bank transfer requires the deploy to have BANK_TRANSFER_* env vars set. Contact support if you need to pay this way."
+      }
+    }
+  },
+  "help": {
+    "gettingStarted": {
+      "eyebrow": "Help",
+      "title": "Getting started with Q Task Manager",
+      "description": "From signup to your team's first completed task — about ten minutes end-to-end.",
+      "tocLabel": "On this page",
+      "footer": {
+        "cta": "Stuck? <link>Back to the help index</link>, or read the Admin guide for more detail."
+      },
+      "sections": {
+        "signup": {
+          "title": "1. Sign up and create your workspace",
+          "body": "Go to /sign-up and enter your work email and a password. Q Task Manager uses email + password authentication; you'll receive a verification link.\n\nOn first sign-in we create a new workspace named after you ('Your Name's Workspace'). You become the CEO of that workspace automatically — every later user you invite joins this workspace under your authority.\n\nThe workspace name and slug can be changed later under Company settings."
+        },
+        "verifyEmail": {
+          "title": "2. Verify your email",
+          "body": "Open the verification email we sent and click the link. Until verification is complete you can browse but not invite teammates.\n\nIf the email didn't arrive, check spam, then re-trigger from the sign-in screen. Issues persist? Contact support."
+        },
+        "orgSetup": {
+          "title": "3. Set up your org structure (optional)",
+          "body": "You start with one Branch ('Main') and one Department ('Executive'). For most small teams that's enough.\n\nIf you have multiple locations or departments, head to Administration → Branches and Administration → Departments. Branches contain Departments, Departments contain Teams. Users belong to one Department and any number of Teams."
+        },
+        "inviteFirstTeammate": {
+          "title": "4. Invite your first teammate",
+          "items": {
+            "1": "Open People in the sidebar.",
+            "2": "Click 'Invite person', enter their email, choose their role.",
+            "3": "Confirm. Q Task Manager sends them an invitation by email.",
+            "4": "They click the link, set a password, and land on their dashboard."
+          }
+        },
+        "createFirstTask": {
+          "title": "5. Create the first task",
+          "items": {
+            "1": "Open Tasks in the sidebar, click 'New task'.",
+            "2": "Add a title, optional description, due date, and priority.",
+            "3": "Pick an assignee — anyone in your workspace.",
+            "4": "Save. The task lands in their inbox; they accept it.",
+            "5": "When the work is done, they submit; you approve; the task is marked completed."
+          }
+        },
+        "nextSteps": {
+          "title": "Where to go next",
+          "body": "Most workspaces are productive within the first hour. From here:\n\n• Admins (CEO, Admin, HR, Manager): read the Admin guide for billing, broadcasts, exports, and activity log.\n\n• Everyone else: read the Employee guide for tasks, comments, notifications, and your profile.\n\n• Hit the bell icon in the header to see your notifications. Use the language switcher (EN / العربية / کوردی) to change the interface language."
+        }
+      },
+      "crosslinks": {
+        "title": "Continue reading",
+        "admin": {
+          "title": "Admin guide",
+          "description": "Roles, billing, broadcasts, activity log, data exports."
+        },
+        "employee": {
+          "title": "Employee guide",
+          "description": "Your tasks, comments, notifications, profile, leave."
+        }
+      }
+    },
+    "admin": {
+      "eyebrow": "Help",
+      "title": "Admin guide",
+      "description": "Everything CEO, Admin, HR, and Manager roles need to run a workspace.",
+      "tocLabel": "On this page",
+      "footer": {
+        "cta": "<link>Back to help index</link> · The Employee guide covers what individual contributors need."
+      },
+      "sections": {
+        "overview": {
+          "title": "Who counts as an admin",
+          "body": "Q Task Manager has six built-in org roles: CEO, Admin, Manager, Supervisor, HR, and Employee. The first four can perform admin actions — invite users, approve invitations, create departments — with progressively narrower scope. CEO sees everything in the workspace; HR sees their department; Manager sees the teams they supervise.\n\nIf you need finer-grained access, create system roles under Administration → Roles and grant them to specific users."
+        },
+        "orgStructure": {
+          "title": "Org structure",
+          "body": "Three layers: Branches (locations or business units) → Departments (functional groups within a branch) → Teams (working units within a department).\n\nUsers belong to exactly one Department, and any number of Teams. Tasks can be assigned to a single person OR a Team — when assigned to a Team, any member can accept.\n\nDepartments can have a parent Department to model nested orgs. The Executive department starts as the root."
+        },
+        "invitingUsers": {
+          "title": "Inviting users",
+          "body": "Open People → Invite person. Fill in name, email, role, branch, department. CEO and Admin invites are sent immediately. Manager / Supervisor invites go through an approval chain (configurable under Company settings) before the invitation email goes out.\n\nThe plan limit applies: the Starter plan allows 3 paid users (active or invited). You'll see a 422 error if you try to exceed it; upgrade or remove an unused seat first."
+        },
+        "rolesPermissions": {
+          "title": "Roles and permissions",
+          "body": "Administration → Roles shows every role in your workspace, including the six built-in ones. Built-in roles can't be edited; create a copy if you need a variant.\n\nA user's effective permissions are the union of their org role plus any system roles you grant them. The 'Admin' system role unlocks the admin dashboard variant; the 'Manager' system role unlocks the manager dashboard.\n\nEvery role change is recorded in the activity log."
+        },
+        "departmentsTeams": {
+          "title": "Branches, departments, and teams",
+          "body": "Administration → Branches lets you add or archive branches. Archiving hides a branch from default lists but preserves history. Branches have a name and optional code.\n\nAdministration → Departments shows the department tree. Departments inherit their branch from their parent. Each department can have a manager and supervisors. Department managers see all tasks in their department.\n\nTeams live inside departments. Each team has one supervisor; team members are a subset of the department. Tasks can be assigned to a team — any member can accept."
+        },
+        "broadcasts": {
+          "title": "Broadcasts",
+          "body": "Broadcasts are fire-and-forget company-wide announcements. Compose at Broadcasts → New broadcast. Pick an audience: everyone, one branch, one role, or a custom list of users.\n\nEvery recipient gets an in-app notification and an email (subject to their notification preferences). Broadcasts are NOT real-time chat — they're announcements. There's no reply thread."
+        },
+        "activityLog": {
+          "title": "Activity log",
+          "body": "Open Activity log in the sidebar. The log is immutable — once written, rows cannot be edited or deleted, only viewed.\n\nFilters let you scope by date range, actor, action type, or target. Export as CSV at any time via the export button. CEO and Admin see the full log; Manager / HR see only events scoped to their authority."
+        },
+        "billing": {
+          "title": "Billing",
+          "body": "Administration → Billing shows your current plan, usage (paid users and storage), trial end date if applicable, and the upgrade button.\n\nUpgrade options depend on your country. If our primary card provider isn't available where you are, we offer a Bank transfer option: we issue an invoice with our bank details, you wire the payment, submit the transfer reference, and our team marks it paid (usually within one business day).\n\nIf payment fails on an active subscription, you'll go through a grace period (7 days), then read-only mode (week 2), then suspension (weeks 3–4), then locked (weeks 5–17). Day 120 the workspace is deleted. You can recover by paying at any point in the cascade."
+        },
+        "dataExport": {
+          "title": "Data export",
+          "body": "Administration → Billing → Export company data downloads a ZIP of every table in your workspace, as CSV + JSON pairs. Useful for migration, backups, or compliance.\n\nThe link is valid for 7 days; you can re-request a new export at any time."
+        },
+        "security": {
+          "title": "Security",
+          "body": "Q Task Manager is multi-tenant: data is isolated at three levels — application code, database row-level security, and tenant-scoped object keys in file storage.\n\nPersonal identifiers (national_id) are encrypted at rest with AES-256-GCM. Other fields (date of birth, address, emergency contact) are stored in plaintext but only visible to the user, their manager, and HR.\n\nThird parties: Clerk handles authentication (we never see passwords); Cloudflare R2 stores file uploads; Resend delivers emails; Paddle/Stripe handle card payments. All connections are HTTPS."
+        }
+      }
+    },
+    "employee": {
+      "eyebrow": "Help",
+      "title": "Employee guide",
+      "description": "Day-to-day Q Task Manager for individual contributors.",
+      "tocLabel": "On this page",
+      "footer": {
+        "cta": "<link>Back to help index</link> · The Admin guide covers workspace-level setup."
+      },
+      "sections": {
+        "dashboard": {
+          "title": "Your dashboard",
+          "body": "When you sign in, you land on the Home dashboard. It shows five widgets: tasks waiting for you, what's due this week, recent activity, recent comments mentioning you, and a quick-stats summary.\n\nIf you have a Manager / Supervisor / HR / Admin role, you'll see an extra 'Manager dashboard' or 'Admin dashboard' option in the sidebar with deeper analytics."
+        },
+        "myTasks": {
+          "title": "Your tasks",
+          "body": "Tasks in the sidebar shows everything assigned to you or your teams, plus tasks you created. Use the status, priority, and date filters to narrow down.\n\nTasks have a status lifecycle: draft → assigned → in progress → submitted → approved → completed. (Some tasks bounce through 'needs revision' or 'cancelled' along the way.) Your current task's status is shown as a coloured badge."
+        },
+        "taskLifecycle": {
+          "title": "Task lifecycle, step by step",
+          "body": "When a task is assigned to you, it appears in your inbox at status 'assigned'. Open it, read the description, and click Accept to move it to 'in progress'.\n\nWhen the work is done, click Submit. Optionally attach files or leave a submission note. The task moves to 'submitted'; the task's creator gets a notification to review.\n\nIf they approve, the task moves to 'completed'. If they request a revision, the task goes back to 'needs revision' with their comments — make the changes and resubmit."
+        },
+        "attachments": {
+          "title": "Attachments",
+          "body": "Tasks can carry file attachments (PDFs, Office docs, images). Drag-and-drop or click 'Attach files' on any task. Each file is stored privately, isolated from other workspaces, and download links are short-lived (5 minutes).\n\nFile size and total storage limits depend on your workspace's plan. If you can't upload, your admin may have hit the plan storage cap."
+        },
+        "comments": {
+          "title": "Comments",
+          "body": "Every task has a comments thread for collaboration. Comments support file attachments and @mentions. You can edit your own comments within 15 minutes of posting; after that they're locked.\n\nDelete works the same way — within 15 minutes you can remove your own comment; after that, only an admin can hide it."
+        },
+        "mentions": {
+          "title": "@mentions",
+          "body": "Type @ in any comment to mention a teammate. They get an in-app notification and an email (subject to their preferences). Mentions resolve by display name; if two people share a name, hover the suggestion to see their full identity.\n\nMentions are scoped to your workspace — you can't mention someone outside it."
+        },
+        "reassignment": {
+          "title": "Asking to be reassigned",
+          "body": "If a task lands on you that should belong to someone else, click 'Request reassignment' from the task page. Pick a target teammate and explain why.\n\nThe original assigner sees your request and either accepts (the task moves to the new person) or declines (it stays with you). Either way you get a notification."
+        },
+        "notifications": {
+          "title": "Notifications",
+          "body": "The bell icon in the header shows your unread notifications. Click to see the full list. Sources include: task assignments, status changes, comment mentions, broadcasts, and approaching deadlines.\n\nFine-tune what you receive under Settings → Notifications. Each notification type has separate in-app and email toggles."
+        },
+        "profile": {
+          "title": "Your profile",
+          "body": "My profile in the sidebar lets you update your display name, avatar, date of birth, address, emergency contact, and upload an ID card / CV / certificates.\n\nOrganizational fields — your role, department, team membership — are managed by your admin or HR. If something looks wrong there, ask them to update it."
+        },
+        "leave": {
+          "title": "Leave (planned absence)",
+          "body": "If you have an upcoming planned absence, set your leave dates in your profile. Q Task Manager will:\n\n• Send you a reminder 3 business days before the start.\n\n• Block new task assignments to you during the leave window.\n\n• Surface your leave status to your manager so they can plan."
+        }
       }
     }
   }
