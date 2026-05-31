@@ -9,6 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "audit:i18n": "node scripts/audit-translation-keys.mjs",
+    "audit:lighthouse": "node scripts/lighthouse-audit.mjs",
     "test": "echo \"(web) no tests yet — added in Sprint 21 E2E\" && exit 0"
   },
   "dependencies": {
