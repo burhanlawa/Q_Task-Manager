@@ -134,7 +134,8 @@ Plus the Sprint 21.4 critical-paths e2e covering the full workflow.
 | CORS | No custom CORS config; Next.js + Nest defaults | LOW (web is same-origin via proxy) |
 | Dependency versions | `pnpm-lock.yaml` pinned. No automated CVE scanning in CI. | **MEDIUM** — log to add `pnpm audit` to CI |
 
-**Critical action item: F-A05-1 (High):** Rotate Neon owner password before prod. The dev value is in chat history.
+**Critical action item: F-A05-1 (High):** | F-A05-1 | npg_AqK4Fzd6GfVH; old value dead. | n/a (env change) | Lawa | 2026-05-31 |
+
 
 **F-A05-2 (Medium):** Add CSP + HSTS headers via Next.js `headers()` config + Nest `helmet` middleware.
 

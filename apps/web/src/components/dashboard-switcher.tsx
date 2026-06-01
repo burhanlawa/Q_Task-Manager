@@ -37,7 +37,13 @@ export function DashboardSwitcher() {
     retry: false,
   });
 
-  if (!isLoaded || !isSignedIn || !data || data.available.length < 2) return null;
+  // While Clerk auth + the /dashboard/available response are still
+  // loading, reserve a slot so the header doesn't reflow if the
+  // switcher ends up appearing. Once we know the user has < 2
+  // variants, collapse to null (the common case for an Employee).
+  if (!isLoaded || !isSignedIn) return null;
+  if (!data) return <div className="h-9 w-24" aria-hidden />;
+  if (data.available.length < 2) return null;
 
   // Active = whichever /dashboard/<x> we're on. Anywhere else, show the
   // primary's label so the switcher always has something to display.

@@ -60,7 +60,11 @@ export function NotificationBell() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
-  if (!isLoaded || !isSignedIn) return null;
+  // While Clerk auth is still loading, reserve the bell's slot with an
+  // invisible placeholder so the header doesn't reflow when the bell
+  // pops in. Once we know the user is signed-out, collapse to null.
+  if (!isLoaded) return <div className="h-9 w-9" aria-hidden />;
+  if (!isSignedIn) return null;
 
   const unread = data?.unreadCount ?? 0;
   const items = (data?.items ?? []).slice(0, 10);

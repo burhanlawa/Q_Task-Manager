@@ -14,14 +14,14 @@ import {
   Layers,
   ListChecks,
   Megaphone,
-  Menu,
+  PanelLeft,
+  PanelLeftClose,
   ScrollText,
   Settings,
   Shield,
   TrendingUp,
   Users,
   UserSquare2,
-  X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -190,7 +190,7 @@ export function SidebarToggle() {
       onClick={toggle}
       className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
     >
-      {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      {open ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
     </button>
   );
 }
@@ -203,11 +203,44 @@ export function MainArea({ children }: { children: React.ReactNode }) {
     <div
       className={cn(
         'transition-[padding] duration-200',
-        // Sidebar is 240px (w-60) on md+. Shift the content over when open.
-        open ? 'md:ps-60' : 'md:ps-0',
+        // On md+ the sidebar is always visible: 240px (w-60) when expanded,
+        // 64px (w-16) icon rail when collapsed. Shift content to match. On
+        // mobile the sidebar overlays, so no padding either way.
+        open ? 'md:ps-60' : 'md:ps-16',
       )}
     >
       {children}
+    </div>
+  );
+}
+
+// Placeholder shown on a cold start (no persisted cache yet) while the `me`
+// and permissions queries are in flight. Mimics two sections of nav rows so
+// the sidebar holds its width and rhythm instead of collapsing.
+function SidebarSkeleton({ collapsed }: { collapsed: boolean }) {
+  return (
+    <div className="animate-pulse space-y-6" aria-hidden>
+      {[5, 4].map((rows, i) => (
+        <div key={i}>
+          {/* Section-title bar — hidden in the rail, like the real titles. */}
+          <div className={cn('mx-3 mb-2 h-3 w-20 rounded bg-secondary', collapsed && 'md:hidden')} />
+          <ul className="space-y-1.5">
+            {Array.from({ length: rows }).map((_, j) => (
+              <li
+                key={j}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5',
+                  collapsed && 'md:justify-center md:px-0',
+                )}
+              >
+                <div className="h-4 w-4 shrink-0 rounded bg-secondary" />
+                {/* Label bar — hidden in the rail. */}
+                <div className={cn('h-3 flex-1 rounded bg-secondary', collapsed && 'md:hidden')} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }
@@ -218,16 +251,22 @@ export function SiteSidebar() {
   const pathname = usePathname();
   const { open, setOpen } = useSidebar();
 
+  // These two power the sidebar's visibility gating. They're persisted to
+  // localStorage (see QueryProvider) and kept fresh for a while so that on
+  // reload the cached values are available immediately and the menu paints
+  // without the blank flash, then revalidates in the background.
   const { data: me } = useQuery<MeResponse>({
     queryKey: ['me'],
     queryFn: () => api.get('me'),
     enabled: isLoaded && !!isSignedIn,
+    staleTime: 5 * 60_000,
     retry: false,
   });
   const { data: perms } = useQuery<PermissionsResponse>({
     queryKey: ['me', 'permissions'],
     queryFn: () => api.get('me/permissions'),
     enabled: isLoaded && !!isSignedIn,
+    staleTime: 5 * 60_000,
     retry: false,
   });
 
@@ -274,25 +313,42 @@ export function SiteSidebar() {
 
       <aside
         className={cn(
-          // Always fixed below the header. Slide transform animates the
-          // open/closed state without a layout reflow.
-          'fixed top-14 z-40 h-[calc(100vh-3.5rem)] w-60 overflow-y-auto border-e bg-background px-3 py-4',
-          'transition-transform duration-200',
-          // Hidden state: slide off the start side.
+          'fixed top-14 z-40 h-[calc(100vh-3.5rem)] overflow-x-hidden overflow-y-auto border-e bg-background py-4',
+          'transition-[transform,width,padding] duration-200',
+          // Mobile (<md): full-width drawer that slides off the start side
+          // when collapsed; a backdrop (below) sits behind it when open.
+          'w-60 px-3',
           open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
+          // Desktop (md+): never slides away. Expanded = 240px with labels;
+          // collapsed = 64px icon rail. Reset the mobile slide transform.
+          'md:translate-x-0 md:rtl:translate-x-0',
+          open ? 'md:w-60 md:px-3' : 'md:w-16 md:px-2',
         )}
-        aria-hidden={!open}
       >
         <nav className="space-y-6">
+          {/* Cold start (no persisted cache): keep the sidebar's shape with a
+              skeleton instead of rendering nothing, so the chrome doesn't
+              collapse and reflow while `me`/`perms` load. On reload the
+              persisted cache makes dataReady true on first paint, so this is
+              only seen on a genuine first visit. */}
+          {authReady && !dataReady && <SidebarSkeleton collapsed={!open} />}
           {visibleSections.map((section) => (
             <div key={section.titleKey}>
-              <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <p
+                className={cn(
+                  'px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground',
+                  // In the desktop rail there's no room for section titles —
+                  // hide them. Replaced by spacing between groups.
+                  !open && 'md:hidden',
+                )}
+              >
                 {t(`sections.${section.titleKey}`)}
               </p>
               <ul className="space-y-0.5">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
+                  const label = t(`items.${item.labelKey}`);
                   return (
                     <li key={item.href}>
                       <Link
@@ -304,15 +360,34 @@ export function SiteSidebar() {
                             setOpen(false);
                           }
                         }}
+                        // `group/nav` scopes the rail tooltip's hover state to
+                        // this row. `title` is the no-JS fallback hint.
+                        title={!open ? label : undefined}
                         className={cn(
-                          'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors',
+                          'group/nav relative flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors',
+                          // Center the icon in the rail (no label beside it).
+                          !open && 'md:justify-center md:px-0',
                           active
                             ? 'bg-secondary text-foreground'
                             : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground',
                         )}
                       >
                         <Icon className="h-4 w-4 shrink-0" />
-                        <span>{t(`items.${item.labelKey}`)}</span>
+                        {/* Label: hidden in the desktop rail, always shown on
+                            mobile and when expanded. */}
+                        <span className={cn(!open && 'md:hidden')}>{label}</span>
+                        {/* Rail-only hover tooltip. Pure CSS: hidden unless the
+                            row is hovered/focused, and only rendered as a popup
+                            on md+ when collapsed. Uses logical `start-full` so
+                            it flips correctly under RTL. */}
+                        {!open && (
+                          <span
+                            role="tooltip"
+                            className="pointer-events-none absolute start-full top-1/2 z-50 ms-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border bg-popover px-2 py-1 text-xs text-popover-foreground opacity-0 shadow-md transition-opacity group-hover/nav:opacity-100 group-focus-visible/nav:opacity-100 md:block"
+                          >
+                            {label}
+                          </span>
+                        )}
                       </Link>
                     </li>
                   );
