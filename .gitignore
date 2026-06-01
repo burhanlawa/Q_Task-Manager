@@ -46,3 +46,9 @@ coverage/
 .turbo/
 .cache/
 .eslintcache
+
+.env.bak
+*.bak
+
+.env.bak
+*.bak
